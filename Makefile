@@ -8,7 +8,8 @@ LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc
 
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
-		obj/main/stream.o
+		obj/main/stream.o\
+		obj/main/vga.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
