@@ -2,12 +2,13 @@ CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -c
+CFLAGS=-std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/
 AFLAGS=
 LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc
 
 OBJECTS=obj/main/boot.o\
-        obj/main/main.o
+		obj/main/main.o\
+		obj/main/stream.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
