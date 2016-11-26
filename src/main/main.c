@@ -4,6 +4,7 @@
 
 #include "main/stream.h"
 #include "main/vga.h"
+#include "main/multiboot.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -15,12 +16,13 @@
 
 #define MSG "Hello world!"
 
-void kernel_main(void) {
+void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
+    (void) magic;
+    
     vga_init();
-
-    uint8_t clr = vga_entry_colour(VGA_COLOUR_BLACK, VGA_COLOUR_WHITE);
-    int bytes;
-    stream_writef(&vga_string_stream, 0, &clr, "Running at %X%%, %s! Currently running %p!", 0xb00b5, "hello world", kernel_main);
-    stream_writef(&vga_string_stream, 0, &clr, "A negative value is %d, but a positive one is %d%n", -123, 345, &bytes);
-    stream_writef(&vga_string_stream, 0, &clr, "That last message was %d bytes!", bytes);
+    
+    uint8_t clr = vga_entry_colour(VGA_COLOUR_WHITE, VGA_COLOUR_BLACK);
+    stream_writef(&vga_string_stream, 0, &clr, "Cantos\n", mbi->boot_loader_name);
+    stream_writef(&vga_string_stream, 0, &clr, "Booted by %s [Flags: %x, Command: %s]",
+        mbi->boot_loader_name, mbi->flags, mbi->cmdline);
 }
