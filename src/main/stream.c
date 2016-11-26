@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <stdarg.h>
+#include <stdbool.h>
 
 #include "main/stream.h"
 #include "main/errno.h"
@@ -42,3 +44,94 @@ int stream_skip(stream_t *stream, size_t len, uint32_t flags, void *data) {
 void stream_clear_error(stream_t *stream) {
     stream->errno = 0;
 }
+
+static int _strlen(uint8_t *str) {
+    int len = 0;
+    while(str[len]) len ++;
+    return len;
+}
+
+static uint8_t _num_to_str(uint8_t value, bool uppercase) {
+    if(value < 10) return value + 0x30;
+    if(uppercase) return value + 0x41 - 0xa;
+    return value + 0x61 - 0xa;
+}
+
+#define _NUM_BUFFER_SIZE 13
+
+void stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...) {
+    size_t p = 0;
+    va_list ap;
+    int written = 0;
+    
+    va_start(ap, fmt);
+    
+    for(p = 0; fmt[p]; p++) {
+        char cur = fmt[p];
+        
+        if(cur == '%') {
+            cur = fmt[++p];
+            switch(cur) {
+                case '%':
+                    stream_write(stream, "%", 1, flags, data);
+                    written ++;
+                    break;
+                case 'n':
+                    (void)0;
+                    int *slot = va_arg(ap, int *);
+                    *slot = written;
+                    break;
+                case 'p':
+                    stream_write(stream, "0x", 2, flags, data);
+                    written += 2;
+                case 'x':
+                case 'X':
+                case 'o':
+                case 'u':
+                case 'd':
+                case 'i':
+                    (void)0;
+                    unsigned int val = va_arg(ap, unsigned int);
+                    int base = 10;
+                    
+                    if(cur == 'x' || cur == 'X' || cur == 'p') base = 16;
+                    if(cur == 'o') base = 8;
+                    
+                    if(cur == 'd' || cur == 'i') {
+                        signed int vals = val;
+                        if(vals < 0) {
+                            val = -vals;
+                            stream_write(stream, "-", 1, flags, data);
+                            written ++;
+                        }
+                    }
+                    
+                    int start = 0;
+                    uint8_t output[_NUM_BUFFER_SIZE];
+                    for(int i = _NUM_BUFFER_SIZE - 1; i >= 0; i --) {
+                        output[i] = _num_to_str(val % base, cur == 'X');
+                        val = val / base;
+                    }
+                    
+                    while(output[start] == '0' && start < _NUM_BUFFER_SIZE - 1) start ++;
+                    
+                    stream_write(stream, output + start, _NUM_BUFFER_SIZE - start, flags, data);
+                    written += _NUM_BUFFER_SIZE - start;
+                    break;
+                case 's':
+                    (void)0;
+                    uint8_t *str = va_arg(ap, uint8_t *);
+                    stream_write(stream, str, _strlen(str), flags, data);
+                    written += _strlen(str);
+                    break;
+            }
+        }else{
+            stream_write(stream, &cur, 1, flags, data);
+            written ++;
+        }
+    }
+    
+    va_end(ap);
+}
+
+#undef _NUM_BUFFER_SIZE

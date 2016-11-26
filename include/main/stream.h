@@ -24,4 +24,6 @@ int stream_skip(stream_t *stream, size_t len, uint32_t flags, void *data);
 
 void stream_clear_error(stream_t *stream);
 
+void stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...);
+
 #endif

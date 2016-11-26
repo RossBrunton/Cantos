@@ -19,5 +19,8 @@ void kernel_main(void) {
     vga_init();
 
     uint8_t clr = vga_entry_colour(VGA_COLOUR_BLACK, VGA_COLOUR_WHITE);
-    stream_write(&vga_string_stream, MSG, sizeof(MSG), 0, &clr);
+    int bytes;
+    stream_writef(&vga_string_stream, 0, &clr, "Running at %X%%, %s! Currently running %p!", 0xb00b5, "hello world", kernel_main);
+    stream_writef(&vga_string_stream, 0, &clr, "A negative value is %d, but a positive one is %d%n", -123, 345, &bytes);
+    stream_writef(&vga_string_stream, 0, &clr, "That last message was %d bytes!", bytes);
 }
