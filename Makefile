@@ -18,8 +18,9 @@ obj/%.o: src/%.s
 	$(AS) $(AFLAGS) -o $@ $^
 
 clean:
-	rm -r obj/*
-	rm -r bin/*
+	-rm -r obj/*
+	-rm -r bin/*
+	-rm -r isodir/*
 
 dirs:
 	test -e obj/main || mkdir obj/main
@@ -28,3 +29,9 @@ all: dirs all_objects
 
 all_objects: $(OBJECTS)
 	$(CC) $(LDFLAGS) -o bin/cantos.bin $^
+
+grub: all
+	mkdir -p isodir/boot/grub
+	cp grub.cfg isodir/boot/grub/
+	cp bin/cantos.bin isodir/boot/cantos.bin
+	grub-mkrescue -o cantos.iso isodir
