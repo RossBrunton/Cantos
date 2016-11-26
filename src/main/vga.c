@@ -34,10 +34,16 @@ void vga_put_at(uint16_t c, size_t x, size_t y) {
 }
 
 static void _vga_append(uint16_t c) {
-    vga_put_at(c, terminal_column, terminal_row);
-    if (++terminal_column == VGA_WIDTH) {
+    if((c & 0xff) == '\n') {
+        terminal_row ++;
         terminal_column = 0;
-        if (++terminal_row == VGA_HEIGHT) terminal_row = 0;
+    }else{
+        vga_put_at(c, terminal_column, terminal_row);
+        
+        if (++terminal_column == VGA_WIDTH) {
+            terminal_column = 0;
+            if (++terminal_row == VGA_HEIGHT) terminal_row = 0;
+        }
     }
 }
 
