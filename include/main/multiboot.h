@@ -3,30 +3,37 @@
 
 //Use flags to detect if a value is set
 typedef struct multiboot_info_s {
-    unsigned long flags;
-    unsigned long mem_lower; // [0]
-    unsigned long mem_upper;
-    unsigned long boot_device; // [1]
-    unsigned long cmdline; // [2]
-    unsigned long mods_count; // [3]
-    unsigned long mods_addr;
-    unsigned long elf_num; // [5]
-    unsigned long elf_size;
-    unsigned long elf_addr;
-    unsigned long elf_shndx;
-    unsigned long mmap_length; // [6]
-    unsigned long mmap_addr;
-    unsigned long drives_length; // [7]
-    unsigned long drives_addr;
-    unsigned long config_table; // [8]
-    unsigned long boot_loader_name; // [9]
-    unsigned long apm_table; // [10]
-    unsigned long vbe_control_info; // [11]
-    unsigned long vbe_mode_info;
-    unsigned long vbe_mode;
-    unsigned long vbe_interface_seg;
-    unsigned long vbe_interface_off;
-    unsigned long vbe_interface_len;
+    uint32_t flags;
+    uint32_t mem_lower; // [0]
+    uint32_t mem_upper;
+    uint32_t boot_device; // [1]
+    uint32_t cmdline; // [2]
+    uint32_t mods_count; // [3]
+    uint32_t mods_addr;
+    uint32_t elf_num; // [5]
+    uint32_t elf_size;
+    uint32_t elf_addr;
+    uint32_t elf_shndx;
+    uint32_t mmap_length; // [6]
+    uint32_t mmap_addr;
+    uint32_t drives_length; // [7]
+    uint32_t drives_addr;
+    uint32_t config_table; // [8]
+    uint32_t boot_loader_name; // [9]
+    uint32_t apm_table; // [10]
+    uint32_t vbe_control_info; // [11]
+    uint32_t vbe_mode_info;
+    uint32_t vbe_mode;
+    uint32_t vbe_interface_seg;
+    uint32_t vbe_interface_off;
+    uint32_t vbe_interface_len;
 } multiboot_info_t;
+
+typedef struct mm_entry_s {
+    uint32_t size;
+    uint64_t base;
+    uint64_t length;
+    uint32_t type;
+} mm_entry_t;
 
 #endif
