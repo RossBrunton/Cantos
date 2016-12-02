@@ -10,7 +10,8 @@ OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
 		obj/main/stream.o\
 		obj/main/vga.o\
-		obj/main/printk.o
+		obj/main/printk.o\
+		obj/mem/page.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -25,6 +26,7 @@ clean:
 
 dirs:
 	test -e obj/main || mkdir obj/main
+	test -e obj/mem || mkdir obj/mem
 
 all: dirs all_objects
 
