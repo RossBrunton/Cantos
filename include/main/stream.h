@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 typedef int (*stream_write_t)(void *buff, size_t len, uint32_t flags, void *data);
 typedef int (*stream_read_t)(void *buff, size_t len, uint32_t flags, void *data);
@@ -24,6 +25,7 @@ int stream_skip(stream_t *stream, size_t len, uint32_t flags, void *data);
 
 void stream_clear_error(stream_t *stream);
 
+void vstream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, va_list va);
 void stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...);
 
 #endif
