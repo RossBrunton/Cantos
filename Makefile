@@ -4,7 +4,7 @@ AS=$(CROSS_PREFIX)-as
 
 CFLAGS=-std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/
 AFLAGS=
-LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc
+LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
 
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
@@ -28,7 +28,7 @@ dirs:
 all: dirs all_objects
 
 all_objects: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o bin/cantos.bin $^
+	$(CC) -o bin/cantos.bin $^ $(LDFLAGS)
 
 grub: all
 	mkdir -p isodir/boot/grub
