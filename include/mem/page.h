@@ -9,7 +9,7 @@
 typedef struct page_s page_t;
 typedef struct page_s {
     int page_id;
-    size_t mem_base_and_free;
+    void *mem_base;
     uint8_t flags;
     int pid;
     page_t *next;
@@ -23,7 +23,29 @@ typedef struct page_s {
 
 #define PAGE_SIZE (1024 * 4)
 
-void page_init(multiboot_info_t *mbi);
+typedef struct __attribute__((aligned(4*1024))) page_table_entry_s {
+    void *block;
+} page_table_entry_t;
+
+typedef struct page_dir_entry_s {
+    void *table;
+} page_dir_entry_t;
+
+typedef page_dir_entry_t page_dir_t[1024];
+typedef page_table_entry_t page_table_t[1024];
+
+#define PAGE_TABLE_FLAGMASK 0xfff
+#define PAGE_TABLE_PRESENT 0x01
+#define PAGE_TABLE_RW 0x02
+#define PAGE_TABLE_USER 0x04
+#define PAGE_TABLE_WRITETHROUGH 0x08
+#define PAGE_TABLE_CACHEDISABLE 0x10
+#define PAGE_TABLE_ACCESSED 0x20
+#define PAGE_TABLE_DIRTY 0x40
+#define PAGE_TABLE_SIZE 0x80
+#define PAGE_TABLE_GLOBAL 0x100
+
+page_t *page_init(multiboot_info_t *mbi);
 page_t *page_alloc(int pid, uint8_t flags);
 int page_free(page_t *page);
 

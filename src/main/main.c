@@ -7,6 +7,7 @@
 #include "main/multiboot.h"
 #include "main/printk.h"
 #include "mem/page.h"
+#include "mem/kmem.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -37,5 +38,5 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
         entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
     }
     
-    page_init(mbi);
+    kmem_init(mbi);
 }

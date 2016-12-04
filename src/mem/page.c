@@ -6,10 +6,12 @@
 #include "main/multiboot.h"
 
 extern char _endofelf;
-static page_t free_list;
-static page_t *free_list_end;
+static page_t *free_start;
+static page_t *free_end;
+static page_t static_page;
 static int page_id_counter;
 static mm_entry_t mem_table[10];
+void *allocation_pointer;
 
 static void *_memcpy(void * destination, const void * source, size_t num) {
     size_t i;
@@ -19,23 +21,25 @@ static void *_memcpy(void * destination, const void * source, size_t num) {
     return destination;
 }
 
-void page_init(multiboot_info_t *mbi) {
+page_t *page_init(multiboot_info_t *mbi) {
     mm_entry_t *entry;
     signed int i;
     
     // Copy the memory table into our little safe place
     entry = (void*)mbi->mmap_addr;
-    for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length; i ++) {
+    for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length && i < 10; i ++) {
         _memcpy(&(mem_table[i]), entry, sizeof(mm_entry_t));
         entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
     }
     
     // Get the first page
-    free_list.page_id = page_id_counter ++;
-    free_list.mem_base_and_free = (size_t)(&_endofelf + PAGE_SIZE) & ~PAGE_FREE_MASK;
-    free_list.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
+    static_page.page_id = page_id_counter ++;
+    static_page.mem_base = (size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE;
+    static_page.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
     
-    printk("First page allocated at %p\n", free_list.mem_base_and_free);
+    printk("First page allocated at %p\n", static_page.mem_base);
+    
+    return &static_page;
 }
 
 page_t *page_alloc(int pid, uint8_t flags) {
@@ -43,12 +47,5 @@ page_t *page_alloc(int pid, uint8_t flags) {
 }
 
 int page_free(page_t *page) {
-    page->mem_base_and_free &= ~PAGE_FREE_MASK;
-    page->flags = 0;
-    page->pid = -1;
-    page->next = NULL;
     
-    page->prev = free_list_end;
-    free_list_end->next = page;
-    free_list_end = page;
 }

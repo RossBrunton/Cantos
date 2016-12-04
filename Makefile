@@ -11,7 +11,8 @@ OBJECTS=obj/main/boot.o\
 		obj/main/stream.o\
 		obj/main/vga.o\
 		obj/main/printk.o\
-		obj/mem/page.o
+		obj/mem/page.o\
+		obj/mem/kmem.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
