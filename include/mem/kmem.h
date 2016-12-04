@@ -12,11 +12,13 @@ typedef struct kmem_header_s {
 // Points to the first free value
 typedef struct kmem_free_s kmem_free_t;
 typedef struct kmem_free_s {
-    int size;
-    void *location;
+    size_t size;
+    void *base;
     kmem_free_t *next;
 } kmem_free_t;
 
 void kmem_init();
+void *kmalloc(size_t size);
+void kfree(void *ptr);
 
 #endif
