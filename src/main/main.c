@@ -39,4 +39,7 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     }
     
     kmem_init(mbi);
+    
+    kwarn("This is a warning!\n");
+    kerror("This is an error!\n");
 }
