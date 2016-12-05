@@ -3,8 +3,8 @@
 #include "mem/page.h"
 
 static page_t *kernel_start;
-
 static kmem_free_t *free_list;
+static kmem_free_t *free_free_structs;
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
@@ -50,22 +50,41 @@ void kmem_init(multiboot_info_t *mbi) {
 
 void *kmalloc(size_t size) {
     kmem_free_t *free = free_list;
-    size_t size_needed;
-    kmem_header_t *hdr;
+    kmem_free_t *prev = NULL;
+    size_t size_needed = 0;
+    kmem_header_t *hdr = NULL;
     
     if(size == 0) return NULL;
     
     // Align size to four bytes
-    size += 4 - size % 4;
+    if(size % 4) size += 4 - size % 4;
     
     size_needed = size + sizeof(kmem_header_t);
-    printk("Allocating %x\n", size);
     
-    for(; free; (free = free->next)) {
-        if(size_needed < free->size) {
+    for(; free; (prev = free), (free = free->next)) {
+        if(size_needed <= free->size) {
             // Do it!
             if(size_needed + sizeof(kmem_header_t) >= free->size) {
                 // Not a typo: If the remaining space is not enough to store any headers, just use up the whole block
+                void *base;
+                
+                // Update the free list
+                size = free->size - sizeof(kmem_header_t);
+                if(!prev) {
+                    free_list = free->next;
+                }else{
+                    prev->next = free->next;
+                }
+                base = free->base;
+                
+                // And mix the structure into the free_free_structs
+                free->next = free_free_structs;
+                free_free_structs = free;
+                
+                // And then do that malloc thing we were going to do
+                hdr = base;
+                hdr->size = size;
+                return base + sizeof(kmem_header_t);
             }else{
                 // Otherwise just shrink it
                 void *base = free->base;
@@ -78,6 +97,7 @@ void *kmalloc(size_t size) {
         }
     }
     
+    kerror("kmalloc failure!\n");
     return NULL;
 }
 

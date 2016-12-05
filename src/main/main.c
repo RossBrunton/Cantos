@@ -46,12 +46,8 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     kwarn("This is a warning!\n");
     kerror("This is an error!\n");
     
-    a = kmalloc(5);
+    a = kmalloc(0xfd0);
     b = kmalloc(10);
     c = kmalloc(20);
     printk("Mallocs! %p %p %p\n", a, b, c);
-    
-    for(int *i = (int *)a - 5; i < (int *)a + 40; i ++) {
-        printk("%x:%x,", (int)i - 0x108000, *i);
-    }
 }
