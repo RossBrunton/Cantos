@@ -14,6 +14,7 @@ static void *_memcpy(void *destination, const void *source, size_t num) {
     return destination;
 }
 
+
 void kmem_init(multiboot_info_t *mbi) {
     page_t *initial;
     kmem_header_t header;
@@ -47,6 +48,7 @@ void kmem_init(multiboot_info_t *mbi) {
     printk("Allocations: kernel_start: %p (%x) free_block: %p (%x)\n", kernel_start, sizeof(page_t), free_list, sizeof(kmem_free_t));
     printk("Free memory starts from %p with size %x\n", free_list->base, free_list->size);
 }
+
 
 void *kmalloc(size_t size) {
     kmem_free_t *free = free_list;
@@ -101,6 +103,66 @@ void *kmalloc(size_t size) {
     return NULL;
 }
 
+
+static kmem_free_t *_get_struct() {
+    kmem_free_t *hold;
+    if(free_free_structs) {
+        hold = free_free_structs;
+        free_free_structs = free_free_structs->next;
+        return hold;
+    }else{
+        hold = kmalloc(sizeof(kmem_free_t));
+        return hold;
+    }
+}
+
+
+inline static void _print() {
+    kmem_free_t *now;
+    for(now = free_list; now; now = now->next) {
+        printk("[%p %d/%x] ", now->base, now->size, now->size);
+    }
+    printk("\n");
+}
+
+
+static void _merge_free(kmem_free_t *first) {
+    if(first->next && first->base + first->size == first->next->base) {
+        kmem_free_t *hold = first->next;
+        first->size += hold->size;
+        first->next = hold->next;
+        hold->next = free_free_structs;
+        free_free_structs = hold;
+    }
+}
+
+
 void kfree(void *ptr) {
-    
+    kmem_header_t *hdr = ptr - sizeof(kmem_header_t);
+    size_t full_size = hdr->size + sizeof(kmem_header_t);
+    if(!free_list) {
+        // The list of free entries is empty, make a new one
+        kmem_free_t *new_entry = _get_struct();
+        new_entry->size = full_size;
+        new_entry->base = hdr;
+        new_entry->next = NULL;
+        free_list = new_entry;
+    }else{
+        // The list exists!
+        kmem_free_t *now = free_list;
+        kmem_free_t *prev = NULL;
+        for(; now->next && now->next->base > (void *)hdr; ((prev = now), (now = now->next)));
+        kmem_free_t *new_entry = _get_struct();
+        new_entry->size = full_size;
+        new_entry->base = hdr;
+        new_entry->next = now;
+        if(prev) {
+            prev->next = new_entry;
+        }else{
+            free_list = new_entry;
+        }
+        
+        _merge_free(new_entry);
+        _merge_free(prev);
+    }
 }

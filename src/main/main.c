@@ -36,8 +36,8 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     
     entry = (void*)mbi->mmap_addr;
     for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length; i ++) {
-        printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
-            entry->base + entry->length, entry->type);
+        //printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
+        //    entry->base + entry->length, entry->type);
         entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
     }
     
@@ -46,8 +46,11 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     kwarn("This is a warning!\n");
     kerror("This is an error!\n");
     
-    a = kmalloc(0xfd0);
+    a = kmalloc(5);
     b = kmalloc(10);
     c = kmalloc(20);
+    kfree(a);
+    kfree(b);
+    kfree(c);
     printk("Mallocs! %p %p %p\n", a, b, c);
 }
