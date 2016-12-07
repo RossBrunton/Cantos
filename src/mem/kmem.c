@@ -8,7 +8,10 @@ static page_t *kernel_start;
 static kmem_free_t *free_list;
 static kmem_free_t *free_end;
 static kmem_free_t *free_free_structs;
-static void *memory_end;
+
+extern char _endofelf;
+
+kmem_map_t kmem_map;
 
 void _print() {
     kmem_free_t *now;
@@ -114,10 +117,18 @@ void kmem_init(multiboot_info_t *mbi) {
     free_list = initial->mem_base+end_pointer;
     free_end = free_list;
     
-    memory_end = free_list->base + free_list->size;
+    // Create the kernel memory table
+    kmem_map.kernel_start = (void *)(0x100000);
+    kmem_map.kernel_end = &_endofelf;
+    kmem_map.memory_start = initial->mem_base;
+    kmem_map.memory_end = free_list->base + free_list->size;
     
-    printk("Allocations: kernel_start: %p (%x) free_block: %p (%x)\n", kernel_start, sizeof(page_t), free_list, sizeof(kmem_free_t));
-    printk("Free memory starts from %p with size %x\n", free_list->base, free_list->size);
+    printk("Initial memory state:\n");
+    printk("Kernel start: %x\n", kmem_map.kernel_start);
+    printk("Kernel end: %x\n", kmem_map.kernel_end);
+    printk("Memory start: %x\n", kmem_map.memory_start);
+    printk("Memory end: %x\n", kmem_map.memory_end);
+    
     _verify(__func__);
 }
 
@@ -183,7 +194,7 @@ void *kmalloc(size_t size) {
     }
     
     // Allocate a new page
-    if(prev && prev->base + prev->size == memory_end) {
+    if(prev && prev->base + prev->size == kmem_map.memory_end) {
         pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t) - prev->size) / PAGE_SIZE;
         can_grow = true;
     }else{
@@ -196,14 +207,14 @@ void *kmalloc(size_t size) {
     
     if(can_grow) {
         // Can just grow the last block because there is free at the end
-        memory_end += new_page->consecutive * PAGE_SIZE;
+        kmem_map.memory_end += new_page->consecutive * PAGE_SIZE;
         prev->size += new_page->consecutive * PAGE_SIZE;
     }else{
         // Well, looks like we have to use the start of the newly allocated block
         // Conveniently there is memory right up to the end of it.
         int space_allocated = new_page->consecutive * PAGE_SIZE - sizeof(kmem_header_t) - sizeof(kmem_free_t);
-        hdr = memory_end;
-        memory_end += new_page->consecutive * PAGE_SIZE;
+        hdr = kmem_map.memory_end;
+        kmem_map.memory_end += new_page->consecutive * PAGE_SIZE;
         hdr->size = sizeof(kmem_free_t);
         free = (kmem_free_t *)(hdr + 1);
         free->size = space_allocated;

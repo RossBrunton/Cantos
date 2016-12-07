@@ -17,6 +17,14 @@ typedef struct kmem_free_s {
     kmem_free_t *next;
 } kmem_free_t;
 
+typedef struct kmem_map_s {
+    void *kernel_start;
+    void *kernel_end;
+    void *memory_start;
+    void *memory_end;
+} kmem_map_t;
+extern kmem_map_t kmem_map;
+
 void kmem_init();
 void *kmalloc(size_t size);
 void kfree(void *ptr);

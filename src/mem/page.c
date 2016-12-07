@@ -34,12 +34,10 @@ page_t *page_init(multiboot_info_t *mbi) {
     
     // Get the first page
     static_page.page_id = page_id_counter ++;
-    static_page.mem_base = (size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE;
+    static_page.mem_base = (void *)((size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE);
     static_page.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
     static_page.consecutive = 1;
     allocation_pointer = static_page.mem_base + PAGE_SIZE;
-    
-    printk("First page allocated at %p\n", static_page.mem_base);
     
     return &static_page;
 }
