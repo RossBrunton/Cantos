@@ -2,10 +2,10 @@
 #include <stddef.h>
 
 #include "mem/page.h"
+#include "mem/kmem.h"
 #include "main/printk.h"
 #include "main/multiboot.h"
 
-extern char _endofelf;
 static page_t *free_start;
 static page_t *used_start;
 static page_t static_page;
@@ -34,7 +34,7 @@ page_t *page_init(multiboot_info_t *mbi) {
     
     // Get the first page
     static_page.page_id = page_id_counter ++;
-    static_page.mem_base = (void *)((size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE);
+    static_page.mem_base = kmem_map.memory_start;
     static_page.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
     static_page.consecutive = 1;
     allocation_pointer = static_page.mem_base + PAGE_SIZE;

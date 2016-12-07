@@ -92,6 +92,15 @@ void kmem_init(multiboot_info_t *mbi) {
     kmem_free_t free_block;
     ptrdiff_t end_pointer = 0;
     
+    // Fill in kernel map
+    kmem_map.kernel_start = (void *)(0x100000);
+    kmem_map.kernel_end = &_endofelf;
+    kmem_map.vm_start = (void *)((size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE);
+    kmem_map.vm_end = kmem_map.vm_start;
+    kmem_map.vm_end += sizeof(page_dir_entry_t) * PAGE_TABLE_LENGTH;
+    kmem_map.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
+    kmem_map.memory_start = kmem_map.vm_end;
+    
     initial = page_init(mbi);
     
     // Memory header for the page header
@@ -118,14 +127,13 @@ void kmem_init(multiboot_info_t *mbi) {
     free_end = free_list;
     
     // Create the kernel memory table
-    kmem_map.kernel_start = (void *)(0x100000);
-    kmem_map.kernel_end = &_endofelf;
-    kmem_map.memory_start = initial->mem_base;
     kmem_map.memory_end = free_list->base + free_list->size;
     
     printk("Initial memory state:\n");
     printk("Kernel start: %x\n", kmem_map.kernel_start);
     printk("Kernel end: %x\n", kmem_map.kernel_end);
+    printk("Kernel VM table start: %x\n", kmem_map.vm_start);
+    printk("Kernel VM table end: %x\n", kmem_map.vm_end);
     printk("Memory start: %x\n", kmem_map.memory_start);
     printk("Memory end: %x\n", kmem_map.memory_end);
     

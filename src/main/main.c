@@ -31,13 +31,12 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     
     printk("Cantos\n", mbi->boot_loader_name);
     printk("Booted by %s [Flags: %x, Command: %s]\n", mbi->boot_loader_name, mbi->flags, mbi->cmdline);
-    printk("Main function is located at %p to %p\n", kernel_main, &_endofelf);
-    //printk("MMap Entries:\n");
+    printk("MMap Entries:\n");
     
     entry = (void*)mbi->mmap_addr;
     for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length; i ++) {
-        //printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
-        //    entry->base + entry->length, entry->type);
+        printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
+            entry->base + entry->length, entry->type);
         entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
     }
     

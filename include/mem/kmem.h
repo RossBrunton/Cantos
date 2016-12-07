@@ -20,6 +20,8 @@ typedef struct kmem_free_s {
 typedef struct kmem_map_s {
     void *kernel_start;
     void *kernel_end;
+    void *vm_start;
+    void *vm_end;
     void *memory_start;
     void *memory_end;
 } kmem_map_t;
