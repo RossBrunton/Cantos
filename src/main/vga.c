@@ -33,6 +33,20 @@ void vga_put_at(uint16_t c, size_t x, size_t y) {
     terminal_buffer[y * VGA_WIDTH + x] = c;
 }
 
+static void _maybe_wrap() {
+    if(terminal_row > VGA_HEIGHT) {
+        for(uint16_t i = VGA_WIDTH; i < VGA_HEIGHT*VGA_WIDTH; i ++) {
+            terminal_buffer[i - VGA_WIDTH] = terminal_buffer[i]; 
+        }
+        
+        for(uint16_t i = (VGA_HEIGHT - 1) * VGA_WIDTH; i < VGA_HEIGHT * VGA_WIDTH; i ++) {
+            terminal_buffer[i] = 0x0000; 
+        }
+        
+        terminal_row = VGA_HEIGHT - 1;
+    }
+}
+
 static void _vga_append(uint16_t c) {
     if((c & 0xff) == '\n') {
         terminal_row ++;
@@ -40,11 +54,14 @@ static void _vga_append(uint16_t c) {
     }else{
         vga_put_at(c, terminal_column, terminal_row);
         
-        if (++terminal_column == VGA_WIDTH) {
+        terminal_column ++;
+        if (terminal_column >= VGA_WIDTH) {
             terminal_column = 0;
-            if (++terminal_row == VGA_HEIGHT) terminal_row = 0;
+            terminal_row ++;
         }
     }
+    
+    _maybe_wrap();
 }
 
 static int _vga_stream_write(void *buff, size_t len, uint32_t flags, void *data) {
