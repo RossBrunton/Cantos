@@ -2,7 +2,8 @@ CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
-CFLAGS=-std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/
+DEBUGFLAGS=-DDEBUG_MEM
+CFLAGS=-std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS)
 AFLAGS=
 LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
 

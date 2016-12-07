@@ -32,7 +32,7 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     printk("Cantos\n", mbi->boot_loader_name);
     printk("Booted by %s [Flags: %x, Command: %s]\n", mbi->boot_loader_name, mbi->flags, mbi->cmdline);
     printk("Main function is located at %p to %p\n", kernel_main, &_endofelf);
-    printk("MMap Entries:\n");
+    //printk("MMap Entries:\n");
     
     entry = (void*)mbi->mmap_addr;
     for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length; i ++) {
@@ -43,14 +43,13 @@ void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
     
     kmem_init(mbi);
     
-    kwarn("This is a warning!\n");
-    kerror("This is an error!\n");
-    
-    a = kmalloc(5);
-    b = kmalloc(10);
-    c = kmalloc(20);
-    kfree(a);
-    kfree(b);
-    kfree(c);
+    for(int i = 1; i < 10000; i ++) {
+        a = kmalloc(i);
+        b = kmalloc(10);
+        kfree(a);
+        c = kmalloc(20);
+        kfree(b);
+        kfree(c);
+    }
     printk("Mallocs! %p %p %p\n", a, b, c);
 }

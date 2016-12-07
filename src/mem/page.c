@@ -7,7 +7,7 @@
 
 extern char _endofelf;
 static page_t *free_start;
-static page_t *free_end;
+static page_t *used_start;
 static page_t static_page;
 static int page_id_counter;
 static mm_entry_t mem_table[10];
@@ -36,16 +36,33 @@ page_t *page_init(multiboot_info_t *mbi) {
     static_page.page_id = page_id_counter ++;
     static_page.mem_base = (size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE;
     static_page.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
+    static_page.consecutive = 1;
+    allocation_pointer = static_page.mem_base + PAGE_SIZE;
     
     printk("First page allocated at %p\n", static_page.mem_base);
     
     return &static_page;
 }
 
-page_t *page_alloc(int pid, uint8_t flags) {
+page_t *page_alloc(int pid, uint8_t flags, int count) {
+    static_page.page_id = page_id_counter ++;
+    static_page.mem_base = allocation_pointer;
+    static_page.flags = PAGE_FLAG_ALLOCATED | flags;
+    static_page.pid = pid;
+    static_page.consecutive = count;
+    allocation_pointer = static_page.mem_base + PAGE_SIZE;
+#if DEBUG_MEM
+    printk("Allocated %d pages.\n", count);
+#endif
     
+    return &static_page;
 }
 
 int page_free(page_t *page) {
     
+}
+
+void page_used(page_t *page) {
+    page->next = used_start;
+    used_start = page;
 }

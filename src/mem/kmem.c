@@ -2,9 +2,62 @@
 #include "mem/kmem.h"
 #include "mem/page.h"
 
+#include <stdbool.h>
+
 static page_t *kernel_start;
 static kmem_free_t *free_list;
+static kmem_free_t *free_end;
 static kmem_free_t *free_free_structs;
+static void *memory_end;
+
+void _print() {
+    kmem_free_t *now;
+    for(now = free_list; now; now = now->next) {
+        printk("[%p@%p %d/%x] ", now->base, now, now->size, now->size);
+    }
+    printk("\n");
+}
+
+void _verify(const char *func) {
+    (void)func;
+#if DEBUG_MEM
+    kmem_free_t *now;
+    kmem_free_t *prev = NULL;
+    for(now = free_list; now; ((prev = now), (now = now->next))) {
+        if(now->next) {
+            if(now->next->base < now->base) {
+                printk("!!! MEMORY CORRUPTION, List out of order [%s] !!!\n", func);
+                _print();
+                while(1) {};
+            }
+            
+            if(prev && prev->base + prev->size > now->base) {
+                printk("!!! MEMORY CORRUPTION, Overlapping free [%s] !!!\n", func);
+                _print();
+                while(1) {};
+            }
+            
+            if((size_t)now->base < 0x1000) {
+                printk("!!! MEMORY CORRUPTION, memory less than 0x1000 [%s] !!!\n", func);
+                _print();
+                while(1) {};
+            }
+            
+            if((size_t)now->base > 0x10000000) {
+                printk("!!! MEMORY CORRUPTION, memory greater than 0x1000000 [%s] !!!\n", func);
+                _print();
+                while(1) {};
+            }
+        }
+    }
+    
+    if(free_end != prev) {
+        printk("!!! MEMORY CORRUPTION, End of free array not set correctly [%s] !!!\n", func);
+        _print();
+        while(1) {};
+    }
+#endif
+}
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
@@ -12,6 +65,21 @@ static void *_memcpy(void *destination, const void *source, size_t num) {
         ((char *)destination)[i] = ((char *)source)[i];
     }
     return destination;
+}
+
+
+static void _merge_free(kmem_free_t *first) {
+    if(first->next && first->base + first->size == first->next->base) {
+        kmem_free_t *hold = first->next;
+        first->size += hold->size;
+        first->next = hold->next;
+        hold->next = free_free_structs;
+        free_free_structs = hold;
+        if(!first->next) {
+            free_end = first;
+        }
+        _verify(__func__);
+    }
 }
 
 
@@ -44,9 +112,13 @@ void kmem_init(multiboot_info_t *mbi) {
     free_block.next = NULL;
     _memcpy(initial->mem_base+end_pointer, &free_block, sizeof(kmem_free_t));
     free_list = initial->mem_base+end_pointer;
+    free_end = free_list;
+    
+    memory_end = free_list->base + free_list->size;
     
     printk("Allocations: kernel_start: %p (%x) free_block: %p (%x)\n", kernel_start, sizeof(page_t), free_list, sizeof(kmem_free_t));
     printk("Free memory starts from %p with size %x\n", free_list->base, free_list->size);
+    _verify(__func__);
 }
 
 
@@ -54,7 +126,11 @@ void *kmalloc(size_t size) {
     kmem_free_t *free = free_list;
     kmem_free_t *prev = NULL;
     size_t size_needed = 0;
+    size_t pages_needed = 0;
     kmem_header_t *hdr = NULL;
+    page_t *new_page;
+    page_t *page_slot;
+    bool can_grow;
     
     if(size == 0) return NULL;
     
@@ -69,6 +145,7 @@ void *kmalloc(size_t size) {
             if(size_needed + sizeof(kmem_header_t) >= free->size) {
                 // Not a typo: If the remaining space is not enough to store any headers, just use up the whole block
                 void *base;
+                _verify("kmalloc@before whole block clear");
                 
                 // Update the free list
                 size = free->size - sizeof(kmem_header_t);
@@ -78,6 +155,9 @@ void *kmalloc(size_t size) {
                     prev->next = free->next;
                 }
                 base = free->base;
+                if(free == free_end) {
+                    free_end = prev;
+                }
                 
                 // And mix the structure into the free_free_structs
                 free->next = free_free_structs;
@@ -86,21 +166,57 @@ void *kmalloc(size_t size) {
                 // And then do that malloc thing we were going to do
                 hdr = base;
                 hdr->size = size;
+                _verify("kmalloc@whole block clear");
                 return base + sizeof(kmem_header_t);
             }else{
                 // Otherwise just shrink it
+                _verify("kmalloc@before shrink block");
                 void *base = free->base;
                 free->size -= size_needed;
                 free->base += size_needed;
                 hdr = base;
                 hdr->size = size;
+                _verify("kmalloc@shrink block");
                 return base + sizeof(kmem_header_t);
             }
         }
     }
     
-    kerror("kmalloc failure!\n");
-    return NULL;
+    // Allocate a new page
+    if(prev && prev->base + prev->size == memory_end) {
+        pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t) - prev->size) / PAGE_SIZE;
+        can_grow = true;
+    }else{
+        pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t)) / PAGE_SIZE;
+        can_grow = false;
+    }
+    pages_needed += 2;
+    
+    new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
+    
+    if(can_grow) {
+        // Can just grow the last block because there is free at the end
+        memory_end += new_page->consecutive * PAGE_SIZE;
+        prev->size += new_page->consecutive * PAGE_SIZE;
+    }else{
+        // Well, looks like we have to use the start of the newly allocated block
+        // Conveniently there is memory right up to the end of it.
+        int space_allocated = new_page->consecutive * PAGE_SIZE - sizeof(kmem_header_t) - sizeof(kmem_free_t);
+        hdr = memory_end;
+        memory_end += new_page->consecutive * PAGE_SIZE;
+        hdr->size = sizeof(kmem_free_t);
+        free = (kmem_free_t *)(hdr + 1);
+        free->size = space_allocated;
+        free->base = free + 1;
+        free_end->next = free;
+        free_end = free;
+    }
+    
+    _verify("kmalloc@end");
+    page_slot = kmalloc(sizeof(page_t));
+    _memcpy(page_slot, new_page, sizeof(page_t));
+    page_used(page_slot);
+    return kmalloc(size);
 }
 
 
@@ -112,27 +228,8 @@ static kmem_free_t *_get_struct() {
         return hold;
     }else{
         hold = kmalloc(sizeof(kmem_free_t));
+        _verify(__func__);
         return hold;
-    }
-}
-
-
-inline static void _print() {
-    kmem_free_t *now;
-    for(now = free_list; now; now = now->next) {
-        printk("[%p %d/%x] ", now->base, now->size, now->size);
-    }
-    printk("\n");
-}
-
-
-static void _merge_free(kmem_free_t *first) {
-    if(first->next && first->base + first->size == first->next->base) {
-        kmem_free_t *hold = first->next;
-        first->size += hold->size;
-        first->next = hold->next;
-        hold->next = free_free_structs;
-        free_free_structs = hold;
     }
 }
 
@@ -140,6 +237,13 @@ static void _merge_free(kmem_free_t *first) {
 void kfree(void *ptr) {
     kmem_header_t *hdr = ptr - sizeof(kmem_header_t);
     size_t full_size = hdr->size + sizeof(kmem_header_t);
+    
+    if(!ptr) {
+        // Ignore NULL
+        return;
+    }
+    
+    _verify("kfree@start of free");
     if(!free_list) {
         // The list of free entries is empty, make a new one
         kmem_free_t *new_entry = _get_struct();
@@ -147,12 +251,14 @@ void kfree(void *ptr) {
         new_entry->base = hdr;
         new_entry->next = NULL;
         free_list = new_entry;
+        free_end = new_entry;
     }else{
         // The list exists!
         kmem_free_t *now = free_list;
         kmem_free_t *prev = NULL;
-        for(; now->next && now->next->base > (void *)hdr; ((prev = now), (now = now->next)));
+        for(; now && now->base < (void *)hdr; ((prev = now), (now = now->next)));
         kmem_free_t *new_entry = _get_struct();
+        _verify("kfree@after get");
         new_entry->size = full_size;
         new_entry->base = hdr;
         new_entry->next = now;
@@ -161,8 +267,16 @@ void kfree(void *ptr) {
         }else{
             free_list = new_entry;
         }
-        
+        if(!new_entry->next) {
+            if(now) {
+                free_end = now;
+            }else{
+                free_end = new_entry;
+            }
+        }
+        _verify("kfree@before merge");
         _merge_free(new_entry);
         _merge_free(prev);
     }
+    _verify("kfree@end");
 }

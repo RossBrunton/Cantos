@@ -12,8 +12,8 @@ typedef struct page_s {
     void *mem_base;
     uint8_t flags;
     int pid;
+    int consecutive;
     page_t *next;
-    page_t *prev;
 } page_t;
 
 #define PAGE_FLAG_ALLOCATED 0x01
@@ -46,7 +46,8 @@ typedef page_table_entry_t page_table_t[1024];
 #define PAGE_TABLE_GLOBAL 0x100
 
 page_t *page_init(multiboot_info_t *mbi);
-page_t *page_alloc(int pid, uint8_t flags);
+page_t *page_alloc(int pid, uint8_t flags, int count);
 int page_free(page_t *page);
+void page_used(page_t *page);
 
 #endif
