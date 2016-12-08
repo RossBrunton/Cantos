@@ -101,7 +101,11 @@ void kmem_init(multiboot_info_t *mbi) {
     kmem_map.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
     kmem_map.memory_start = kmem_map.vm_end;
     
-    initial = page_init(mbi);
+    // Set up paging
+    page_init(mbi);
+    
+    // Create a page for memory
+    initial = page_alloc(0, PAGE_FLAG_KERNEL, 1);
     
     // Memory header for the page header
     header.size = sizeof(page_t);

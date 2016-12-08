@@ -21,7 +21,7 @@ static void *_memcpy(void * destination, const void * source, size_t num) {
     return destination;
 }
 
-page_t *page_init(multiboot_info_t *mbi) {
+void page_init(multiboot_info_t *mbi) {
     mm_entry_t *entry;
     signed int i;
     
@@ -32,14 +32,7 @@ page_t *page_init(multiboot_info_t *mbi) {
         entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
     }
     
-    // Get the first page
-    static_page.page_id = page_id_counter ++;
-    static_page.mem_base = kmem_map.memory_start;
-    static_page.flags = PAGE_FLAG_ALLOCATED | PAGE_FLAG_KERNEL;
-    static_page.consecutive = 1;
-    allocation_pointer = static_page.mem_base + PAGE_SIZE;
-    
-    return &static_page;
+    allocation_pointer = kmem_map.memory_start;
 }
 
 page_t *page_alloc(int pid, uint8_t flags, int count) {

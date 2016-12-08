@@ -47,7 +47,7 @@ typedef struct page_dir_entry_s {
 #define KERNEL_VM_PAGES (KERNEL_VM_SIZE / PAGE_SIZE)
 #define KERNEL_VM_PAGE_TABLES (KERNEL_VM_PAGES / PAGE_TABLE_LENGTH)
 
-page_t *page_init(multiboot_info_t *mbi);
+void page_init(multiboot_info_t *mbi);
 page_t *page_alloc(int pid, uint8_t flags, int count);
 int page_free(page_t *page);
 void page_used(page_t *page);
