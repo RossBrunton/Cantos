@@ -9,7 +9,9 @@ static kmem_free_t *free_list;
 static kmem_free_t *free_end;
 static kmem_free_t *free_free_structs;
 
-extern char _endofelf;
+extern char _startofro;
+extern char _endofro;
+extern char _endofrw;
 
 kmem_map_t kmem_map;
 
@@ -40,14 +42,8 @@ void _verify(const char *func) {
                 while(1) {};
             }
             
-            if((size_t)now->base < 0x1000) {
-                printk("!!! MEMORY CORRUPTION, memory less than 0x1000 [%s] !!!\n", func);
-                _print();
-                while(1) {};
-            }
-            
-            if((size_t)now->base > 0x10000000) {
-                printk("!!! MEMORY CORRUPTION, memory greater than 0x1000000 [%s] !!!\n", func);
+            if((size_t)now->base < 0xc01000) {
+                printk("!!! MEMORY CORRUPTION, memory less than 0xc01000 [%s] !!!\n", func);
                 _print();
                 while(1) {};
             }
@@ -86,60 +82,56 @@ static void _merge_free(kmem_free_t *first) {
 }
 
 
-void kmem_init(multiboot_info_t *mbi) {
+void kmem_init() {
     page_t *initial;
     kmem_header_t header;
     kmem_free_t free_block;
     ptrdiff_t end_pointer = 0;
+    void * mem_base;
     
     // Fill in kernel map
-    kmem_map.kernel_start = (void *)(0x100000);
-    kmem_map.kernel_end = &_endofelf;
-    kmem_map.vm_start = (void *)((size_t)((&_endofelf + PAGE_SIZE)) / PAGE_SIZE * PAGE_SIZE);
+    kmem_map.kernel_ro_start = &_startofro;
+    kmem_map.kernel_ro_end = &_endofro;
+    kmem_map.kernel_rw_start = &_endofro;
+    kmem_map.kernel_rw_end = &_endofrw;
+    kmem_map.vm_start = &_endofrw;
     kmem_map.vm_end = kmem_map.vm_start;
     kmem_map.vm_end += sizeof(page_dir_entry_t) * PAGE_TABLE_LENGTH;
     kmem_map.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
     kmem_map.memory_start = kmem_map.vm_end;
     
     // Set up paging
-    page_init(mbi);
+    page_init();
     
     // Create a page for memory
     initial = page_alloc(0, PAGE_FLAG_KERNEL, 1);
+    mem_base = page_kinstall(initial, PAGE_TABLE_RW);
     
     // Memory header for the page header
     header.size = sizeof(page_t);
-    _memcpy(initial->mem_base, &header, sizeof(kmem_header_t));
+    _memcpy(mem_base, &header, sizeof(kmem_header_t));
     end_pointer += sizeof(kmem_header_t);
     
     // And the struct
-    _memcpy(initial->mem_base+end_pointer, initial, sizeof(page_t));
-    kernel_start = initial->mem_base+end_pointer;
+    _memcpy(mem_base+end_pointer, initial, sizeof(page_t));
+    kernel_start = mem_base+end_pointer;
     end_pointer += sizeof(page_t);
     
     // And now for the initial free block thing's header
     header.size = sizeof(kmem_free_t);
-    _memcpy(initial->mem_base+end_pointer, &header, sizeof(kmem_header_t));
+    _memcpy(mem_base+end_pointer, &header, sizeof(kmem_header_t));
     end_pointer += sizeof(kmem_header_t);
     
     // And its value
     free_block.size = PAGE_SIZE - end_pointer - sizeof(kmem_free_t);
-    free_block.base = initial->mem_base + end_pointer + sizeof(kmem_free_t);
+    free_block.base = mem_base + end_pointer + sizeof(kmem_free_t);
     free_block.next = NULL;
-    _memcpy(initial->mem_base+end_pointer, &free_block, sizeof(kmem_free_t));
-    free_list = initial->mem_base+end_pointer;
+    _memcpy(mem_base+end_pointer, &free_block, sizeof(kmem_free_t));
+    free_list = mem_base+end_pointer;
     free_end = free_list;
     
     // Create the kernel memory table
     kmem_map.memory_end = free_list->base + free_list->size;
-    
-    printk("Initial memory state:\n");
-    printk("Kernel start: %x\n", kmem_map.kernel_start);
-    printk("Kernel end: %x\n", kmem_map.kernel_end);
-    printk("Kernel VM table start: %x\n", kmem_map.vm_start);
-    printk("Kernel VM table end: %x\n", kmem_map.vm_end);
-    printk("Memory start: %x\n", kmem_map.memory_start);
-    printk("Memory end: %x\n", kmem_map.memory_end);
     
     _verify(__func__);
 }
@@ -153,7 +145,7 @@ void *kmalloc(size_t size) {
     kmem_header_t *hdr = NULL;
     page_t *new_page;
     page_t *page_slot;
-    bool can_grow;
+    void *installed_loc;
     
     if(size == 0) return NULL;
     
@@ -208,25 +200,22 @@ void *kmalloc(size_t size) {
     // Allocate a new page
     if(prev && prev->base + prev->size == kmem_map.memory_end) {
         pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t) - prev->size) / PAGE_SIZE;
-        can_grow = true;
     }else{
         pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t)) / PAGE_SIZE;
-        can_grow = false;
     }
     pages_needed += 2;
     
     new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
+    installed_loc = page_kinstall(new_page, PAGE_TABLE_RW);
     
-    if(can_grow) {
+    if(prev && prev->base + prev->size == installed_loc) {
         // Can just grow the last block because there is free at the end
-        kmem_map.memory_end += new_page->consecutive * PAGE_SIZE;
         prev->size += new_page->consecutive * PAGE_SIZE;
     }else{
         // Well, looks like we have to use the start of the newly allocated block
         // Conveniently there is memory right up to the end of it.
         int space_allocated = new_page->consecutive * PAGE_SIZE - sizeof(kmem_header_t) - sizeof(kmem_free_t);
-        hdr = kmem_map.memory_end;
-        kmem_map.memory_end += new_page->consecutive * PAGE_SIZE;
+        hdr = installed_loc;
         hdr->size = sizeof(kmem_free_t);
         free = (kmem_free_t *)(hdr + 1);
         free->size = space_allocated;
@@ -299,7 +288,7 @@ void kfree(void *ptr) {
         }
         _verify("kfree@before merge");
         _merge_free(new_entry);
-        _merge_free(prev);
+        if(prev) _merge_free(prev);
     }
     _verify("kfree@end");
 }

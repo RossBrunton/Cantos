@@ -18,8 +18,10 @@ typedef struct kmem_free_s {
 } kmem_free_t;
 
 typedef struct kmem_map_s {
-    void *kernel_start;
-    void *kernel_end;
+    void *kernel_ro_start;
+    void *kernel_ro_end;
+    void *kernel_rw_start;
+    void *kernel_rw_end;
     void *vm_start;
     void *vm_end;
     void *memory_start;

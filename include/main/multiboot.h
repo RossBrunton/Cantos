@@ -1,6 +1,8 @@
 #ifndef _H_MAIN_MULTIBOOT_
 #define _H_MAIN_MULTIBOOT_
 
+#include <stddef.h>
+
 //Use flags to detect if a value is set
 typedef struct multiboot_info_s {
     uint32_t flags;
@@ -35,5 +37,15 @@ typedef struct mm_entry_s {
     uint64_t length;
     uint32_t type;
 } mm_entry_t;
+
+#define LOCAL_MM_COUNT 10
+#define LOCAL_CMDLINE_LENGTH 256
+#define LOCAL_BOOT_LOADER_NAME_LENGTH 16
+
+extern mm_entry_t mb_mem_table[LOCAL_MM_COUNT];
+extern char mb_cmdline[LOCAL_CMDLINE_LENGTH];
+extern char mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
+
+void mb_copy_into_high();
 
 #endif

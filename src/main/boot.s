@@ -5,6 +5,11 @@
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
+# Set up VM details
+.set TOTAL_VM_SIZE, 0x100000000
+.set KERNEL_VM_SIZE, 0x40000000
+.set KERNEL_VM_BASE, (TOTAL_VM_SIZE - KERNEL_VM_SIZE) # Higher half kernel
+
 # Declare a multiboot header that marks the program as a kernel. These are magic
 # values that are documented in the multiboot standard. The bootloader will
 # search for this signature in the first 8 KiB of the kernel file, aligned at a
@@ -19,8 +24,14 @@
 # Set up stack
 .section .bss
 .align 16
-stack_bottom:
+lo_stack_bottom:
 .skip 16384 # 16 KiB
+lo_stack_top:
+
+.section .hi-bss
+.align 16
+stack_bottom:
+.skip 16384
 stack_top:
 
 # The linker script specifies _start as the entry point to the kernel and the
@@ -30,14 +41,31 @@ stack_top:
 .global _start
 .type _start, @function
 _start:
-    mov $stack_top, %esp
+    mov $lo_stack_top, %esp
     push %ebx
-
+    
+    call low_kernel_main
+    
+    # Install the page table
+    mov %eax, %cr3
+    
+    # Enable 4MiB pages
+    mov %cr4, %ecx
+    or $0x00000010, %ecx
+    mov %ecx, %cr4
+    
+    # And flick the switch
+    mov %cr0, %ecx
+    or  $0x80000000, %ecx
+    mov %ecx, %cr0
+    
+    mov $stack_top, %esp
+    
     call kernel_main
-
+    
     cli
-1:  hlt
-    jmp 1b
+halt:   hlt
+    jmp halt
 
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.

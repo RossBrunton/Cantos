@@ -13,7 +13,9 @@ OBJECTS=obj/main/boot.o\
 		obj/main/vga.o\
 		obj/main/printk.o\
 		obj/mem/page.o\
-		obj/mem/kmem.o
+		obj/mem/kmem.o\
+		obj/main/lomain.o\
+		obj/main/multiboot.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

@@ -19,31 +19,44 @@
 
 extern char _endofelf;
 
-void kernel_main(multiboot_info_t *mbi, unsigned int magic) {
-    (void) magic;
+void kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
+    page_dir_t *dir;
     void *a;
     void *b;
     void *c;
     
-    vga_init();
+    mb_copy_into_high();
     
-    printk("Cantos\n", mbi->boot_loader_name);
-    printk("Booted by %s [Flags: %x, Command: %s]\n", mbi->boot_loader_name, mbi->flags, mbi->cmdline);
+    kmem_init();
+    
+    // Clear the first 1MiB
+    dir = kmem_map.vm_start;
+    dir->entries[0].table = 0x0;
+    
+    vga_init();
+    printk("Cantos\n");
+    printk("Booted by %s [%s]\n", mb_boot_loader_name, mb_cmdline);
+    printk("Initial memory state:\n");
+    printk("Kernel start: %x\n", kmem_map.kernel_ro_start);
+    printk("Kernel end: %x\n", kmem_map.kernel_rw_end);
+    printk("Kernel VM table start: %x\n", kmem_map.vm_start);
+    printk("Kernel VM table end: %x\n", kmem_map.vm_end);
+    printk("Memory start: %x\n", kmem_map.memory_start);
+    printk("Memory end: %x\n", kmem_map.memory_end);
     printk("MMap Entries:\n");
     
-    entry = (void*)mbi->mmap_addr;
-    for(i = 0; (uint32_t)((void *)entry - mbi->mmap_addr) < mbi->mmap_length; i ++) {
+    entry = &(mb_mem_table[0]);
+    for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
         printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
             entry->base + entry->length, entry->type);
-        entry = (mm_entry_t *)(((void *)entry) + entry->size + 4);
+        entry ++;
     }
-    
-    kmem_init(mbi);
     
     for(int i = 1; i < 10000; i ++) {
         a = kmalloc(i);
+        ((char *)a)[i/2] = '!';
         b = kmalloc(10);
         kfree(a);
         c = kmalloc(20);

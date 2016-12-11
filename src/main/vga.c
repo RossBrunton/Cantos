@@ -4,6 +4,7 @@
 
 #include "main/stream.h"
 #include "main/vga.h"
+#include "mem/page.h"
 
 uint8_t vga_entry_colour(vga_colour_t fg, vga_colour_t bg) {
     return fg | bg << 4;
@@ -20,8 +21,11 @@ static uint16_t *terminal_buffer;
 void vga_init() {
     terminal_row = 0;
     terminal_column = 0;
-    terminal_buffer = (uint16_t*) 0xB8000;
-
+    page_t *page;
+    
+    page = page_create(0, 0xB8000, PAGE_FLAG_AUTOKMALLOC | PAGE_FLAG_KERNEL, (128 * 1024) / PAGE_SIZE);
+    terminal_buffer = page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
+    
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             terminal_buffer[y * VGA_WIDTH + x] = ' ';
@@ -48,6 +52,8 @@ static void _maybe_wrap() {
 }
 
 static void _vga_append(uint16_t c) {
+    if(!terminal_buffer) return;
+    
     if((c & 0xff) == '\n') {
         terminal_row ++;
         terminal_column = 0;
