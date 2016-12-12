@@ -58,6 +58,7 @@ SECTIONS {
     .hi-rodata BLOCK(4K) : AT(ADDR(.hi-rodata) - _high_offset)
     {
         *(.rodata)
+        *(.rodata*)
     }
     
     _endofro = ALIGN(4K);

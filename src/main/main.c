@@ -54,9 +54,9 @@ void kernel_main() {
         entry ++;
     }
     
-    for(int i = 1; i < 10000; i ++) {
+    for(int i = 1; i < 0x3000000000; i += 0x1000000) {
         a = kmalloc(i);
-        ((char *)a)[i/2] = '!';
+        ((char *)a)[i-1] = '!';
         b = kmalloc(10);
         kfree(a);
         c = kmalloc(20);
@@ -64,4 +64,6 @@ void kernel_main() {
         kfree(c);
     }
     printk("Mallocs! %p %p %p\n", a, b, c);
+    
+    while(1) {};
 }

@@ -3,9 +3,9 @@ CC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
 DEBUGFLAGS=-DDEBUG_MEM
-CFLAGS=-std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS)
-AFLAGS=
-LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
+CFLAGS=-g -std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS)
+AFLAGS=-g
+LDFLAGS=-g -T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
 
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\

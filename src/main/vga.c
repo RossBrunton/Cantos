@@ -16,7 +16,7 @@ uint16_t vga_add_colour(uint8_t uc, uint8_t color) {
 
 static size_t terminal_row;
 static size_t terminal_column;
-static uint16_t *terminal_buffer;
+static volatile uint16_t *terminal_buffer;
 
 void vga_init() {
     terminal_row = 0;
