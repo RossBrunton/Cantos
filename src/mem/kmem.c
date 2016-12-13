@@ -1,6 +1,7 @@
 #include "main/printk.h"
 #include "mem/kmem.h"
 #include "mem/page.h"
+#include "main/panic.h"
 
 #include <stdbool.h>
 
@@ -31,29 +32,25 @@ void _verify(const char *func) {
     for(now = free_list; now; ((prev = now), (now = now->next))) {
         if(now->next) {
             if(now->next->base < now->base) {
-                printk("!!! MEMORY CORRUPTION, List out of order [%s] !!!\n", func);
                 _print();
-                while(1) {};
+                panic("Memory corruption, List out of order [%s]", func);
             }
             
             if(prev && prev->base + prev->size > now->base) {
-                printk("!!! MEMORY CORRUPTION, Overlapping free [%s] !!!\n", func);
                 _print();
-                while(1) {};
+                panic("Memory corruption, Overlapping free [%s]", func);
             }
             
             if((size_t)now->base < 0xc01000) {
-                printk("!!! MEMORY CORRUPTION, memory less than 0xc01000 [%s] !!!\n", func);
                 _print();
-                while(1) {};
+                panic("Memory corruption, memory less than 0xc01000 [%s]\n", func);
             }
         }
     }
     
     if(free_end != prev) {
-        printk("!!! MEMORY CORRUPTION, End of free array not set correctly [%s] !!!\n", func);
         _print();
-        while(1) {};
+        panic("Memory corrutpion, End of free array not set correctly [%s]", func);
     }
 #endif
 }

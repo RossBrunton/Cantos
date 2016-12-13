@@ -5,6 +5,7 @@
 #include "mem/kmem.h"
 #include "main/printk.h"
 #include "main/multiboot.h"
+#include "main/panic.h"
 
 static page_t *free_start;
 static page_t *used_start;
@@ -77,8 +78,7 @@ page_t *page_alloc(int pid, uint8_t flags, int count) {
         current_map ++;
         for(; current_map->type != 1 && current_map < (mb_mem_table + sizeof(mb_mem_table)); current_map ++);
         if(current_map >= (mb_mem_table + sizeof(mb_mem_table))) {
-            kerror("Error: Ran out of physical memory!\n");
-            for(;;);
+            panic("Ran out of physical memory!");
         }
         allocation_pointer = current_map->base;
     }
@@ -104,8 +104,7 @@ void *page_kinstall(page_t *page, uint8_t page_flags) {
     void *first = NULL;
     for(i = 0; i < page->consecutive; i ++) {
         if((uint32_t)virtual_pointer >= TOTAL_VM_SIZE - PAGE_SIZE) {
-            kerror("Error: Ran out of kernel virtual address space!\n");
-            while(1) {}
+            panic("Ran out of kernel virtual address space!");
         }
         
         cursor->block = ((uint32_t)page->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT | PAGE_TABLE_USER;

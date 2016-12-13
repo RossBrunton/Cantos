@@ -15,7 +15,8 @@ OBJECTS=obj/main/boot.o\
 		obj/mem/page.o\
 		obj/mem/kmem.o\
 		obj/main/lomain.o\
-		obj/main/multiboot.o
+		obj/main/multiboot.o\
+		obj/main/panic.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

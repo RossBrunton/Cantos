@@ -11,7 +11,7 @@ uint8_t vga_entry_colour(vga_colour_t fg, vga_colour_t bg) {
 }
 
 uint16_t vga_add_colour(uint8_t uc, uint8_t color) {
-    return (uint16_t) uc | (uint16_t) color << 8;
+    return (uint16_t) uc | ((uint16_t) color << 8);
 }
 
 static size_t terminal_row;
@@ -38,7 +38,7 @@ void vga_put_at(uint16_t c, size_t x, size_t y) {
 }
 
 static void _maybe_wrap() {
-    if(terminal_row > VGA_HEIGHT) {
+    if(terminal_row >= VGA_HEIGHT) {
         for(uint16_t i = VGA_WIDTH; i < VGA_HEIGHT*VGA_WIDTH; i ++) {
             terminal_buffer[i - VGA_WIDTH] = terminal_buffer[i]; 
         }
