@@ -8,6 +8,7 @@
 #include "main/printk.h"
 #include "mem/page.h"
 #include "mem/kmem.h"
+#include "mem/gdt.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -34,6 +35,8 @@ void kernel_main() {
     // Clear the first 1MiB
     dir = kmem_map.vm_start;
     dir->entries[0].table = 0x0;
+    
+    gdt_init();
     
     vga_init();
     printk("Cantos\n");
