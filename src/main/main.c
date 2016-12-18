@@ -9,6 +9,8 @@
 #include "mem/page.h"
 #include "mem/kmem.h"
 #include "mem/gdt.h"
+#include "interrupts/idt.h"
+#include "interrupts/exceptions.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -37,6 +39,8 @@ void kernel_main() {
     dir->entries[0].table = 0x0;
     
     gdt_init();
+    idt_init();
+    except_init();
     
     vga_init();
     printk("Cantos\n");

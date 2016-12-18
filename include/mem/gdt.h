@@ -24,6 +24,8 @@ typedef struct gdt_table_entry_e {
 #define GDT_CODE_OFFSET 0x10
 #define GDT_DATA_OFFSET 0x08
 
+#define GDT_SELECTOR(rpl, ti, index) ((rpl) | ((ti) << 2) | ((index) << 3))
+
 void gdt_set_entry(gdt_table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access);
 void gdt_init();
 

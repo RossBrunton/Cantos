@@ -44,13 +44,15 @@ void gdt_init() {
     // Code
     gdt_set_entry((gdt_table_entry_t *)entry, 0, 0xfffff,
         GDT_FLAG_GRANULARITY | GDT_FLAG_SIZE,
-        GDT_ACCESS_PRESENT | GDT_ACCESS_PRIV(3) | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_DC | GDT_ACCESS_RW
+        GDT_ACCESS_PRESENT | GDT_ACCESS_PRIV(0) | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_DC | GDT_ACCESS_RW
     );
     
     descriptor.size = sizeof(gdt_table_entry_t) * _GDT_LENGTH;
     descriptor.offset = (uint32_t)table;
     
     __asm__ volatile ("lgdt (descriptor)");
+    __asm__ volatile goto ("ljmp $0x10, $%l0" :::: next);
+    next:
     __asm__ volatile ("mov $0x8, %ax");
     __asm__ volatile ("mov %ax, %ds");
     __asm__ volatile ("mov %ax, %es");

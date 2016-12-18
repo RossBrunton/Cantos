@@ -17,7 +17,10 @@ OBJECTS=obj/main/boot.o\
 		obj/main/lomain.o\
 		obj/main/multiboot.o\
 		obj/main/panic.o\
-		obj/mem/gdt.o
+		obj/mem/gdt.o\
+		obj/interrupts/idt.o\
+		obj/interrupts/wrapper.o\
+		obj/interrupts/exceptions.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -33,6 +36,7 @@ clean:
 dirs:
 	test -e obj/main || mkdir obj/main
 	test -e obj/mem || mkdir obj/mem
+	test -e obj/interrupts || mkdir obj/interrupts
 
 all: dirs all_objects
 
