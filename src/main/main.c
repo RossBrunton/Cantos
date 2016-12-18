@@ -11,6 +11,7 @@
 #include "mem/gdt.h"
 #include "interrupts/idt.h"
 #include "interrupts/exceptions.h"
+#include "io/pic.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -54,23 +55,14 @@ void kernel_main() {
     printk("Memory end: %x\n", kmem_map.memory_end);
     printk("MMap Entries:\n");
     
+    pic_init();
+    
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
         printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
             entry->base + entry->length, entry->type);
         entry ++;
     }
-    
-    for(int i = 1; i < 0x3000000000; i += 0x1000000) {
-        a = kmalloc(i);
-        ((char *)a)[i-1] = '!';
-        b = kmalloc(10);
-        kfree(a);
-        c = kmalloc(20);
-        kfree(b);
-        kfree(c);
-    }
-    printk("Mallocs! %p %p %p\n", a, b, c);
     
     while(1) {};
 }
