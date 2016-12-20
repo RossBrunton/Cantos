@@ -70,9 +70,10 @@ static void _vga_append(uint16_t c) {
     _maybe_wrap();
 }
 
-static int _vga_stream_write(void *buff, size_t len, uint32_t flags, void *data) {
+static int _vga_stream_write(void *buff, size_t len, uint32_t flags, void *data, stream_t *stream) {
     (void)data;
     (void)flags;
+    (void)stream;
     uint16_t *str = buff;
     for(size_t i = 0; i < len; i ++) {
         _vga_append(str[i]);
@@ -81,8 +82,9 @@ static int _vga_stream_write(void *buff, size_t len, uint32_t flags, void *data)
     return len;
 }
 
-static int _vga_string_stream_write(void *buff, size_t len, uint32_t flags, void *data) {
+static int _vga_string_stream_write(void *buff, size_t len, uint32_t flags, void *data, stream_t *stream) {
     (void)flags;
+    (void)stream;
     uint8_t *colour = data;
     uint8_t *str = buff;
     for(size_t i = 0; i < len; i ++) {

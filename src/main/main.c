@@ -12,6 +12,7 @@
 #include "interrupts/idt.h"
 #include "interrupts/exceptions.h"
 #include "io/pic.h"
+#include "io/serial.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -39,6 +40,7 @@ void kernel_main() {
     dir = kmem_map.vm_start;
     dir->entries[0].table = 0x0;
     
+    serial_init();
     gdt_init();
     idt_init();
     except_init();

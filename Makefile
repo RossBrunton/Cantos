@@ -2,7 +2,7 @@ CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
-DEBUGFLAGS=-DDEBUG_MEM
+DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
 CFLAGS=-g -std=c99 -ffreestanding -O2 -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS)
 AFLAGS=-g
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
@@ -22,7 +22,8 @@ OBJECTS=obj/main/boot.o\
 		obj/interrupts/wrapper.o\
 		obj/interrupts/exceptions.o\
 		obj/io/utils.o\
-		obj/io/pic.o
+		obj/io/pic.o\
+		obj/io/serial.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

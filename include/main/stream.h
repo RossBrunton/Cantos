@@ -5,10 +5,12 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-typedef int (*stream_write_t)(void *buff, size_t len, uint32_t flags, void *data);
-typedef int (*stream_read_t)(void *buff, size_t len, uint32_t flags, void *data);
-typedef int (*stream_peek_t)(void *buff, size_t len, uint32_t flags, void *data);
-typedef int (*stream_skip_t)(size_t len, uint32_t flags, void *data);
+typedef struct stream_s stream_t;
+
+typedef int (*stream_write_t)(void *buff, size_t len, uint32_t flags, void *data, stream_t *stream);
+typedef int (*stream_read_t)(void *buff, size_t len, uint32_t flags, void *data, stream_t *stream);
+typedef int (*stream_peek_t)(void *buff, size_t len, uint32_t flags, void *data, stream_t *stream);
+typedef int (*stream_skip_t)(size_t len, uint32_t flags, void *data, stream_t *stream);
 
 typedef struct stream_s {
     stream_write_t write;
@@ -16,6 +18,7 @@ typedef struct stream_s {
     stream_peek_t peek;
     stream_skip_t skip;
     int errno;
+    void *data;
 } stream_t;
 
 int stream_write(stream_t *stream, void *buff, size_t len, uint32_t flags, void *data);

@@ -11,7 +11,7 @@ int stream_write(stream_t *stream, void *buff, size_t len, uint32_t flags, void 
         return 0;
     }
     
-    return stream->write(buff, len, flags, data);
+    return stream->write(buff, len, flags, data, stream);
 }
 
 int stream_read(stream_t *stream, void *buff, size_t len, uint32_t flags, void *data) {
@@ -20,7 +20,7 @@ int stream_read(stream_t *stream, void *buff, size_t len, uint32_t flags, void *
         return 0;
     }
     
-    return stream->read(buff, len, flags, data);
+    return stream->read(buff, len, flags, data, stream);
 }
 
 int stream_peek(stream_t *stream, void *buff, size_t len, uint32_t flags, void *data) {
@@ -29,7 +29,7 @@ int stream_peek(stream_t *stream, void *buff, size_t len, uint32_t flags, void *
         return 0;
     }
     
-    return stream->peek(buff, len, flags, data);
+    return stream->peek(buff, len, flags, data, stream);
 }
 
 int stream_skip(stream_t *stream, size_t len, uint32_t flags, void *data) {
@@ -38,7 +38,7 @@ int stream_skip(stream_t *stream, size_t len, uint32_t flags, void *data) {
         return 0;
     }
     
-    return stream->skip(len, flags, data);
+    return stream->skip(len, flags, data, stream);
 }
 
 void stream_clear_error(stream_t *stream) {
