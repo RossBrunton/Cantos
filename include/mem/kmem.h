@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "mem/page.h"
+
 typedef struct kmem_header_s {
     int size;
 } kmem_header_t;
@@ -11,21 +13,21 @@ typedef struct kmem_header_s {
 // Start of the block of free memory, not after any headers
 // Points to the first free value
 typedef struct kmem_free_s kmem_free_t;
-typedef struct kmem_free_s {
+struct kmem_free_s {
     size_t size;
-    void *base;
+    addr_logical_t base;
     kmem_free_t *next;
-} kmem_free_t;
+};
 
 typedef struct kmem_map_s {
-    void *kernel_ro_start;
-    void *kernel_ro_end;
-    void *kernel_rw_start;
-    void *kernel_rw_end;
-    void *vm_start;
-    void *vm_end;
-    void *memory_start;
-    void *memory_end;
+    addr_logical_t kernel_ro_start;
+    addr_logical_t kernel_ro_end;
+    addr_logical_t kernel_rw_start;
+    addr_logical_t kernel_rw_end;
+    addr_logical_t vm_start;
+    addr_logical_t vm_end;
+    addr_logical_t memory_start;
+    addr_logical_t memory_end;
 } kmem_map_t;
 extern kmem_map_t kmem_map;
 

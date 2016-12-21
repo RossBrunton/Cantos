@@ -27,18 +27,10 @@ extern char _endofelf;
 void kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
-    page_dir_t *dir;
-    void *a;
-    void *b;
-    void *c;
     
     mb_copy_into_high();
     
     kmem_init();
-    
-    // Clear the first 1MiB
-    dir = kmem_map.vm_start;
-    dir->entries[0].table = 0x0;
     
     serial_init();
     gdt_init();

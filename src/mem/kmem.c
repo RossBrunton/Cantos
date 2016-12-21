@@ -84,14 +84,15 @@ void kmem_init() {
     kmem_header_t header;
     kmem_free_t free_block;
     ptrdiff_t end_pointer = 0;
-    void * mem_base;
+    addr_logical_t mem_base;
+    page_dir_t *dir;
     
     // Fill in kernel map
-    kmem_map.kernel_ro_start = &_startofro;
-    kmem_map.kernel_ro_end = &_endofro;
-    kmem_map.kernel_rw_start = &_endofro;
-    kmem_map.kernel_rw_end = &_endofrw;
-    kmem_map.vm_start = &_endofrw;
+    kmem_map.kernel_ro_start = (addr_logical_t)&_startofro;
+    kmem_map.kernel_ro_end = (addr_logical_t)&_endofro;
+    kmem_map.kernel_rw_start = (addr_logical_t)&_endofro;
+    kmem_map.kernel_rw_end = (addr_logical_t)&_endofrw;
+    kmem_map.vm_start = (addr_logical_t)&_endofrw;
     kmem_map.vm_end = kmem_map.vm_start;
     kmem_map.vm_end += sizeof(page_dir_entry_t) * PAGE_TABLE_LENGTH;
     kmem_map.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
@@ -102,33 +103,37 @@ void kmem_init() {
     
     // Create a page for memory
     initial = page_alloc(0, PAGE_FLAG_KERNEL, 1);
-    mem_base = page_kinstall(initial, PAGE_TABLE_RW);
+    mem_base = (addr_logical_t)page_kinstall(initial, PAGE_TABLE_RW);
     
     // Memory header for the page header
     header.size = sizeof(page_t);
-    _memcpy(mem_base, &header, sizeof(kmem_header_t));
+    _memcpy((void *)mem_base, &header, sizeof(kmem_header_t));
     end_pointer += sizeof(kmem_header_t);
     
     // And the struct
-    _memcpy(mem_base+end_pointer, initial, sizeof(page_t));
-    kernel_start = mem_base+end_pointer;
+    _memcpy((void *)(mem_base+end_pointer), initial, sizeof(page_t));
+    kernel_start = (page_t *)(mem_base + end_pointer);
     end_pointer += sizeof(page_t);
     
     // And now for the initial free block thing's header
     header.size = sizeof(kmem_free_t);
-    _memcpy(mem_base+end_pointer, &header, sizeof(kmem_header_t));
+    _memcpy((void *)(mem_base+end_pointer), &header, sizeof(kmem_header_t));
     end_pointer += sizeof(kmem_header_t);
     
     // And its value
     free_block.size = PAGE_SIZE - end_pointer - sizeof(kmem_free_t);
     free_block.base = mem_base + end_pointer + sizeof(kmem_free_t);
     free_block.next = NULL;
-    _memcpy(mem_base+end_pointer, &free_block, sizeof(kmem_free_t));
-    free_list = mem_base+end_pointer;
+    _memcpy((void *)(mem_base+end_pointer), &free_block, sizeof(kmem_free_t));
+    free_list = (kmem_free_t *)(mem_base+end_pointer);
     free_end = free_list;
     
     // Create the kernel memory table
     kmem_map.memory_end = free_list->base + free_list->size;
+    
+    // Clear the first 1MiB
+    dir = (page_dir_t *)kmem_map.vm_start;
+    dir->entries[0].table = 0x0;
     
     _verify(__func__);
 }
@@ -142,7 +147,7 @@ void *kmalloc(size_t size) {
     kmem_header_t *hdr = NULL;
     page_t *new_page;
     page_t *page_slot;
-    void *installed_loc;
+    addr_logical_t installed_loc;
     
     if(size == 0) return NULL;
     
@@ -156,7 +161,7 @@ void *kmalloc(size_t size) {
             // Do it!
             if(size_needed + sizeof(kmem_header_t) >= free->size) {
                 // Not a typo: If the remaining space is not enough to store any headers, just use up the whole block
-                void *base;
+                addr_logical_t base;
                 _verify("kmalloc@before whole block clear");
                 
                 // Update the free list
@@ -176,20 +181,20 @@ void *kmalloc(size_t size) {
                 free_free_structs = free;
                 
                 // And then do that malloc thing we were going to do
-                hdr = base;
+                hdr = (kmem_header_t *)base;
                 hdr->size = size;
                 _verify("kmalloc@whole block clear");
-                return base + sizeof(kmem_header_t);
+                return (void *)(base + sizeof(kmem_header_t));
             }else{
                 // Otherwise just shrink it
                 _verify("kmalloc@before shrink block");
-                void *base = free->base;
+                addr_logical_t base = free->base;
                 free->size -= size_needed;
                 free->base += size_needed;
-                hdr = base;
+                hdr = (kmem_header_t *)base;
                 hdr->size = size;
                 _verify("kmalloc@shrink block");
-                return base + sizeof(kmem_header_t);
+                return (void *)(base + sizeof(kmem_header_t));
             }
         }
     }
@@ -203,7 +208,7 @@ void *kmalloc(size_t size) {
     pages_needed += 2;
     
     new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
-    installed_loc = page_kinstall(new_page, PAGE_TABLE_RW);
+    installed_loc = (addr_logical_t)page_kinstall(new_page, PAGE_TABLE_RW);
     
     if(prev && prev->base + prev->size == installed_loc) {
         // Can just grow the last block because there is free at the end
@@ -212,11 +217,11 @@ void *kmalloc(size_t size) {
         // Well, looks like we have to use the start of the newly allocated block
         // Conveniently there is memory right up to the end of it.
         int space_allocated = new_page->consecutive * PAGE_SIZE - sizeof(kmem_header_t) - sizeof(kmem_free_t);
-        hdr = installed_loc;
+        hdr = (kmem_header_t *)installed_loc;
         hdr->size = sizeof(kmem_free_t);
         free = (kmem_free_t *)(hdr + 1);
         free->size = space_allocated;
-        free->base = free + 1;
+        free->base = (addr_logical_t)(free + 1);
         free_end->next = free;
         free_end = free;
     }
@@ -244,7 +249,7 @@ static kmem_free_t *_get_struct() {
 
 
 void kfree(void *ptr) {
-    kmem_header_t *hdr = ptr - sizeof(kmem_header_t);
+    kmem_header_t *hdr = (kmem_header_t *)ptr - 1;
     size_t full_size = hdr->size + sizeof(kmem_header_t);
     
     if(!ptr) {
@@ -257,7 +262,7 @@ void kfree(void *ptr) {
         // The list of free entries is empty, make a new one
         kmem_free_t *new_entry = _get_struct();
         new_entry->size = full_size;
-        new_entry->base = hdr;
+        new_entry->base = (addr_logical_t)hdr;
         new_entry->next = NULL;
         free_list = new_entry;
         free_end = new_entry;
@@ -265,11 +270,11 @@ void kfree(void *ptr) {
         // The list exists!
         kmem_free_t *now = free_list;
         kmem_free_t *prev = NULL;
-        for(; now && now->base < (void *)hdr; ((prev = now), (now = now->next)));
+        for(; now && now->base < (addr_logical_t)hdr; ((prev = now), (now = now->next)));
         kmem_free_t *new_entry = _get_struct();
         _verify("kfree@after get");
         new_entry->size = full_size;
-        new_entry->base = hdr;
+        new_entry->base = (addr_logical_t)hdr;
         new_entry->next = now;
         if(prev) {
             prev->next = new_entry;

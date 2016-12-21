@@ -7,14 +7,14 @@
 #include "main/multiboot.h"
 #include "main/panic.h"
 
-static page_t *free_start;
+//static page_t *free_start;
 static page_t *used_start;
 static page_t static_page;
 static int page_id_counter;
 static addr_phys_t allocation_pointer;
 static page_table_entry_t *cursor;
 static mm_entry_t *current_map;
-void *virtual_pointer;
+static addr_logical_t virtual_pointer;
 
 void page_init() {
     page_table_t *page_table;
@@ -28,11 +28,11 @@ void page_init() {
     
     // The cursor in the table to use
     // This is the logical address of the next unallocated space in the kernel address space
-    page_dir = kmem_map.vm_start;
+    page_dir = (page_dir_t *)kmem_map.vm_start;
     page_table = (page_table_t *)PAGE_TABLE_NOFLAGS(
-        page_dir->entries[(uint32_t)kmem_map.vm_end >> PAGE_DIR_SHIFT].table) + KERNEL_VM_BASE;
-    cursor = (page_table_entry_t *)((uint32_t)(
-            &(page_table->entries[(((uint32_t)kmem_map.vm_end >> PAGE_SHIFT) & 0x3ff)])) + KERNEL_VM_BASE);
+        page_dir->entries[kmem_map.vm_end >> PAGE_DIR_SHIFT].table) + KERNEL_VM_BASE;
+    cursor = (page_table_entry_t *)((addr_logical_t)(
+            &(page_table->entries[((kmem_map.vm_end >> PAGE_SHIFT) & 0x3ff)])) + (addr_logical_t)KERNEL_VM_BASE);
     virtual_pointer = kmem_map.vm_end;
 }
 
@@ -91,7 +91,8 @@ page_t *page_alloc(int pid, uint8_t flags, int count) {
 }
 
 int page_free(page_t *page) {
-    
+    (void)page;
+    return 0;
 }
 
 void page_used(page_t *page) {
@@ -101,13 +102,13 @@ void page_used(page_t *page) {
 
 void *page_kinstall(page_t *page, uint8_t page_flags) {
     uint32_t i;
-    void *first = NULL;
+    addr_logical_t first = 0;
     for(i = 0; i < page->consecutive; i ++) {
-        if((uint32_t)virtual_pointer >= TOTAL_VM_SIZE - PAGE_SIZE) {
+        if(virtual_pointer >= TOTAL_VM_SIZE - PAGE_SIZE) {
             panic("Ran out of kernel virtual address space!");
         }
         
-        cursor->block = ((uint32_t)page->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT | PAGE_TABLE_USER;
+        cursor->block = (page->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT | PAGE_TABLE_USER;
         if(!first) {
             first = virtual_pointer;
         }
@@ -119,5 +120,5 @@ void *page_kinstall(page_t *page, uint8_t page_flags) {
     
     kmem_map.memory_end = virtual_pointer;
     
-    return first;
+    return (void *)first;
 }

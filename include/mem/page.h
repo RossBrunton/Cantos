@@ -6,17 +6,18 @@
 
 #include "main/multiboot.h"
 
-typedef uint32_t addr_phys_t;
+typedef uintptr_t addr_phys_t;
+typedef uintptr_t addr_logical_t;
 
 typedef struct page_s page_t;
-typedef struct page_s {
+struct page_s {
     unsigned int page_id;
     addr_phys_t mem_base;
     uint8_t flags;
     unsigned int pid;
     unsigned int consecutive;
     page_t *next;
-} page_t;
+};
 
 #define PAGE_FLAG_ALLOCATED 0x01
 #define PAGE_FLAG_KERNEL 0x02
