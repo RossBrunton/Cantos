@@ -27,6 +27,7 @@ extern char _endofelf;
 void kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
+    page_vm_map_t *map;
     
     mb_copy_into_high();
     
@@ -57,6 +58,11 @@ void kernel_main() {
             entry->base + entry->length, entry->type);
         entry ++;
     }
+    
+    map = page_alloc_vm_map(0, true);
+    printk("New memory map at %p.\n", map);
+    page_vm_map_new_table(0x1000000, map, NULL, NULL);
+    page_vm_map_insert(0x1000000, map, page_alloc(0, 0, 1), 0);
     
     while(1) {};
 }
