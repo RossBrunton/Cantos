@@ -67,8 +67,8 @@ typedef struct page_dir_s {
 #define KERNEL_VM_BASE (TOTAL_VM_SIZE - KERNEL_VM_SIZE) // Higher half kernel
 
 void page_init();
-page_t *page_alloc(int pid, uint8_t flags, int count);
-page_t *page_create(int pid, uint32_t base, uint8_t flags, int count);
+page_t *page_alloc(int pid, uint8_t flags, unsigned int count);
+page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count);
 int page_free(page_t *page);
 void page_used(page_t *page);
 void *page_kinstall(page_t *page, uint8_t page_flags);

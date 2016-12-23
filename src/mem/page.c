@@ -36,7 +36,7 @@ void page_init() {
     virtual_pointer = kmem_map.vm_end;
 }
 
-page_t *page_create(int pid, uint32_t base, uint8_t flags, int count) {
+page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count) {
     page_t *write = &static_page;
     if(flags & PAGE_FLAG_AUTOKMALLOC) {
         write = kmalloc(sizeof(page_t));
@@ -53,7 +53,7 @@ page_t *page_create(int pid, uint32_t base, uint8_t flags, int count) {
     return write;
 }
 
-page_t *page_alloc(int pid, uint8_t flags, int count) {
+page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
     page_t *write = &static_page;
     unsigned int size = count * PAGE_SIZE;
     
@@ -69,7 +69,7 @@ page_t *page_alloc(int pid, uint8_t flags, int count) {
     write->flags = PAGE_FLAG_ALLOCATED | flags;
     write->pid = pid;
     write->consecutive = size / PAGE_SIZE;
-    allocation_pointer = static_page.mem_base + size;
+    allocation_pointer = write->mem_base + size;
     
     if((write->mem_base + size) == (current_map->base + current_map->length)) {
 #if DEBUG_MEM
@@ -80,12 +80,19 @@ page_t *page_alloc(int pid, uint8_t flags, int count) {
         if(current_map >= (mb_mem_table + sizeof(mb_mem_table))) {
             panic("Ran out of physical memory!");
         }
+        if(current_map->base > UINT32_MAX) {
+            panic("Ran out of addressable physical memory!");
+        }
         allocation_pointer = current_map->base;
     }
     
 #if DEBUG_MEM
     printk("Allocated %d pages.\n", count);
 #endif
+    
+    if((flags & PAGE_FLAG_AUTOKMALLOC) && write->consecutive < count) {
+        write->next = page_alloc(pid, flags, count - write->consecutive);
+    }
     
     return write;
 }
@@ -98,6 +105,9 @@ int page_free(page_t *page) {
 void page_used(page_t *page) {
     page->next = used_start;
     used_start = page;
+    if(page->next) {
+        page_used(page->next);
+    }
 }
 
 void *page_kinstall(page_t *page, uint8_t page_flags) {
@@ -119,6 +129,10 @@ void *page_kinstall(page_t *page, uint8_t page_flags) {
     }
     
     kmem_map.memory_end = virtual_pointer;
+    
+    if(page->next) {
+        page_kinstall(page->next, page_flags);
+    }
     
     return (void *)first;
 }
