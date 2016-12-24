@@ -66,6 +66,7 @@ typedef struct page_vm_map_s {
     page_dir_t *logical_dir;
     page_logical_tables_t *logical_tables;
     uint32_t pid;
+    uint32_t task_id;
 } page_vm_map_t;
 
 #define PAGE_TABLE_NOFLAGS(x) ((x) & ~PAGE_TABLE_FLAGMASK)
@@ -87,9 +88,13 @@ int page_free(page_t *page);
 void page_used(page_t *page);
 void *page_kinstall(page_t *page, uint8_t page_flags);
 
-page_vm_map_t *page_alloc_vm_map(int pid, bool kernel);
-bool page_vm_map_new_table(addr_logical_t addr, page_vm_map_t *map, page_t **page, page_table_t **table);
+page_vm_map_t *page_alloc_vm_map(uint32_t pid, uint32_t task_id, bool kernel);
+bool page_vm_map_new_table
+    (addr_logical_t addr, page_vm_map_t *map, page_t **page, page_table_t **table, uint8_t page_flags);
 void page_vm_map_insert(addr_logical_t addr, page_vm_map_t *map, page_t *page, uint8_t page_flags);
 void page_free_vm_map(page_vm_map_t *map);
+
+void page_table_switch(addr_phys_t table);
+void page_table_clear();
 
 #endif

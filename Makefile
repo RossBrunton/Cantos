@@ -23,7 +23,8 @@ OBJECTS=obj/main/boot.o\
 		obj/interrupts/exceptions.o\
 		obj/io/utils.o\
 		obj/io/pic.o\
-		obj/io/serial.o
+		obj/io/serial.o\
+		obj/task/task.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -41,6 +42,7 @@ dirs:
 	test -e obj/mem || mkdir obj/mem
 	test -e obj/interrupts || mkdir obj/interrupts
 	test -e obj/io || mkdir obj/io
+	test -e obj/task || mkdir obj/task
 
 all: dirs all_objects
 

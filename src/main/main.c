@@ -13,6 +13,7 @@
 #include "interrupts/exceptions.h"
 #include "io/pic.h"
 #include "io/serial.h"
+#include "task/task.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -24,10 +25,15 @@
 
 extern char _endofelf;
 
+task_thread_t *thread;
+
+void myfunc() {
+    printk("Hello world!\n");
+}
+
 void kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
-    page_vm_map_t *map;
     
     mb_copy_into_high();
     
@@ -52,6 +58,8 @@ void kernel_main() {
     
     pic_init();
     
+    task_init();
+    
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
         printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
@@ -59,10 +67,7 @@ void kernel_main() {
         entry ++;
     }
     
-    map = page_alloc_vm_map(0, true);
-    printk("New memory map at %p.\n", map);
-    page_vm_map_new_table(0x1000000, map, NULL, NULL);
-    page_vm_map_insert(0x1000000, map, page_alloc(0, 0, 1), 0);
+    thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
     
     while(1) {};
 }
