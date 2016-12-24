@@ -73,6 +73,7 @@ page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
     write->flags = PAGE_FLAG_ALLOCATED | flags;
     write->pid = pid;
     write->consecutive = size / PAGE_SIZE;
+    write->next = NULL;
     allocation_pointer = write->mem_base + size;
     
     if((write->mem_base + size) == (current_map->base + current_map->length)) {
@@ -109,10 +110,11 @@ int page_free(page_t *page) {
 
 
 void page_used(page_t *page) {
+    page_t *old_next = page->next;
     page->next = used_start;
     used_start = page;
-    if(page->next) {
-        page_used(page->next);
+    if(old_next) {
+        page_used(old_next);
     }
 }
 
