@@ -29,6 +29,7 @@ task_thread_t *thread;
 
 void myfunc() {
     printk("Hello world!\n");
+    while(1){}
 }
 
 void kernel_main() {
@@ -68,6 +69,7 @@ void kernel_main() {
     }
     
     thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
+    task_enter(thread);
     
     while(1) {};
 }

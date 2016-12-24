@@ -5,6 +5,7 @@
 #include "mem/kmem.h"
 #include "interrupts/idt.h"
 #include "mem/gdt.h"
+#include "task/asm.h"
 
 task_process_t kernel_process;
 
@@ -62,15 +63,23 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     // [pushad values]
     // entry eip
     sp = (uint32_t *)(TASK_STACK_TOP - sizeof(void *));
-    pstate.esp = sp - (sizeof(pstate) / 4);
-    _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate)); 
-    sp -= (sizeof(pstate) / 4);
     *sp = entry;
     sp --;
+    *sp = task_asm_entry_point;
+    sp -= (sizeof(pstate) / 4);
+    _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
     
-    thread->stack_pointer = (addr_logical_t)sp;
+    thread->stack_pointer = sp;
     
     page_table_clear();
     
     return thread;
+}
+
+void task_enter(task_thread_t *thread) {
+    // Load the task's memory map
+    page_table_switch(thread->vm->physical_dir->mem_base);
+    
+    // And then hop into it
+    task_asm_enter(thread->stack_pointer);
 }

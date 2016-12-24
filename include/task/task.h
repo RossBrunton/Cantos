@@ -32,8 +32,6 @@ struct task_thread_s {
     page_t *stack_page;
     addr_logical_t stack_pointer;
     
-    addr_logical_t instruction_pointer;
-    
     task_thread_t *next;
 };
 
@@ -43,5 +41,6 @@ extern task_process_t kernel_process;
 void task_init();
 task_process_t *task_proc_create(uint32_t owner, uint32_t group);
 task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry);
+void task_enter(task_thread_t *thread);
 
 #endif

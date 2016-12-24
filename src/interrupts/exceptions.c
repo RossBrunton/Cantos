@@ -59,7 +59,9 @@ void except_gpf(idt_proc_state_t state, uint32_t errcode) {
 
 void except_page_fault(idt_proc_state_t state, uint32_t errcode) {
     (void)state;
-    panic("Page Fault %x", errcode);
+    uint32_t addr;
+    __asm__("mov %%cr2, %0" : "=r"(addr));
+    panic("Page Fault %x [Address: %p]", errcode, addr);
 }
 
 void except_floating_point(idt_proc_state_t state) {
