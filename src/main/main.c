@@ -14,6 +14,7 @@
 #include "io/pic.h"
 #include "io/serial.h"
 #include "task/task.h"
+#include "main/cpu.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -26,9 +27,24 @@
 extern char _endofelf;
 
 task_thread_t *thread;
+task_thread_t *thread2;
 
 void myfunc() {
+    int i = 0;
     printk("Hello world!\n");
+    while(1) {
+        task_yield();
+        printk("Yield success [%d]!\n", i++);
+    }
+    while(1){}
+}
+
+void myfunc2() {
+    int i = 0;
+    while(1) {
+        task_yield();
+        printk("Yield success 2 [%d]!\n", i++);
+    }
     while(1){}
 }
 
@@ -59,6 +75,7 @@ void kernel_main() {
     
     pic_init();
     
+    cpu_init();
     task_init();
     
     entry = &(mb_mem_table[0]);
@@ -69,6 +86,7 @@ void kernel_main() {
     }
     
     thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
+    thread2 = task_thread_create(&kernel_process, (addr_logical_t)&myfunc2);
     task_enter(thread);
     
     while(1) {};

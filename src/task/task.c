@@ -6,12 +6,15 @@
 #include "interrupts/idt.h"
 #include "mem/gdt.h"
 #include "task/asm.h"
+#include "main/cpu.h"
 
 task_process_t kernel_process;
 
 static uint32_t thread_counter;
 static uint32_t process_counter;
 static uint32_t task_counter;
+
+int i;
 
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
@@ -65,11 +68,11 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     sp = (uint32_t *)(TASK_STACK_TOP - sizeof(void *));
     *sp = entry;
     sp --;
-    *sp = task_asm_entry_point;
+    *sp = (addr_logical_t)task_asm_entry_point;
     sp -= (sizeof(pstate) / 4);
     _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
     
-    thread->stack_pointer = sp;
+    thread->stack_pointer = (addr_logical_t)sp;
     
     page_table_clear();
     
@@ -77,9 +80,42 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
 }
 
 void task_enter(task_thread_t *thread) {
+    cpu_status_t *info;
+    
+    info = cpu_info();
+    info->thread = thread;
+    
     // Load the task's memory map
     page_table_switch(thread->vm->physical_dir->mem_base);
     
     // And then hop into it
     task_asm_enter(thread->stack_pointer);
+}
+
+void task_yield() {
+    cpu_status_t *info;
+    info = cpu_info();
+    
+    // Call the exit function to move over the stack, will call task_yield_done
+    task_asm_yield((uint32_t)info->stack + PAGE_SIZE - 4);
+}
+
+void task_yield_done(uint32_t sp) {
+    cpu_status_t *info;
+    info = cpu_info();
+    
+    info->thread->stack_pointer = sp;
+    info->thread = NULL;
+    
+    // And then use the "normal" memory map
+    page_table_clear();
+    
+    extern task_thread_t *thread, *thread2;
+    if(i ++ % 2) {
+        task_enter(thread);
+    }else{
+        task_enter(thread2);
+    }
+    
+    while(1) {}
 }

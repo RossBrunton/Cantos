@@ -25,7 +25,8 @@ OBJECTS=obj/main/boot.o\
 		obj/io/pic.o\
 		obj/io/serial.o\
 		obj/task/task.o\
-		obj/task/asm.o
+		obj/task/asm.o\
+		obj/main/cpu.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
