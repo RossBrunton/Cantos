@@ -26,9 +26,6 @@
 
 extern char _endofelf;
 
-task_thread_t *thread;
-task_thread_t *thread2;
-
 void myfunc() {
     int i = 0;
     printk("Hello world!\n");
@@ -51,6 +48,9 @@ void myfunc2() {
 void kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
+    
+    task_thread_t *thread;
+    task_thread_t *thread2;
     
     mb_copy_into_high();
     
@@ -88,6 +88,4 @@ void kernel_main() {
     thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
     thread2 = task_thread_create(&kernel_process, (addr_logical_t)&myfunc2);
     task_enter(thread);
-    
-    while(1) {};
 }

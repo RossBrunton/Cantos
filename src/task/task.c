@@ -14,8 +14,7 @@ static uint32_t thread_counter;
 static uint32_t process_counter;
 static uint32_t task_counter;
 
-int i;
-
+static task_thread_t *tasks;
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
@@ -31,6 +30,14 @@ void task_init() {
     // All other fields 0 by default
 }
 
+static task_thread_t *_next_task(task_thread_t *task) {
+    if(task->next_in_tasks) {
+        return task->next_in_tasks;
+    }else{
+        return tasks;
+    }
+}
+
 
 task_process_t *task_process_create(uint32_t owner, uint32_t group);
 
@@ -42,7 +49,7 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     idt_proc_state_t pstate = {0};
     
     thread = kmalloc(sizeof(task_thread_t));
-    thread->next = process->thread;
+    thread->next_in_process = process->thread;
     process->thread = thread;
     thread->process = process;
     thread->thread_id = ++process->thread_counter;
@@ -76,6 +83,9 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     
     page_table_clear();
     
+    thread->next_in_tasks = tasks;
+    tasks = thread;
+    
     return thread;
 }
 
@@ -102,20 +112,18 @@ void task_yield() {
 
 void task_yield_done(uint32_t sp) {
     cpu_status_t *info;
+    task_thread_t *current;
+    task_thread_t *next;
     info = cpu_info();
     
     info->thread->stack_pointer = sp;
+    current = info->thread;
     info->thread = NULL;
     
     // And then use the "normal" memory map
     page_table_clear();
     
-    extern task_thread_t *thread, *thread2;
-    if(i ++ % 2) {
-        task_enter(thread);
-    }else{
-        task_enter(thread2);
-    }
+    next = _next_task(current);
     
-    while(1) {}
+    task_enter(next);
 }

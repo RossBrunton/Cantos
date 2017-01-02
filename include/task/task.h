@@ -32,7 +32,8 @@ struct task_thread_s {
     page_t *stack_page;
     addr_logical_t stack_pointer;
     
-    task_thread_t *next;
+    task_thread_t *next_in_process;
+    task_thread_t *next_in_tasks;
 };
 
 
