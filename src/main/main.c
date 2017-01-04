@@ -78,6 +78,13 @@ void kernel_main() {
     cpu_init();
     task_init();
     
+    while(1) {
+        page_t *page = page_alloc(0, 0, 100);
+        page_free(page);
+    }
+    
+    while(1);
+    
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
         printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,

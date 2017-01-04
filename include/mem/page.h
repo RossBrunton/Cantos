@@ -22,7 +22,6 @@ struct page_s {
 
 #define PAGE_FLAG_ALLOCATED 0x01
 #define PAGE_FLAG_KERNEL 0x02
-#define PAGE_FLAG_AUTOKMALLOC 0x4
 
 #define PAGE_FREE_MASK 0xfff
 
@@ -82,9 +81,10 @@ typedef struct page_vm_map_s {
 #define PAGE_TABLE_GLOBAL 0x100
 
 void page_init();
+page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count);
 page_t *page_alloc(int pid, uint8_t flags, unsigned int count);
 page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count);
-int page_free(page_t *page);
+void page_free(page_t *page);
 void page_used(page_t *page);
 void *page_kinstall(page_t *page, uint8_t page_flags);
 

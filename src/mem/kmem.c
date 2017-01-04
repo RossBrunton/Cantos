@@ -24,7 +24,7 @@ void _print() {
     printk("\n");
 }
 
-void _verify(const char *func) {
+static void _verify(const char *func) {
     (void)func;
 #if DEBUG_MEM
     kmem_free_t *now;
@@ -102,7 +102,7 @@ void kmem_init() {
     page_init();
     
     // Create a page for memory
-    initial = page_alloc(0, PAGE_FLAG_KERNEL, 1);
+    initial = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, 1);
     mem_base = (addr_logical_t)page_kinstall(initial, PAGE_TABLE_RW);
     
     // Memory header for the page header
@@ -207,7 +207,7 @@ void *kmalloc(size_t size) {
     }
     pages_needed += 2;
     
-    new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
+    new_page = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, pages_needed);
     installed_loc = (addr_logical_t)page_kinstall(new_page, PAGE_TABLE_RW);
     
     if(prev && prev->base + prev->size == installed_loc) {
@@ -222,7 +222,12 @@ void *kmalloc(size_t size) {
         free = (kmem_free_t *)(hdr + 1);
         free->size = space_allocated;
         free->base = (addr_logical_t)(free + 1);
-        free_end->next = free;
+        if(free_end) {
+            free_end->next = free;
+            free_end = free;
+        }else{
+            free_list = free;
+        }
         free_end = free;
     }
     

@@ -23,7 +23,7 @@ void vga_init() {
     terminal_column = 0;
     page_t *page;
     
-    page = page_create(0, 0xB8000, PAGE_FLAG_AUTOKMALLOC | PAGE_FLAG_KERNEL, (128 * 1024) / PAGE_SIZE);
+    page = page_create(0, 0xB8000, PAGE_FLAG_KERNEL, (128 * 1024) / PAGE_SIZE);
     terminal_buffer = page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
     
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
