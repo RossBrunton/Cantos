@@ -79,7 +79,10 @@ void kernel_main() {
     task_init();
     
     while(1) {
-        page_t *page = page_alloc(0, 0, 100);
+        page_t *page = page_alloc(0, 0, 1);
+        void *loc = page_kinstall(page, 0);
+        //loc = page_kinstall(page, 0);
+        page_kuninstall(loc, page);
         page_free(page);
     }
     

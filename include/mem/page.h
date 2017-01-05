@@ -87,6 +87,9 @@ page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count);
 void page_free(page_t *page);
 void page_used(page_t *page);
 void *page_kinstall(page_t *page, uint8_t page_flags);
+void *page_kinstall_append(page_t *page, uint8_t page_flags); // Doesn't kmalloc, but doesn't reuse any existing memory
+// either
+void page_kuninstall(void *base, page_t *page);
 
 page_vm_map_t *page_alloc_vm_map(uint32_t pid, uint32_t task_id, bool kernel);
 bool page_vm_map_new_table

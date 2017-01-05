@@ -103,7 +103,7 @@ void kmem_init() {
     
     // Create a page for memory
     initial = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, 1);
-    mem_base = (addr_logical_t)page_kinstall(initial, PAGE_TABLE_RW);
+    mem_base = (addr_logical_t)page_kinstall_append(initial, PAGE_TABLE_RW);
     
     // Memory header for the page header
     header.size = sizeof(page_t);
@@ -208,7 +208,7 @@ void *kmalloc(size_t size) {
     pages_needed += 2;
     
     new_page = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, pages_needed);
-    installed_loc = (addr_logical_t)page_kinstall(new_page, PAGE_TABLE_RW);
+    installed_loc = (addr_logical_t)page_kinstall_append(new_page, PAGE_TABLE_RW);
     
     if(prev && prev->base + prev->size == installed_loc) {
         // Can just grow the last block because there is free at the end

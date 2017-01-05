@@ -18,6 +18,14 @@ static addr_logical_t virtual_pointer;
 static page_dir_t *page_dir;
 static page_t *page_free_head;
 
+typedef struct _empty_virtual_slot_s _empty_virtual_slot_t;
+struct _empty_virtual_slot_s {
+    addr_logical_t base;
+    unsigned int pages;
+    _empty_virtual_slot_t *next;
+};
+static _empty_virtual_slot_t *empty_slot;
+
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
     for(i = 0; i < num; i ++) {
@@ -51,6 +59,17 @@ static void _merge_free(page_t *first) {
     if(first->next && first->mem_base + (first->consecutive * PAGE_SIZE) == first->next->mem_base) {
         page_t *hold = first->next;
         first->consecutive += hold->consecutive;
+        first->next = hold->next;
+        kfree(hold);
+        _verify(__func__);
+    }
+}
+
+
+static void _merge_free_slots(_empty_virtual_slot_t *first) {
+    if(first->next && first->base + (first->pages * PAGE_SIZE) == first->next->base) {
+        _empty_virtual_slot_t *hold = first->next;
+        first->pages += hold->pages;
         first->next = hold->next;
         kfree(hold);
         _verify(__func__);
@@ -203,7 +222,7 @@ void page_used(page_t *page) {
 }
 
 
-void *page_kinstall(page_t *page, uint8_t page_flags) {
+void *page_kinstall_append(page_t *page, uint8_t page_flags) {
     uint32_t i;
     addr_logical_t first = 0;
     addr_phys_t base = 0;
@@ -226,14 +245,109 @@ void *page_kinstall(page_t *page, uint8_t page_flags) {
     kmem_map.memory_end = virtual_pointer;
     
     if(page->next) {
-        page_kinstall(page->next, page_flags);
+        page_kinstall_append(page->next, page_flags);
     }
     
 #if DEBUG_MEM
-    printk("KInstalled %d pages at %p onto %p.\n", page->consecutive, base, first);
+    printk("KInstalled %d new pages at %p onto %p.\n", page->consecutive, base, first);
 #endif
     
     return (void *)first;
+}
+
+
+void *page_kinstall(page_t *page, uint8_t page_flags) {
+    page_t *current = page;
+    _empty_virtual_slot_t *slot = empty_slot;
+    _empty_virtual_slot_t *prev_slot = NULL;
+    unsigned int total_pages = 0;
+    addr_logical_t base = 0;
+    uint32_t page_offset;
+    page_table_entry_t *table_entry;
+    unsigned int i;
+    
+    // Count the total number of pages we need
+    for(; current; current = current->next) total_pages += current->consecutive;
+    
+    // And search for an empty hole in virtual memory for it
+    for(; slot && (slot->pages < total_pages); (prev_slot = slot), (slot = slot->next));
+    
+    if(slot) {
+        if(slot->pages == total_pages) {
+            if(prev_slot) {
+                prev_slot->next = slot->next;
+            }else{
+                empty_slot = slot->next;
+            }
+            base = slot->base;
+            kfree(slot);
+        }else{
+            base = slot->base;
+            slot->pages -= total_pages;
+            slot->base += total_pages * PAGE_SIZE;
+        }
+        
+        if(base) {
+            page_offset = (base - KERNEL_VM_BASE) / PAGE_SIZE;
+            table_entry = (page_table_entry_t *)(page_dir + 1) + page_offset;
+            
+            for(current = page; current; current = current->next) {
+                for(i = 0; i < page->consecutive; i ++) {
+                    table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT;
+                    table_entry ++;
+                }
+            }
+            
+            return (void *)base;
+        }
+    }
+    
+    // No free spaces could be found
+    return page_kinstall_append(page, page_flags);
+}
+
+
+void page_kuninstall(void *base, page_t *page) {
+    _empty_virtual_slot_t *now;
+    _empty_virtual_slot_t *prev = NULL;
+    _empty_virtual_slot_t *new;
+    uint32_t page_offset;
+    page_table_entry_t *table_entry;
+    unsigned int i;
+    
+    if(!page) {
+        return;
+    }
+    
+    for(now = empty_slot; now && now->base < (addr_logical_t)base; ((prev = now), (now = now->next)));
+    
+    new = kmalloc(sizeof(_empty_virtual_slot_t));
+    new->base = (addr_logical_t)base;
+    new->pages = page->consecutive;
+    
+    if(prev) {
+        prev->next = new;
+    }else{
+        empty_slot = new;
+    }
+    new->next = now;
+    
+    // Remove the mappings in the page table
+    page_offset = ((addr_logical_t)base - KERNEL_VM_BASE) / PAGE_SIZE;
+    table_entry = (page_table_entry_t *)(page_dir + 1) + page_offset;
+    
+    for(i = 0; i < page->consecutive; i ++) {
+        table_entry->block = 0;
+        table_entry ++;
+    }
+    
+    // Try to flatten the free entries
+    if(prev) _merge_free_slots(prev);
+    _merge_free_slots(new);
+    
+    if(page->next) {
+        page_kuninstall((void *)(((addr_logical_t)base) + (page->consecutive * PAGE_SIZE)), page->next);
+    }
 }
 
 
