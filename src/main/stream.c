@@ -5,6 +5,12 @@
 #include "main/stream.h"
 #include "main/errno.h"
 
+/** @todo There are race conditions in the errno thing. Obviously, it can't work as described because what if an
+ * Interrupt does stream IO, what would the errno be?
+ *
+ * @todo stream_writef Doesn't handle errors in the stream, or writing less than it expected to.
+ */
+
 int stream_write(stream_t *stream, void *buff, size_t len, uint32_t flags, void *data) {
     if(!stream->write) {
         stream->errno = EPERM;

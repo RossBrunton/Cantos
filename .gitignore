@@ -1,4 +1,5 @@
 /obj/**
 /bin/**
+/doc/**
 /isodir/**
 cantos.iso

@@ -9,8 +9,21 @@ extern char _startofro;
 extern char _endofro;
 extern char _endofrw;
 
+/** Low memory slot for the memory table.
+ *
+ * Just a fixed length array, it's not scattered across entire memory. Since stuff is copied in here, it won't be
+ *  accidently erased like the "real" mbi memory tables would be.
+ */
 mm_entry_t low_mb_mem_table[LOCAL_MM_COUNT];
+/** Low memory slot for the command line.
+ *
+ * Will always be null terminated.
+ */
 char low_mb_cmdline[LOCAL_CMDLINE_LENGTH];
+/** Low memory slot for the bootloader name.
+ *
+ * Will always be null terminated
+ */
 char low_mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
@@ -32,8 +45,31 @@ static char *_strncpy(char *destination, const char *source, size_t n) {
     return destination;
 }
 
-volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi, unsigned int magic) {
-    (void)magic;
+/** Copies values into the various low memory structures, and sets up and returns a page table for the kernel.
+ *
+ * Only the first @ref LOCAL_MM_COUNT mbi memory map entries will be copied, the first @ref LOCAL_CMDLINE_LENGTH bytes
+ *  of the command line and the first @LOCAL_BOOT_LOADER_NAME_LENGTH bytes of the boot loader name will be copied,
+ *  anything left is discarded.
+ *
+ * The kernel memory map is filled in using the addresses of symbols defined in the linker script (`linker.ld`).
+ *
+ * The page directory will be set up using a reserved region located at `map.vm_start` to `map.vm_end`. This is the page
+ *  directory followed by @ref KERNEL_VM_PAGE_TABLES page tables. The directory will be set up so that the page tables
+ *  located after it are used to map the last @ref KERNEL_VM_SIZE pages in memory. The entire range will be marked
+ *  as present in the page directory.
+ *
+ * Pages will be marked as follows:
+ * * Readonly (.text, .rodata) sections of the kernel will be marked as present.
+ * * Read/write (.data, .bss) sections will be marked as present and read/write.
+ * * The page directory and page tables will be marked as present and read/write.
+ * * All other pages are marked as not present.
+ *
+ * In addition, the first entry in the page direcotry will be marked as a present, readwrite, 4MiB page.
+ *
+ * @param mbi The multiboot header, from the bootloader
+ * @return The kernel page table located at @ref kmem_map.vm_start
+ */
+volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi) {
     addr_logical_t low_ro_start = (addr_logical_t)&_startofro - KERNEL_VM_BASE;
     addr_logical_t low_ro_end = (addr_logical_t)&_endofro - KERNEL_VM_BASE;
     addr_logical_t low_rw_end = (addr_logical_t)&_endofrw - KERNEL_VM_BASE;
