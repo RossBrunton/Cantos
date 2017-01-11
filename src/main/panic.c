@@ -1,6 +1,6 @@
 #include <stdarg.h>
 
-#include "main/stream.h"
+#include "structures/stream.h"
 #include "main/panic.h"
 #include "main/vga.h"
 

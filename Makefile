@@ -9,7 +9,7 @@ LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-lib
 
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
-		obj/main/stream.o\
+		obj/structures/stream.o\
 		obj/main/vga.o\
 		obj/main/printk.o\
 		obj/mem/page.o\
@@ -45,6 +45,7 @@ dirs:
 	test -e obj/interrupts || mkdir obj/interrupts
 	test -e obj/io || mkdir obj/io
 	test -e obj/task || mkdir obj/task
+	test -e obj/structures || mkdir obj/structures
 
 all: dirs all_objects
 

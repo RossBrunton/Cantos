@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "main/stream.h"
+#include "structures/stream.h"
 #include "main/vga.h"
 #include "mem/page.h"
 

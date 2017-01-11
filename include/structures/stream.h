@@ -1,7 +1,7 @@
 #ifndef _H_MAIN_STREAM_
 #define _H_MAIN_STREAM_
 
-/** @file main/stream.h
+/** @file structures/stream.h
  *
  * A "stream" is an abstraction that allows different parts of the kernel to communicate with each other.
  *
@@ -40,7 +40,7 @@
 /** A single stream
  *
  * Provides the handler functions, as well as an error number and additonal data. See the documentation at
- *  @ref main/stream.h for more information on streams.
+ *  @ref structures/stream.h for more information on streams.
  */
 typedef struct stream_s stream_t;
 

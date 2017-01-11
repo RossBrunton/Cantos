@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "main/stream.h"
+#include "structures/stream.h"
 
 /* Hardware text mode color constants. */
 typedef enum vga_colour_e {

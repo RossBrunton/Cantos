@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include "main/stream.h"
+#include "structures/stream.h"
 #include "main/errno.h"
 
 /** @todo There are race conditions in the errno thing. Obviously, it can't work as described because what if an

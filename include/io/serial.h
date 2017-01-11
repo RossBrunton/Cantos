@@ -1,7 +1,7 @@
 #ifndef _H_IO_SERIAL_
 #define _H_IO_SERIAL_
 
-#include "main/stream.h"
+#include "structures/stream.h"
 
 typedef struct serial_port_s {
     uint16_t io_port; // Set to 0 if absent
