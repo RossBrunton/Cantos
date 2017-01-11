@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "mem/page.h"
+#include "mem/vm.h"
 
 #define TASK_STACK_TOP KERNEL_VM_BASE
 
@@ -25,7 +26,7 @@ struct task_thread_s {
     uint32_t thread_id;
     uint32_t task_id;
     
-    page_vm_map_t *vm;
+    vm_map_t *vm;
     
     addr_logical_t stack_top;
     addr_logical_t stack_bottom;

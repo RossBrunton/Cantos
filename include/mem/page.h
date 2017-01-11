@@ -60,14 +60,6 @@ typedef struct page_logical_tables_s {
     page_table_t *tables[PAGE_TABLE_LENGTH - (KERNEL_VM_PAGE_TABLES)];
 } page_logical_tables_t;
 
-typedef struct page_vm_map_s {
-    page_t *physical_dir;
-    page_dir_t *logical_dir;
-    page_logical_tables_t *logical_tables;
-    uint32_t pid;
-    uint32_t task_id;
-} page_vm_map_t;
-
 #define PAGE_TABLE_NOFLAGS(x) ((x) & ~PAGE_TABLE_FLAGMASK)
 #define PAGE_TABLE_FLAGMASK 0xfff
 #define PAGE_TABLE_PRESENT 0x01
@@ -80,6 +72,8 @@ typedef struct page_vm_map_s {
 #define PAGE_TABLE_SIZE 0x80
 #define PAGE_TABLE_GLOBAL 0x100
 
+extern page_dir_t *page_dir;
+
 void page_init();
 page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count);
 page_t *page_alloc(int pid, uint8_t flags, unsigned int count);
@@ -90,14 +84,5 @@ void *page_kinstall(page_t *page, uint8_t page_flags);
 void *page_kinstall_append(page_t *page, uint8_t page_flags); // Doesn't kmalloc, but doesn't reuse any existing memory
 // either
 void page_kuninstall(void *base, page_t *page);
-
-page_vm_map_t *page_alloc_vm_map(uint32_t pid, uint32_t task_id, bool kernel);
-bool page_vm_map_new_table
-    (addr_logical_t addr, page_vm_map_t *map, page_t **page, page_table_t **table, uint8_t page_flags);
-void page_vm_map_insert(addr_logical_t addr, page_vm_map_t *map, page_t *page, uint8_t page_flags);
-void page_free_vm_map(page_vm_map_t *map);
-
-void page_table_switch(addr_phys_t table);
-void page_table_clear();
 
 #endif

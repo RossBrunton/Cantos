@@ -56,18 +56,18 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     thread->task_id = ++task_counter;
     
     // Create the virtual memory map
-    thread->vm = page_alloc_vm_map(process->process_id, thread->task_id, kernel);
+    thread->vm = vm_map_alloc(process->process_id, thread->task_id, kernel);
     
     // Temporarily use the vm to set up values
-    page_table_switch(thread->vm->physical_dir->mem_base);
+    vm_table_switch(thread->vm->physical_dir->mem_base);
     
     // Create the stack
     thread->stack_top = TASK_STACK_TOP;
     thread->stack_bottom = TASK_STACK_TOP - PAGE_SIZE;
     thread->stack_page = page_alloc(process->process_id, 0, 1);
     
-    page_vm_map_new_table(TASK_STACK_TOP - PAGE_SIZE, thread->vm, NULL, NULL, PAGE_TABLE_RW);
-    page_vm_map_insert(TASK_STACK_TOP - PAGE_SIZE, thread->vm, thread->stack_page, PAGE_TABLE_RW);
+    vm_map_new_table(TASK_STACK_TOP - PAGE_SIZE, thread->vm, NULL, NULL, PAGE_TABLE_RW);
+    vm_map_insert(TASK_STACK_TOP - PAGE_SIZE, thread->vm, thread->stack_page, PAGE_TABLE_RW);
     
     // Initial stack format:
     // [pushad values]
@@ -81,7 +81,7 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     
     thread->stack_pointer = (addr_logical_t)sp;
     
-    page_table_clear();
+    vm_table_clear();
     
     thread->next_in_tasks = tasks;
     tasks = thread;
@@ -96,7 +96,7 @@ void task_enter(task_thread_t *thread) {
     info->thread = thread;
     
     // Load the task's memory map
-    page_table_switch(thread->vm->physical_dir->mem_base);
+    vm_table_switch(thread->vm->physical_dir->mem_base);
     
     // And then hop into it
     task_asm_enter(thread->stack_pointer);
@@ -121,7 +121,7 @@ void task_yield_done(uint32_t sp) {
     info->thread = NULL;
     
     // And then use the "normal" memory map
-    page_table_clear();
+    vm_table_clear();
     
     next = _next_task(current);
     
