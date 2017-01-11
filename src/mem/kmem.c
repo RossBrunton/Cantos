@@ -222,6 +222,7 @@ void *kmalloc(size_t size) {
         free = (kmem_free_t *)(hdr + 1);
         free->size = space_allocated;
         free->base = (addr_logical_t)(free + 1);
+        free->next = NULL;
         if(free_end) {
             free_end->next = free;
             free_end = free;

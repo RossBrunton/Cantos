@@ -15,7 +15,7 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     
     map = kmalloc(sizeof(vm_map_t));
     map->physical_dir = page_alloc(pid, kernel_flag, 1);
-    map->logical_dir = page_kinstall(map->physical_dir, 0);
+    map->logical_dir = page_kinstall(map->physical_dir, PAGE_TABLE_RW);
     map->logical_tables = kmalloc(sizeof(page_logical_tables_t));
     
     map->pid = pid;
@@ -24,7 +24,7 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     // Load the kernel tables into it
     for(i = 0; i < PAGE_TABLE_LENGTH; i ++) {
         if(i >= PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES) {
-            map->logical_dir->entries[i] = page_dir->entries[i];
+            map->logical_dir->entries[i].table = page_dir->entries[i].table;
         }else{
             map->logical_dir->entries[i].table = 0;
         }
@@ -32,50 +32,52 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     
     // And zero the logical tables
     for(i = 0; i < (sizeof(map->logical_tables->tables) / sizeof(map->logical_tables->tables[0])); i ++) {
-        map->logical_tables->tables[0] = NULL;
-        map->logical_tables->pages[0] = NULL;
+        map->logical_tables->tables[i] = NULL;
+        map->logical_tables->pages[i] = NULL;
     }
     
     return map;
 }
 
 
-bool vm_map_new_table(addr_logical_t addr, vm_map_t *map, page_t **page, page_table_t **table, uint8_t page_flags) {
+/** @todo Support linked lists of vm_maps to synchronise their mappings */
+static void _new_table(addr_logical_t addr, vm_map_t *map, uint8_t page_flags) {
+    page_t *page;
+    page_table_t *table;
     uint32_t slot = addr >> PAGE_DIR_SHIFT;
     uint8_t kernel_flag = map->pid == 0 ? PAGE_FLAG_KERNEL : 0;
     
     if(map->logical_tables->tables[slot]) {
-        return false;
+        return;
     }else{
-        page_t *page_ptr = NULL;
-        page_table_t *page_table_ptr = NULL;
-        if(!page) {
-            page = &page_ptr;
-            table = &page_table_ptr;
-        }
-        if(!*page) {
-            *page = page_alloc(map->pid, kernel_flag, 1);
-            *table = page_kinstall(*page, 0);
-        }
+        page = page_alloc(map->pid, kernel_flag | PAGE_TABLE_RW, 1);
+        table = page_kinstall(page, 0);
         
-        map->logical_tables->pages[slot] = *page;
-        map->logical_tables->tables[slot] = *table;
-        map->logical_dir->entries[slot].table = (*page)->mem_base | PAGE_TABLE_PRESENT | page_flags;
-        return true;
+        map->logical_tables->pages[slot] = page;
+        map->logical_tables->tables[slot] = table;
+        map->logical_dir->entries[slot].table = page->mem_base | PAGE_TABLE_PRESENT | page_flags;
     }
 }
 
 
 void vm_map_insert(addr_logical_t addr, vm_map_t *map, page_t *page, uint8_t page_flags) {
-    uint32_t dir_slot = addr >> PAGE_DIR_SHIFT;
-    uint32_t page_slot = (addr >> PAGE_TABLE_SHIFT) & PAGE_TABLE_MASK;
+    uint32_t dir_slot;
+    uint32_t page_slot;
+    unsigned int i = 0;
     
-    if(!map->logical_tables->pages[dir_slot]) {
-        panic("Tried to map an address in virtual memory with no page table!");
+    for(i = 0; i < page->consecutive; i ++) {
+        dir_slot = addr >> PAGE_DIR_SHIFT;
+        page_slot = (addr >> PAGE_TABLE_SHIFT) & PAGE_TABLE_MASK;
+        
+        if(!map->logical_tables->pages[dir_slot]) {
+            _new_table(addr, map, page_flags);
+        }
+        
+        map->logical_tables->tables[dir_slot]->entries[page_slot].block =
+            (page->mem_base + i * PAGE_SIZE) | page_flags | PAGE_TABLE_PRESENT;
+        
+        addr += PAGE_SIZE;
     }
-    
-    map->logical_tables->tables[dir_slot]->entries[page_slot].block =
-        page->mem_base | page_flags | PAGE_TABLE_PRESENT;
 }
 
 
