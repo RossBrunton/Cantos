@@ -78,6 +78,10 @@ void vm_map_insert(addr_logical_t addr, vm_map_t *map, page_t *page, uint8_t pag
         
         addr += PAGE_SIZE;
     }
+    
+    if(page->next) {
+        vm_map_insert(addr, map, page->next, page_flags);
+    }
 }
 
 
