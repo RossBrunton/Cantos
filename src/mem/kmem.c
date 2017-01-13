@@ -5,10 +5,14 @@
 
 #include <stdbool.h>
 
+#define _MINIMUM_PAGES 2
+
 static page_t *kernel_start;
 static kmem_free_t *free_list;
 static kmem_free_t *free_end;
 static kmem_free_t *free_free_structs;
+static volatile uint32_t memory_total;
+static volatile uint32_t memory_used;
 
 extern char _startofro;
 extern char _endofro;
@@ -127,6 +131,7 @@ void kmem_init() {
     _memcpy((void *)(mem_base+end_pointer), &free_block, sizeof(kmem_free_t));
     free_list = (kmem_free_t *)(mem_base+end_pointer);
     free_end = free_list;
+    end_pointer += sizeof(kmem_free_t);
     
     // Create the kernel memory table
     kmem_map.memory_end = free_list->base + free_list->size;
@@ -135,66 +140,87 @@ void kmem_init() {
     dir = (page_dir_t *)kmem_map.vm_start;
     dir->entries[0].table = 0x0;
     
+    // Set the initial memory values
+    memory_total = PAGE_SIZE;
+    memory_used = end_pointer;
+    
     _verify(__func__);
 }
 
 
-void *kmalloc(size_t size) {
+void *kmalloc(size_t size, uint8_t flags) {
     kmem_free_t *free = free_list;
     kmem_free_t *prev = NULL;
     size_t size_needed = 0;
     size_t pages_needed = 0;
     kmem_header_t *hdr = NULL;
     page_t *new_page;
-    page_t *page_slot;
     addr_logical_t installed_loc;
+#if DEBUG_VMEM
+    printk("Allocating %d bytes.\n", size);
+#endif
     
     if(size == 0) return NULL;
     
     // Align size to four bytes
     if(size % 4) size += 4 - size % 4;
     
+    // And ensure the size is at least the size of a page, so some nasty person doesn't pollute the memory with
+    //  2 word entries followed by a 2 word gap, meaning that more pages can't be allocated despite there seeming to be
+    //  room
+    if(size < sizeof(page_t)) size = sizeof(page_t);
+    
     size_needed = size + sizeof(kmem_header_t);
     
-    for(; free; (prev = free), (free = free->next)) {
-        if(size_needed <= free->size) {
-            // Do it!
-            if(size_needed + sizeof(kmem_header_t) >= free->size) {
-                // Not a typo: If the remaining space is not enough to store any headers, just use up the whole block
-                addr_logical_t base;
-                _verify("kmalloc@before whole block clear");
-                
-                // Update the free list
-                size = free->size - sizeof(kmem_header_t);
-                if(!prev) {
-                    free_list = free->next;
+    if(((uint64_t)memory_used + (uint64_t)size_needed > memory_total - (_MINIMUM_PAGES * PAGE_SIZE)
+    || memory_total < (_MINIMUM_PAGES * PAGE_SIZE))
+    && !(flags & KMALLOC_RESERVED)) {
+#if DEBUG_MEM
+        printk("Wanted to kmalloc more than we can safely store.\n");
+#endif
+    }else{
+        for(; free; (prev = free), (free = free->next)) {
+            if(size_needed <= free->size) {
+                // Do it!
+                if(size_needed + sizeof(kmem_header_t) >= free->size) {
+                    // If the remaining space is not enough to store any more headers, just use up the whole block
+                    addr_logical_t base;
+                    _verify("kmalloc@before whole block clear");
+                    
+                    // Update the free list
+                    size = free->size - sizeof(kmem_header_t);
+                    if(!prev) {
+                        free_list = free->next;
+                    }else{
+                        prev->next = free->next;
+                    }
+                    base = free->base;
+                    if(free == free_end) {
+                        free_end = prev;
+                    }
+                    
+                    // And mix the structure into the free_free_structs
+                    free->next = free_free_structs;
+                    free_free_structs = free;
+                    
+                    // And then do that malloc thing we were going to do
+                    hdr = (kmem_header_t *)base;
+                    hdr->size = size;
+                    _verify("kmalloc@whole block clear");
+                    memory_used += size + sizeof(kmem_header_t);
+                    return (void *)(base + sizeof(kmem_header_t));
                 }else{
-                    prev->next = free->next;
+                    // Otherwise just shrink it
+                    _verify("kmalloc@before shrink block");
+                    addr_logical_t base = free->base;
+                    free->size -= size_needed;
+                    free->base += size_needed;
+                    hdr = (kmem_header_t *)base;
+                    hdr->size = size;
+                    _verify("kmalloc@shrink block");
+                    memory_used += size_needed;
+                    return (void *)(base + sizeof(kmem_header_t));
                 }
-                base = free->base;
-                if(free == free_end) {
-                    free_end = prev;
-                }
-                
-                // And mix the structure into the free_free_structs
-                free->next = free_free_structs;
-                free_free_structs = free;
-                
-                // And then do that malloc thing we were going to do
-                hdr = (kmem_header_t *)base;
-                hdr->size = size;
-                _verify("kmalloc@whole block clear");
-                return (void *)(base + sizeof(kmem_header_t));
-            }else{
-                // Otherwise just shrink it
-                _verify("kmalloc@before shrink block");
-                addr_logical_t base = free->base;
-                free->size -= size_needed;
-                free->base += size_needed;
-                hdr = (kmem_header_t *)base;
-                hdr->size = size;
-                _verify("kmalloc@shrink block");
-                return (void *)(base + sizeof(kmem_header_t));
             }
         }
     }
@@ -205,10 +231,16 @@ void *kmalloc(size_t size) {
     }else{
         pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t)) / PAGE_SIZE;
     }
-    pages_needed += 2;
+    pages_needed += _MINIMUM_PAGES;
     
-    new_page = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, pages_needed);
+#if DEBUG_MEM
+    printk("Extending memory by %d pages.\n", pages_needed);
+#endif
+    
+    // This calls kmalloc, be careful!
+    new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
     installed_loc = (addr_logical_t)page_kinstall_append(new_page, PAGE_TABLE_RW);
+    memory_total += pages_needed * PAGE_SIZE;
     
     if(prev && prev->base + prev->size == installed_loc) {
         // Can just grow the last block because there is free at the end
@@ -233,10 +265,8 @@ void *kmalloc(size_t size) {
     }
     
     _verify("kmalloc@end");
-    page_slot = kmalloc(sizeof(page_t));
-    _memcpy(page_slot, new_page, sizeof(page_t));
-    page_used(page_slot);
-    return kmalloc(size);
+    page_used(new_page);
+    return kmalloc(size, flags);
 }
 
 
@@ -247,7 +277,7 @@ static kmem_free_t *_get_struct() {
         free_free_structs = free_free_structs->next;
         return hold;
     }else{
-        hold = kmalloc(sizeof(kmem_free_t));
+        hold = kmalloc(sizeof(kmem_free_t), KMALLOC_RESERVED);
         _verify(__func__);
         return hold;
     }
@@ -257,6 +287,10 @@ static kmem_free_t *_get_struct() {
 void kfree(void *ptr) {
     kmem_header_t *hdr = (kmem_header_t *)ptr - 1;
     size_t full_size = hdr->size + sizeof(kmem_header_t);
+    
+#if DEBUG_VMEM
+    printk("Freeing %p (%d bytes).\n", ptr, hdr->size);
+#endif
     
     if(!ptr) {
         // Ignore NULL
@@ -299,4 +333,8 @@ void kfree(void *ptr) {
         if(prev) _merge_free(prev);
     }
     _verify("kfree@end");
+    
+    memory_used -= hdr->size + sizeof(kmem_header_t);
 }
+
+#undef _MINIMUM_PAGES

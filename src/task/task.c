@@ -48,7 +48,7 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     uint32_t *sp;
     idt_proc_state_t pstate = {0};
     
-    thread = kmalloc(sizeof(task_thread_t));
+    thread = kmalloc(sizeof(task_thread_t), 0);
     thread->next_in_process = process->thread;
     process->thread = thread;
     thread->process = process;

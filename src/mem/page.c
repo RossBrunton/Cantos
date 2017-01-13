@@ -100,7 +100,7 @@ void page_init() {
 
 page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count) {
     page_t *write = &static_page;
-    write = kmalloc(sizeof(page_t));
+    write = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
     write->page_id = page_id_counter ++;
     write->mem_base = base;
     write->flags = PAGE_FLAG_ALLOCATED | flags;
@@ -159,7 +159,7 @@ page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
     // Collect all the pages in the free list
     if(page_free_head) {
         if(page_free_head->consecutive > count) {
-            new = kmalloc(sizeof(page_t));
+            new = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
             new->page_id = page_id_counter ++;
             new->mem_base = page_free_head->mem_base;
             page_free_head->mem_base += (page_free_head->consecutive - count) * PAGE_SIZE;
@@ -173,7 +173,7 @@ page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
         new->next = NULL;
         _verify(__func__);
     }else{
-        new = kmalloc(sizeof(page_t));
+        new = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
         page_alloc_nokmalloc(pid, flags, count);
         _memcpy(new, &static_page, sizeof(page_t));
         
@@ -321,7 +321,7 @@ void page_kuninstall(void *base, page_t *page) {
     
     for(now = empty_slot; now && now->base < (addr_logical_t)base; ((prev = now), (now = now->next)));
     
-    new = kmalloc(sizeof(_empty_virtual_slot_t));
+    new = kmalloc(sizeof(_empty_virtual_slot_t), 0);
     new->base = (addr_logical_t)base;
     new->pages = page->consecutive;
     

@@ -13,10 +13,10 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     vm_map_t *map;
     size_t i;
     
-    map = kmalloc(sizeof(vm_map_t));
+    map = kmalloc(sizeof(vm_map_t), 0);
     map->physical_dir = page_alloc(pid, kernel_flag, 1);
     map->logical_dir = page_kinstall(map->physical_dir, PAGE_TABLE_RW);
-    map->logical_tables = kmalloc(sizeof(page_logical_tables_t));
+    map->logical_tables = kmalloc(sizeof(page_logical_tables_t), 0);
     
     map->pid = pid;
     map->task_id = task_id;

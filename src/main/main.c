@@ -78,15 +78,13 @@ void kernel_main() {
     cpu_init();
     task_init();
     
-    while(1) {
+    /*while(1) {
         page_t *page = page_alloc(0, 0, 1);
         void *loc = page_kinstall(page, 0);
         //loc = page_kinstall(page, 0);
         page_kuninstall(loc, page);
         page_free(page);
-    }
-    
-    while(1);
+    }*/
     
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {

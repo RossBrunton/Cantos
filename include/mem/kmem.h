@@ -6,6 +6,8 @@
 
 #include "mem/page.h"
 
+#define KMALLOC_RESERVED (1 << 0)
+
 typedef struct kmem_header_s {
     int size;
 } kmem_header_t;
@@ -32,7 +34,7 @@ typedef struct kmem_map_s {
 extern kmem_map_t kmem_map;
 
 void kmem_init();
-void *kmalloc(size_t size);
+void *kmalloc(size_t size, uint8_t flags);
 void kfree(void *ptr);
 
 #endif
