@@ -28,6 +28,25 @@ object_t *object_alloc(object_generator_t generator, object_deleter_t deleter,
     return obj;
 }
 
+void object_free(object_t *object) {
+    object_page_entry_t *page_entry;
+    object_page_entry_t *next;
+    // Destroy it's VM mappings
+    while(object->vm_maps) {
+        object_remove_from_vm(object, object->vm_maps->map);
+    }
+    
+    // And then destroy all the pages
+    for(page_entry = object->pages; page_entry; page_entry = next) {
+        object->deleter(page_entry->page, object);
+        next = page_entry->next;
+        kfree(page_entry);
+    }
+    
+    // And finally free it
+    kfree(object);
+}
+
 void object_add_to_vm(object_t *object, vm_map_t *map, uint32_t base) {
     object_list_t *entry;
     object_list_t *next = NULL;

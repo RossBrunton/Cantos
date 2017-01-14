@@ -51,6 +51,7 @@ struct object_list_s {
 
 object_t *object_alloc(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
     uint8_t object_flags);
+void object_free(object_t *object);
 void object_add_to_vm(object_t *object, vm_map_t *map, uint32_t base);
 void object_remove_from_vm(object_t *object, vm_map_t *map);
 void object_generate(object_t *object, uint32_t addr, uint32_t count);
