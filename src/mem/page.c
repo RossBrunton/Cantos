@@ -98,13 +98,12 @@ void page_init() {
 }
 
 
-page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count) {
+page_t *page_create(uint32_t base, uint8_t flags, unsigned int count) {
     page_t *write = &static_page;
     write = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
     write->page_id = page_id_counter ++;
     write->mem_base = base;
     write->flags = PAGE_FLAG_ALLOCATED | flags;
-    write->pid = pid;
     write->consecutive = count;
 #if DEBUG_MEM
     printk("Allocated %d pages.\n", count);
@@ -114,7 +113,7 @@ page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count) {
 }
 
 
-page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count) {
+page_t *page_alloc_nokmalloc(uint8_t flags, unsigned int count) {
     page_t *write = &static_page;
     unsigned int size = count * PAGE_SIZE;
     
@@ -125,7 +124,6 @@ page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count) {
     write->page_id = page_id_counter ++;
     write->mem_base = allocation_pointer;
     write->flags = PAGE_FLAG_ALLOCATED | flags;
-    write->pid = pid;
     write->consecutive = size / PAGE_SIZE;
     write->next = NULL;
     allocation_pointer = write->mem_base + size;
@@ -153,7 +151,7 @@ page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count) {
 }
 
 
-page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
+page_t *page_alloc(uint8_t flags, unsigned int count) {
     page_t *new;
     
     // Collect all the pages in the free list
@@ -169,16 +167,15 @@ page_t *page_alloc(int pid, uint8_t flags, unsigned int count) {
             page_free_head = new->next;
         }
         new->flags = flags;
-        new->pid = pid;
         new->next = NULL;
         _verify(__func__);
     }else{
         new = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
-        page_alloc_nokmalloc(pid, flags, count);
+        page_alloc_nokmalloc(flags, count);
         _memcpy(new, &static_page, sizeof(page_t));
         
         if(new->consecutive < count) {
-            new->next = page_alloc(pid, flags, count - new->consecutive);
+            new->next = page_alloc(flags, count - new->consecutive);
         }
     }
     

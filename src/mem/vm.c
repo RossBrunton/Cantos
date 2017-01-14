@@ -14,7 +14,7 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     size_t i;
     
     map = kmalloc(sizeof(vm_map_t), 0);
-    map->physical_dir = page_alloc(pid, kernel_flag, 1);
+    map->physical_dir = page_alloc(kernel_flag, 1);
     map->logical_dir = page_kinstall(map->physical_dir, PAGE_TABLE_RW);
     map->logical_tables = kmalloc(sizeof(page_logical_tables_t), 0);
     
@@ -50,7 +50,7 @@ static void _new_table(addr_logical_t addr, vm_map_t *map, uint8_t page_flags) {
     if(map->logical_tables->tables[slot]) {
         return;
     }else{
-        page = page_alloc(map->pid, kernel_flag | PAGE_TABLE_RW, 1);
+        page = page_alloc(kernel_flag | PAGE_TABLE_RW, 1);
         table = page_kinstall(page, 0);
         
         map->logical_tables->pages[slot] = page;

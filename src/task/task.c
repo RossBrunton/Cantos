@@ -64,7 +64,7 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     // Create the stack
     thread->stack_top = TASK_STACK_TOP;
     thread->stack_bottom = TASK_STACK_TOP - PAGE_SIZE;
-    thread->stack_page = page_alloc(process->process_id, 0, 1);
+    thread->stack_page = page_alloc(0, 1);
     
     vm_map_insert(TASK_STACK_TOP - PAGE_SIZE, thread->vm, thread->stack_page, PAGE_TABLE_RW);
     

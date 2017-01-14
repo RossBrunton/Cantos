@@ -15,7 +15,6 @@ struct page_s {
     unsigned int page_id;
     addr_phys_t mem_base;
     uint8_t flags;
-    unsigned int pid;
     unsigned int consecutive;
     page_t *next;
 };
@@ -75,9 +74,9 @@ typedef struct page_logical_tables_s {
 extern page_dir_t *page_dir;
 
 void page_init();
-page_t *page_alloc_nokmalloc(int pid, uint8_t flags, unsigned int count);
-page_t *page_alloc(int pid, uint8_t flags, unsigned int count);
-page_t *page_create(int pid, uint32_t base, uint8_t flags, unsigned int count);
+page_t *page_alloc_nokmalloc(uint8_t flags, unsigned int count);
+page_t *page_alloc(uint8_t flags, unsigned int count);
+page_t *page_create(uint32_t base, uint8_t flags, unsigned int count);
 void page_free(page_t *page);
 void page_used(page_t *page);
 void *page_kinstall(page_t *page, uint8_t page_flags);

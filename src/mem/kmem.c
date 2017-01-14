@@ -106,7 +106,7 @@ void kmem_init() {
     page_init();
     
     // Create a page for memory
-    initial = page_alloc_nokmalloc(0, PAGE_FLAG_KERNEL, 1);
+    initial = page_alloc_nokmalloc(PAGE_FLAG_KERNEL, 1);
     mem_base = (addr_logical_t)page_kinstall_append(initial, PAGE_TABLE_RW);
     
     // Memory header for the page header
@@ -238,7 +238,7 @@ void *kmalloc(size_t size, uint8_t flags) {
 #endif
     
     // This calls kmalloc, be careful!
-    new_page = page_alloc(0, PAGE_FLAG_KERNEL, pages_needed);
+    new_page = page_alloc(PAGE_FLAG_KERNEL, pages_needed);
     installed_loc = (addr_logical_t)page_kinstall_append(new_page, PAGE_TABLE_RW);
     memory_total += pages_needed * PAGE_SIZE;
     
