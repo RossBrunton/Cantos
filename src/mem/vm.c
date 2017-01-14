@@ -20,6 +20,7 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     
     map->pid = pid;
     map->task_id = task_id;
+    map->objects = NULL;
     
     // Load the kernel tables into it
     for(i = 0; i < PAGE_TABLE_LENGTH; i ++) {
@@ -40,18 +41,16 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
 }
 
 
-/** @todo Support linked lists of vm_maps to synchronise their mappings */
 static void _new_table(addr_logical_t addr, vm_map_t *map, uint8_t page_flags) {
     page_t *page;
     page_table_t *table;
     uint32_t slot = addr >> PAGE_DIR_SHIFT;
-    uint8_t kernel_flag = map->pid == 0 ? PAGE_FLAG_KERNEL : 0;
     
     if(map->logical_tables->tables[slot]) {
         return;
     }else{
-        page = page_alloc(kernel_flag | PAGE_TABLE_RW, 1);
-        table = page_kinstall(page, 0);
+        page = page_alloc(0, 1);
+        table = page_kinstall(page, page_flags | PAGE_TABLE_RW);
         
         map->logical_tables->pages[slot] = page;
         map->logical_tables->tables[slot] = table;

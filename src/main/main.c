@@ -15,6 +15,7 @@
 #include "io/serial.h"
 #include "task/task.h"
 #include "main/cpu.h"
+#include "mem/object.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -25,6 +26,18 @@
 #endif
 
 extern char _endofelf;
+
+void object_test() {
+    object_t *obj = object_alloc(object_gen_empty, 100, PAGE_TABLE_RW);
+    task_thread_t *t;
+    
+    t = cpu_info()->thread;
+    
+    object_generate(obj, 0x0, 0x100);
+    object_add_to_vm(obj, t->vm, 0x1600);
+    
+    while(1) {}
+}
 
 void myfunc() {
     int i = 0;
@@ -93,7 +106,7 @@ void kernel_main() {
         entry ++;
     }
     
-    thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
+    thread = task_thread_create(&kernel_process, (addr_logical_t)&object_test);
     thread2 = task_thread_create(&kernel_process, (addr_logical_t)&myfunc2);
     task_enter(thread);
 }

@@ -7,6 +7,7 @@
 #include "mem/gdt.h"
 #include "task/asm.h"
 #include "main/cpu.h"
+#include "mem/object.h"
 
 task_process_t kernel_process;
 
@@ -42,11 +43,15 @@ static task_thread_t *_next_task(task_thread_t *task) {
 task_process_t *task_process_create(uint32_t owner, uint32_t group);
 
 
+/** 
+ * @todo Copy all the objects into the new memory map
+ */
 task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry) {
     task_thread_t *thread;
     bool kernel = process->process_id == 0;
     uint32_t *sp;
     idt_proc_state_t pstate = {0};
+    object_t *stack;
     
     thread = kmalloc(sizeof(task_thread_t), 0);
     thread->next_in_process = process->thread;
@@ -61,12 +66,10 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     // Temporarily use the vm to set up values
     vm_table_switch(thread->vm->physical_dir->mem_base);
     
-    // Create the stack
-    thread->stack_top = TASK_STACK_TOP;
-    thread->stack_bottom = TASK_STACK_TOP - PAGE_SIZE;
-    thread->stack_page = page_alloc(0, 1);
-    
-    vm_map_insert(TASK_STACK_TOP - PAGE_SIZE, thread->vm, thread->stack_page, PAGE_TABLE_RW);
+    // Create the stack object
+    stack = object_alloc(object_gen_empty, 1, PAGE_TABLE_RW);
+    object_generate(stack, 0, 1);
+    object_add_to_vm(stack, thread->vm, TASK_STACK_TOP - PAGE_SIZE);
     
     // Initial stack format:
     // [pushad values]

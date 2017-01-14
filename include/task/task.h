@@ -28,9 +28,6 @@ struct task_thread_s {
     
     vm_map_t *vm;
     
-    addr_logical_t stack_top;
-    addr_logical_t stack_bottom;
-    page_t *stack_page;
     addr_logical_t stack_pointer;
     
     task_thread_t *next_in_process;
