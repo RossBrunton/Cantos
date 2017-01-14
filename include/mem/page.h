@@ -83,5 +83,6 @@ void *page_kinstall(page_t *page, uint8_t page_flags);
 void *page_kinstall_append(page_t *page, uint8_t page_flags); // Doesn't kmalloc, but doesn't reuse any existing memory
 // either
 void page_kuninstall(void *base, page_t *page);
+uint32_t page_count(page_t *page);
 
 #endif

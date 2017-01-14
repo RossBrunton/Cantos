@@ -84,6 +84,22 @@ void vm_map_insert(addr_logical_t addr, vm_map_t *map, page_t *page, uint8_t pag
 }
 
 
+void vm_map_clear(addr_logical_t addr, vm_map_t *map, uint32_t pages) {
+    uint32_t dir_slot;
+    uint32_t page_slot;
+    unsigned int i = 0;
+    
+    for(i = 0; i < pages; i ++) {
+        dir_slot = addr >> PAGE_DIR_SHIFT;
+        page_slot = (addr >> PAGE_TABLE_SHIFT) & PAGE_TABLE_MASK;
+        
+        map->logical_tables->tables[dir_slot]->entries[page_slot].block = 0;
+        
+        addr += PAGE_SIZE;
+    }
+}
+
+
 void vm_map_free(vm_map_t *map) {
     (void)map;
 }

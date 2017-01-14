@@ -67,7 +67,7 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     vm_table_switch(thread->vm->physical_dir->mem_base);
     
     // Create the stack object
-    stack = object_alloc(object_gen_empty, 1, PAGE_TABLE_RW);
+    stack = object_alloc(object_gen_empty, object_del_free, 1, PAGE_TABLE_RW, 0);
     object_generate(stack, 0, 1);
     object_add_to_vm(stack, thread->vm, TASK_STACK_TOP - PAGE_SIZE);
     

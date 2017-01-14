@@ -264,7 +264,7 @@ void *page_kinstall(page_t *page, uint8_t page_flags) {
     unsigned int i;
     
     // Count the total number of pages we need
-    for(; current; current = current->next) total_pages += current->consecutive;
+    total_pages = page_count(page);
     
     // And search for an empty hole in virtual memory for it
     for(; slot && (slot->pages < total_pages); (prev_slot = slot), (slot = slot->next));
@@ -345,4 +345,13 @@ void page_kuninstall(void *base, page_t *page) {
     if(page->next) {
         page_kuninstall((void *)(((addr_logical_t)base) + (page->consecutive * PAGE_SIZE)), page->next);
     }
+}
+
+
+uint32_t page_count(page_t *page) {
+    uint32_t sum = 0;
+    
+    for(; page; page = page->next) sum += page->consecutive;
+    
+    return sum;
 }
