@@ -21,6 +21,7 @@ struct page_s {
 
 #define PAGE_FLAG_ALLOCATED 0x01
 #define PAGE_FLAG_KERNEL 0x02
+#define PAGE_FLAG_RESERVED 0x04
 
 #define PAGE_FREE_MASK 0xfff
 

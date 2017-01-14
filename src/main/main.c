@@ -28,15 +28,15 @@
 extern char _endofelf;
 
 void object_test() {
-    object_t *obj = object_alloc(object_gen_empty, object_del_free, 100, PAGE_TABLE_RW, 0);
+    object_t *obj = object_alloc(object_gen_empty, object_del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, PAGE_TABLE_RW, 0);
     task_thread_t *t;
     
     t = cpu_info()->thread;
     
-    object_generate(obj, 0x0, 0x100);
+    object_generate(obj, 0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
     
     while(1) {
-        object_add_to_vm(obj, t->vm, 0x1600);
+        object_add_to_vm(obj, t->vm, 0x0);
         object_remove_from_vm(obj, t->vm);
     }
     

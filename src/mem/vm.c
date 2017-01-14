@@ -49,6 +49,9 @@ static void _new_table(addr_logical_t addr, vm_map_t *map, uint8_t page_flags) {
     if(map->logical_tables->tables[slot]) {
         return;
     }else{
+#if DEBUG_MEM
+        printk("Allocating page for a vm.\n");
+#endif
         page = page_alloc(0, 1);
         table = page_kinstall(page, page_flags | PAGE_TABLE_RW);
         

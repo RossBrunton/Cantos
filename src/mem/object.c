@@ -114,6 +114,10 @@ void object_generate(object_t *object, uint32_t addr, uint32_t count) {
     page_t *page;
     object_map_entry_t *map_entry;
     
+    if((addr / PAGE_SIZE) + count > object->max_pages) {
+        count = object->max_pages - (addr / PAGE_SIZE);
+    }
+    
     for(next = object->pages; next && next->offset < addr; (prev = next), (next = next->next));
     
     if(next && addr + (count * PAGE_SIZE) >= next->offset) {

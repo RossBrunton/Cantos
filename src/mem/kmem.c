@@ -172,7 +172,7 @@ void *kmalloc(size_t size, uint8_t flags) {
     
     size_needed = size + sizeof(kmem_header_t);
     
-    if(((uint64_t)memory_used + (uint64_t)size_needed > memory_total - (_MINIMUM_PAGES * PAGE_SIZE)
+    if((((uint64_t)memory_used + (uint64_t)size_needed > memory_total - (_MINIMUM_PAGES * PAGE_SIZE))
     || memory_total < (_MINIMUM_PAGES * PAGE_SIZE))
     && !(flags & KMALLOC_RESERVED)) {
 #if DEBUG_MEM
@@ -234,11 +234,11 @@ void *kmalloc(size_t size, uint8_t flags) {
     pages_needed += _MINIMUM_PAGES;
     
 #if DEBUG_MEM
-    printk("Extending memory by %d pages.\n", pages_needed);
+    printk("Extending memory by %d pages (%x/%x).\n", pages_needed, memory_used, memory_total);
 #endif
     
     // This calls kmalloc, be careful!
-    new_page = page_alloc(PAGE_FLAG_KERNEL, pages_needed);
+    new_page = page_alloc(PAGE_FLAG_KERNEL | PAGE_FLAG_RESERVED, pages_needed);
     installed_loc = (addr_logical_t)page_kinstall_append(new_page, PAGE_TABLE_RW);
     memory_total += pages_needed * PAGE_SIZE;
     
