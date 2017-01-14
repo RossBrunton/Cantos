@@ -155,13 +155,18 @@ page_t *page_alloc(uint8_t flags, unsigned int count) {
     page_t *new;
     uint8_t alloc_flag = (flags & PAGE_FLAG_RESERVED) ? KMALLOC_RESERVED : 0;
     
+    if(count == 0) {
+        return NULL;
+    }
+    
     // Collect all the pages in the free list
     if(page_free_head) {
         if(page_free_head->consecutive > count) {
             new = kmalloc(sizeof(page_t), alloc_flag);
             new->page_id = page_id_counter ++;
             new->mem_base = page_free_head->mem_base;
-            page_free_head->mem_base += (page_free_head->consecutive - count) * PAGE_SIZE;
+            new->consecutive = count;
+            page_free_head->mem_base += count * PAGE_SIZE;
             page_free_head->consecutive -= count;
         }else{
             new = page_free_head;
