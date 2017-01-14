@@ -30,15 +30,17 @@ extern char _endofelf;
 void object_test() {
     object_t *obj;
     task_thread_t *t;
+    vm_map_t *vm;
     
     t = cpu_info()->thread;
-    
     
     while(1) {
         obj = object_alloc(object_gen_empty, object_del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, PAGE_TABLE_RW, 0);
         object_generate(obj, 0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
         object_add_to_vm(obj, t->vm, 0x0);
         object_free(obj);
+        vm = vm_map_alloc(0, 0, true);
+        vm_map_free(vm);
     }
     
     while(1) {}

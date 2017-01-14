@@ -4,6 +4,7 @@
 #include "mem/vm.h"
 #include "mem/page.h"
 #include "mem/kmem.h"
+#include "mem/object.h"
 #include "main/printk.h"
 #include "main/multiboot.h"
 #include "main/panic.h"
@@ -38,6 +39,32 @@ vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel) {
     }
     
     return map;
+}
+
+
+void vm_map_free(vm_map_t *map) {
+    page_t *page;
+    page_table_t *table;
+    
+    // Remove all the objects
+    while(map->objects) {
+        object_remove_from_vm(map->objects->object, map);
+    }
+    
+    page_kuninstall(map->logical_dir, map->physical_dir);
+    page_free(map->physical_dir);
+    
+    for(int i = 0; i < PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES; i ++) {
+        if(map->logical_tables->pages[i]) {
+            page = map->logical_tables->pages[i];
+            table = map->logical_tables->tables[i];
+            page_kuninstall(table, page);
+            page_free(page);
+        }
+    }
+    
+    kfree(map->logical_tables);
+    kfree(map);
 }
 
 
@@ -100,11 +127,6 @@ void vm_map_clear(addr_logical_t addr, vm_map_t *map, uint32_t pages) {
         
         addr += PAGE_SIZE;
     }
-}
-
-
-void vm_map_free(vm_map_t *map) {
-    (void)map;
 }
 
 

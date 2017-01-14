@@ -23,9 +23,9 @@ typedef struct vm_map_s {
 } vm_map_t;
 
 vm_map_t *vm_map_alloc(uint32_t pid, uint32_t task_id, bool kernel);
+void vm_map_free(vm_map_t *map);
 void vm_map_insert(addr_logical_t addr, vm_map_t *map, page_t *page, uint8_t page_flags);
 void vm_map_clear(addr_logical_t addr, vm_map_t *map, uint32_t pages);
-void vm_map_free(vm_map_t *map);
 
 void vm_table_switch(addr_phys_t table);
 void vm_table_clear();
