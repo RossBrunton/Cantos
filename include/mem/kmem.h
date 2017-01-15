@@ -34,7 +34,7 @@ typedef struct kmem_map_s {
 extern kmem_map_t kmem_map;
 
 void kmem_init();
-void *kmalloc(size_t size, uint8_t flags);
+void *__attribute__((alloc_size(1), malloc)) kmalloc(size_t size, uint8_t flags) ;
 void kfree(void *ptr);
 
 #endif

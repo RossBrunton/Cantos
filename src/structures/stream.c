@@ -65,14 +65,15 @@ static uint8_t _num_to_str(uint8_t value, bool uppercase) {
 
 #define _NUM_BUFFER_SIZE 20
 
-void stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...) {
+void __attribute__((format(printf, 4, 5))) stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...) {
     va_list va;
     va_start(va, fmt);
     vstream_writef(stream, flags, data, fmt, va);
     va_end(va);
 }
 
-void vstream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, va_list ap) {
+void __attribute__((format(printf, 4, 0))) vstream_writef(stream_t *stream, uint32_t flags, void *data,
+    char *fmt, va_list ap) {
     size_t p = 0;
     int written = 0;
     unsigned long long val;

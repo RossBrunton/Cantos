@@ -27,38 +27,38 @@
  * @param[in] fmt The format of the message
  * @param[in] ... Parameters for the format
  */
-void printk(char *fmt, ...);
+void __attribute__((format(printf, 1, 2))) printk(char *fmt, ...);
 /** Prints a regular message to the log destination.
  *
  * @param[in] fmt The format of the message
  * @param[in] ap The argument list from `va_start`
  */
-void vprintk(char *fmt, va_list ap);
+void __attribute__((format(printf, 1, 0))) vprintk(char *fmt, va_list ap);
 
 /** Prints a warning message to the log destination.
  *
  * @param[in] fmt The format of the message
  * @param[in] ... Parameters for the format
  */
-void kwarn(char *fmt, ...);
+void __attribute__((format(printf, 1, 2))) kwarn(char *fmt, ...);
 /** Prints a warning message to the log destination.
  *
  * @param[in] fmt The format of the message
  * @param[in] ap The argument list from `va_start`
  */
-void vkwarn(char *fmt, va_list ap);
+void __attribute__((format(printf, 1, 0))) vkwarn(char *fmt, va_list ap);
 
 /** Prints an error message to the log destination.
  *
  * @param[in] fmt The format of the message
  * @param[in] ... Parameters for the format
  */
-void kerror(char *fmt, ...);
+void __attribute__((format(printf, 1, 2))) kerror(char *fmt, ...);
 /** Prints an error message to the log destination.
  *
  * @param[in] fmt The format of the message
  * @param[in] ap The argument list from `va_start`
  */
-void vkerror(char *fmt, va_list ap);
+void __attribute__((format(printf, 1, 0))) vkerror(char *fmt, va_list ap);
 
 #endif

@@ -129,7 +129,7 @@ void task_thread_destroy(task_thread_t *thread) {
 }
 
 
-void task_enter(task_thread_t *thread) {
+void __attribute__((noreturn)) task_enter(task_thread_t *thread) {
     cpu_status_t *info;
     
     info = cpu_info();

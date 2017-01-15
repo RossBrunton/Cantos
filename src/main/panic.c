@@ -6,7 +6,7 @@
 
 static uint8_t clr = VGA_COLOUR_WHITE | (VGA_COLOUR_RED << 4);
 
-void panic(char *fmt, ...) {
+void __attribute__((format(printf, 1, 2))) panic(char *fmt, ...) {
     va_list va;
     va_start(va, fmt);
     

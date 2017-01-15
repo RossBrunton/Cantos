@@ -21,6 +21,6 @@
  * @param[in] fmt The format string
  * @param[in] ... The values to use with the format
  */
-void panic(char *fmt, ...);
+void __attribute__((format(printf, 1, 2))) panic(char *fmt, ...);
 
 #endif

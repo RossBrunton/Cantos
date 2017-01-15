@@ -182,7 +182,7 @@ void kmem_init() {
 }
 
 
-void *kmalloc(size_t size, uint8_t flags) {
+void *__attribute__((alloc_size(1), malloc)) kmalloc(size_t size, uint8_t flags) {
     kmem_free_t *free = free_list;
     kmem_free_t *prev = NULL;
     size_t size_needed = 0;

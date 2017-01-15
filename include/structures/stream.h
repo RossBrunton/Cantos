@@ -152,7 +152,9 @@ void stream_clear_error(stream_t *stream);
  * @param[in] fmt The format string.
  * @param[in] va The argument list from va_start.
  */
-void vstream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, va_list va);
+void __attribute__((format(printf, 4, 0))) vstream_writef(stream_t *stream, uint32_t flags, void *data,
+    char *fmt, va_list va);
+
 /** Writes to the given stream using printf semantics.
  *
  * Many of the same values supported by printf are also supported here, but there may be some differences.
@@ -185,6 +187,6 @@ void vstream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, va_
  * @param[in] fmt The format string.
  * @param[in] ... The format parameters.
  */
-void stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...);
+void __attribute__((format(printf, 4, 5))) stream_writef(stream_t *stream, uint32_t flags, void *data, char *fmt, ...);
 
 #endif

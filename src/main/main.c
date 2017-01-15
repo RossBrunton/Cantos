@@ -70,7 +70,7 @@ void myfunc2() {
     while(1){}
 }
 
-void kernel_main() {
+void __attribute__((noreturn)) kernel_main() {
     unsigned int i;
     mm_entry_t *entry;
     
