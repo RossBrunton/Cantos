@@ -15,6 +15,7 @@
  */
 
 #include "interrupts/idt.h"
+#include "main/common.h"
 
 /** (\#DE) Division by zero exception */
 #define EXCEPT_DIV0 0x0

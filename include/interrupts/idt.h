@@ -19,21 +19,6 @@
 
 #include <stdint.h>
 
-/** Processor state, in the same format as pushed by the `PUSHAD` instruction.
- *
- * That is, `PUSHAD` before a function call will have a structure of this type as its argument.
- */
-typedef struct idt_proc_state_s {
-    uint32_t edi;
-    uint32_t esi;
-    uint32_t ebp;
-    uint32_t esp;
-    uint32_t ebx;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t eax;
-} idt_proc_state_t;
-
 /** An IDT descriptor, as used by the `LIDT` instruction.
  */
 typedef struct __attribute__((packed)) idt_descriptor_s {

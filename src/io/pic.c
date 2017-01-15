@@ -4,6 +4,7 @@
 #include "io/pic.h"
 #include "io/ports.h"
 #include "main/printk.h"
+#include "main/common.h"
 
 void pic_init() {
     uint8_t mm;

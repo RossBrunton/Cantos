@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "mem/page.h"
+#include "main/common.h"
 
 #define KMALLOC_RESERVED (1 << 0)
 

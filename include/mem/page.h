@@ -6,9 +6,7 @@
 #include <stdbool.h>
 
 #include "main/multiboot.h"
-
-typedef uintptr_t addr_phys_t;
-typedef uintptr_t addr_logical_t;
+#include "main/common.h"
 
 typedef struct page_s page_t;
 struct page_s {
