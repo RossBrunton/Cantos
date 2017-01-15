@@ -123,6 +123,11 @@ void object_remove_from_vm(object_t *object, vm_map_t *map) {
     
     kfree(oentry);
     kfree(mentry);
+    
+    // But wait, if the flag is set, we may have to free ourselves
+    if((object->object_flags & OBJECT_FLAG_AUTOFREE) && !object->vm_maps) {
+        object_free(object);
+    }
 }
 
 

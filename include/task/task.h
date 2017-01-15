@@ -5,6 +5,7 @@
 
 #include "mem/page.h"
 #include "mem/vm.h"
+#include "mem/object.h"
 
 #define TASK_STACK_TOP KERNEL_VM_BASE
 
@@ -28,6 +29,7 @@ struct task_thread_s {
     
     vm_map_t *vm;
     
+    object_t *stack;
     addr_logical_t stack_pointer;
     
     task_thread_t *next_in_process;
@@ -40,6 +42,7 @@ extern task_process_t kernel_process;
 void task_init();
 task_process_t *task_proc_create(uint32_t owner, uint32_t group);
 task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry);
+void task_thread_destroy(task_thread_t *thread);
 void task_enter(task_thread_t *thread);
 void task_yield();
 void task_yield_done(uint32_t sp);

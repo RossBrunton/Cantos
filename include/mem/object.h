@@ -9,6 +9,8 @@
 #include "mem/page.h"
 #include "mem/vm.h"
 
+#define OBJECT_FLAG_AUTOFREE 0x1
+
 typedef struct object_s object_t;
 
 typedef page_t *(* object_generator_t)(addr_logical_t addr, object_t *object, uint32_t count);

@@ -27,10 +27,21 @@
 
 extern char _endofelf;
 
+void myfunc() {
+    int i = 0;
+    printk("Hello world!\n");
+    while(1) {
+        task_yield();
+        printk("Yield success [%d]!\n", i++);
+    }
+    while(1){}
+}
+
 void object_test() {
     object_t *obj;
     task_thread_t *t;
     vm_map_t *vm;
+    task_thread_t *thread;
     
     t = cpu_info()->thread;
     
@@ -41,19 +52,13 @@ void object_test() {
         object_free(obj);
         vm = vm_map_alloc(0, 0, true);
         vm_map_free(vm);
+        
+        thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
+        task_yield();
+        task_thread_destroy(thread);
     }
     
     while(1) {}
-}
-
-void myfunc() {
-    int i = 0;
-    printk("Hello world!\n");
-    while(1) {
-        task_yield();
-        printk("Yield success [%d]!\n", i++);
-    }
-    while(1){}
 }
 
 void myfunc2() {
@@ -70,7 +75,6 @@ void kernel_main() {
     mm_entry_t *entry;
     
     task_thread_t *thread;
-    task_thread_t *thread2;
     
     mb_copy_into_high();
     
@@ -114,6 +118,5 @@ void kernel_main() {
     }
     
     thread = task_thread_create(&kernel_process, (addr_logical_t)&object_test);
-    thread2 = task_thread_create(&kernel_process, (addr_logical_t)&myfunc2);
     task_enter(thread);
 }

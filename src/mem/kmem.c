@@ -22,8 +22,24 @@ kmem_map_t kmem_map;
 
 void _print() {
     kmem_free_t *now;
-    for(now = free_list; now; now = now->next) {
+    int i;
+    for((now = free_list), (i = 0); now && i < 1000; (now = now->next), (i ++)) {
         printk("[%p@%p %d/%x] ", now->base, now, now->size, now->size);
+    }
+    if(i >= 999) {
+        printk("[...]");
+    }
+    printk("\n");
+}
+
+void _print_frees() {
+    kmem_free_t *now;
+    int i;
+    for((now = free_free_structs), (i = 0); now && i < 1000; (now = now->next), (i ++)) {
+        printk("{%p@%p %d/%x} ", now->base, now, now->size, now->size);
+    }
+    if(i >= 999) {
+        printk("{...}");
     }
     printk("\n");
 }
@@ -33,28 +49,46 @@ static void _verify(const char *func) {
 #if DEBUG_MEM
     kmem_free_t *now;
     kmem_free_t *prev = NULL;
+    kmem_free_t *frees = NULL;
     for(now = free_list; now; ((prev = now), (now = now->next))) {
         if(now->next) {
             if(now->next->base < now->base) {
                 _print();
-                panic("Memory corruption, List out of order [%s]", func);
+                panic("Memory corruption, list out of order [%s]", func);
+            }
+            
+            if(prev && prev->base == now->base) {
+                _print();
+                panic("Memory corruption, same start address [%s] (prev: %p, now: %p)", func, prev, now);
             }
             
             if(prev && prev->base + prev->size > now->base) {
                 _print();
-                panic("Memory corruption, Overlapping free [%s]", func);
+                panic("Memory corruption, overlapping free [%s] (prev: %p, now: %p)", func, prev, now);
             }
             
             if((size_t)now->base < 0xc01000) {
                 _print();
                 panic("Memory corruption, memory less than 0xc01000 [%s]\n", func);
             }
+            
+            if(now->next == now) {
+                _print();
+                panic("Memory corruption, free linked to itself [%s]\n", func);
+            }
+        }
+        
+        for(frees = free_free_structs; frees; frees = frees->next) {
+            if(frees == now) {
+                _print();
+                panic("Memory corruption, entry is in free structs list [%s]\n", func);
+            }
         }
     }
     
     if(free_end != prev) {
         _print();
-        panic("Memory corrutpion, End of free array not set correctly [%s]", func);
+        panic("Memory corruption, end of free array not set correctly [%s]", func);
     }
 #endif
 }
@@ -275,6 +309,7 @@ static kmem_free_t *_get_struct() {
     if(free_free_structs) {
         hold = free_free_structs;
         free_free_structs = free_free_structs->next;
+        _verify(__func__);
         return hold;
     }else{
         hold = kmalloc(sizeof(kmem_free_t), KMALLOC_RESERVED);
@@ -287,6 +322,7 @@ static kmem_free_t *_get_struct() {
 void kfree(void *ptr) {
     kmem_header_t *hdr = (kmem_header_t *)ptr - 1;
     size_t full_size = hdr->size + sizeof(kmem_header_t);
+    kmem_free_t *new_entry = _get_struct();
     
 #if DEBUG_VMEM
     printk("Freeing %p (%d bytes).\n", ptr, hdr->size);
@@ -300,7 +336,6 @@ void kfree(void *ptr) {
     _verify("kfree@start of free");
     if(!free_list) {
         // The list of free entries is empty, make a new one
-        kmem_free_t *new_entry = _get_struct();
         new_entry->size = full_size;
         new_entry->base = (addr_logical_t)hdr;
         new_entry->next = NULL;
@@ -311,7 +346,6 @@ void kfree(void *ptr) {
         kmem_free_t *now = free_list;
         kmem_free_t *prev = NULL;
         for(; now && now->base < (addr_logical_t)hdr; ((prev = now), (now = now->next)));
-        kmem_free_t *new_entry = _get_struct();
         _verify("kfree@after get");
         new_entry->size = full_size;
         new_entry->base = (addr_logical_t)hdr;
@@ -321,12 +355,8 @@ void kfree(void *ptr) {
         }else{
             free_list = new_entry;
         }
-        if(!new_entry->next) {
-            if(now) {
-                free_end = now;
-            }else{
-                free_end = new_entry;
-            }
+        if(!now) {
+            free_end = new_entry;
         }
         _verify("kfree@before merge");
         _merge_free(new_entry);

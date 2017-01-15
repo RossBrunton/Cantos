@@ -210,8 +210,8 @@ void page_free(page_t *page) {
     page->next = now;
     
     // Try to flatten the free entries
-    if(prev) _merge_free(prev);
     _merge_free(page);
+    if(prev) _merge_free(prev);
 }
 
 
@@ -345,8 +345,8 @@ void page_kuninstall(void *base, page_t *page) {
     }
     
     // Try to flatten the free entries
-    if(prev) _merge_free_slots(prev);
     _merge_free_slots(new);
+    if(prev) _merge_free_slots(prev);
     
     if(page->next) {
         page_kuninstall((void *)(((addr_logical_t)base) + (page->consecutive * PAGE_SIZE)), page->next);
