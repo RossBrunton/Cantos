@@ -16,6 +16,7 @@
 #include "task/task.h"
 #include "main/cpu.h"
 #include "mem/object.h"
+#include "interrupts/wrapper.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -98,6 +99,7 @@ void __attribute__((noreturn)) kernel_main() {
     printk("MMap Entries:\n");
     
     pic_init();
+    ioapic_init();
     
     cpu_init();
     task_init();
@@ -109,6 +111,12 @@ void __attribute__((noreturn)) kernel_main() {
         page_kuninstall(loc, page);
         page_free(page);
     }*/
+    
+    ioapic_enable_func(IRQ_KEYBOARD, int_wrap_io_keyboard, 0);
+    
+    while(1){}
+    
+    
     
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {

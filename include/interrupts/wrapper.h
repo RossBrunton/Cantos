@@ -29,4 +29,6 @@ void int_wrap_gpf();
 void int_wrap_page_fault();
 void int_wrap_floating_point();
 
+void int_wrap_io_keyboard();
+
 #endif

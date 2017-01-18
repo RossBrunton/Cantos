@@ -33,3 +33,5 @@ handlee int_wrap_stack_segment_not_present, except_stack_segment_not_present
 handlee int_wrap_gpf, except_gpf
 handlee int_wrap_page_fault, except_page_fault
 handle int_wrap_floating_point, except_floating_point
+
+handle int_wrap_io_keyboard, ioapic_keyboard

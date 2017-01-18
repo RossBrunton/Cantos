@@ -91,6 +91,18 @@
  */
 #define EXCEPT_SECURITY 0x1e
 
+/** The base of the LAPIC exceptions
+ *
+ * All LAPIC exceptions are mapped from EXCEPT_LAPIC_BASE to @ref EXCEPT_IOAPIC_BASE.
+ */
+#define EXCEPT_LAPIC_BASE 0x20
+
+/** The base of the IOAPIC exceptions
+ *
+ * The interrupt vector of IRQ #x is (EXCEPT_IOAPIC_BASE + x).
+ */
+#define EXCEPT_IOAPIC_BASE 0x30
+
 /** Handles \#DE by panicing
  *
  * @param[in] state The values of all the registers
