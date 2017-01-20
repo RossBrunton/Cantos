@@ -31,4 +31,6 @@ void int_wrap_floating_point();
 
 void int_wrap_io_keyboard();
 
+void int_wrap_lapic_timer();
+
 #endif

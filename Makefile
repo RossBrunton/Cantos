@@ -29,7 +29,8 @@ OBJECTS=obj/main/boot.o\
 		obj/main/cpu.o\
 		obj/mem/vm.o\
 		obj/mem/object.o\
-		obj/io/ioapic.o
+		obj/io/ioapic.o\
+		obj/interrupts/lapic.o
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

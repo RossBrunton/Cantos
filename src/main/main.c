@@ -99,6 +99,7 @@ void __attribute__((noreturn)) kernel_main() {
     printk("MMap Entries:\n");
     
     pic_init();
+    lapic_init();
     ioapic_init();
     
     cpu_init();

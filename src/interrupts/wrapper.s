@@ -35,3 +35,5 @@ handlee int_wrap_page_fault, except_page_fault
 handle int_wrap_floating_point, except_floating_point
 
 handle int_wrap_io_keyboard, ioapic_keyboard
+
+handle int_wrap_lapic_timer, lapic_timer
