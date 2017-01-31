@@ -24,6 +24,7 @@ typedef struct idt_proc_state_s {
 #define IRQ_INTERRUPT_TIMER 0x0
 #define IRQ_KEYBOARD 0x1
 #define IRQ_CASCADE 0x2
+#define IRQ_INTERRUPT_TIMER_IOAPIC 0x2
 #define IRQ_COM2 0x3
 #define IRQ_COM1 0x4
 #define IRQ_LPT2 0x5

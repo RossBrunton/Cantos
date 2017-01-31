@@ -6,6 +6,11 @@
 #define IO_PORT_SPIC_COM 0xa0
 #define IO_PORT_SPIC_DAT 0xa1
 
+#define IO_PORT_PIT_0 0x40
+#define IO_PORT_PIT_1 0x41
+#define IO_PORT_PIT_2 0x42
+#define IO_PORT_PIT_MODE 0x43
+
 #define IO_PORT_CHECKPOINT 0x80
 
 #define IO_PORT_COM1_BASE 0x3f8

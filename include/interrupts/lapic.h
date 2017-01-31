@@ -34,5 +34,6 @@
 
 void lapic_init();
 void lapic_timer();
+void lapic_eoi();
 
 #endif

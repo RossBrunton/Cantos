@@ -101,6 +101,7 @@ void __attribute__((noreturn)) kernel_main() {
     pic_init();
     lapic_init();
     ioapic_init();
+    pit_init();
     
     cpu_init();
     task_init();
