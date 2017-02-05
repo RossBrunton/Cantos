@@ -35,6 +35,7 @@ void lapic_init() {
 }
 
 void lapic_timer(idt_proc_state_t state) {
+    (void)state;
     printk("Tick\n");
     lapic_eoi();
 }

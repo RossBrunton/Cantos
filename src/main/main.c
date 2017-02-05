@@ -17,6 +17,9 @@
 #include "main/cpu.h"
 #include "mem/object.h"
 #include "interrupts/wrapper.h"
+#include "interrupts/lapic.h"
+#include "io/ioapic.h"
+#include "io/pit.h"
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"

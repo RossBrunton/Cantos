@@ -53,6 +53,7 @@ void ioapic_enable_func(uint8_t irq, void (* func)(), uint64_t flags) {
 }
 
 void ioapic_keyboard(idt_proc_state_t state) {
+    (void)state;
     printk("Got keyboard input!\n");
 }
 

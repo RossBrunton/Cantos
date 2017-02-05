@@ -29,6 +29,7 @@ void pit_init() {
 }
 
 void pit_interrupt(idt_proc_state_t state) {
+    (void)state;
     pit_time ++;
     
     if(!(pit_time % PIT_PER_SECOND)) {

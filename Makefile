@@ -3,7 +3,7 @@ CC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
 DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
-CFLAGS=-g -std=c99 -ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS)
+CFLAGS=-g -std=c99 -ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format
 AFLAGS=-g
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-libgcc
 
