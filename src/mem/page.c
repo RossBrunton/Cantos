@@ -99,12 +99,14 @@ void page_init() {
 
 
 page_t *page_create(uint32_t base, uint8_t flags, unsigned int count) {
-    page_t *write = &static_page;
+    page_t *write;
+    
     write = kmalloc(sizeof(page_t), KMALLOC_RESERVED);
     write->page_id = page_id_counter ++;
     write->mem_base = base;
     write->flags = PAGE_FLAG_ALLOCATED | flags;
     write->consecutive = count;
+    write->next = NULL;
 #if DEBUG_MEM
     printk("Allocated %d pages.\n", count);
 #endif
