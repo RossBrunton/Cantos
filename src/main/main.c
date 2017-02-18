@@ -31,14 +31,18 @@
 
 extern char _endofelf;
 
-void myfunc() {
+void t2() {
     int i = 0;
-    printk("Hello world!\n");
     while(1) {
-        task_yield();
-        printk("Yield success [%d]!\n", i++);
+        printk("Thread 2 [%d]!\n", i++);
     }
-    while(1){}
+}
+
+void t1() {
+    int i = 0;
+    while(1) {
+        printk("Thread 1 [%d]!\n", i++);
+    }
 }
 
 void object_test() {
@@ -57,21 +61,12 @@ void object_test() {
         vm = vm_map_alloc(0, 0, true);
         vm_map_free(vm);
         
-        thread = task_thread_create(&kernel_process, (addr_logical_t)&myfunc);
+        thread = task_thread_create(&kernel_process, (addr_logical_t)&t1);
         task_yield();
         task_thread_destroy(thread);
     }
     
     while(1) {}
-}
-
-void myfunc2() {
-    int i = 0;
-    while(1) {
-        task_yield();
-        printk("Yield success 2 [%d]!\n", i++);
-    }
-    while(1){}
 }
 
 void __attribute__((noreturn)) kernel_main() {
@@ -119,10 +114,6 @@ void __attribute__((noreturn)) kernel_main() {
     
     ioapic_enable_func(IRQ_KEYBOARD, int_wrap_io_keyboard, 0);
     
-    while(1){}
-    
-    
-    
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
         printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
@@ -130,6 +121,10 @@ void __attribute__((noreturn)) kernel_main() {
         entry ++;
     }
     
-    thread = task_thread_create(&kernel_process, (addr_logical_t)&object_test);
+    printk("--- Before thread\n");
+    thread = task_thread_create(&kernel_process, (addr_logical_t)&t1);
+    printk("--- Thread created\n");
+    task_thread_create(&kernel_process, (addr_logical_t)&t2);
+    printk("--- Second thread created!\n");
     task_enter(thread);
 }

@@ -7,6 +7,7 @@
 #include "interrupts/wrapper.h"
 #include "mem/gdt.h"
 #include "io/pit.h"
+#include "task/task.h"
 
 static volatile uint32_t *_base;
 static volatile uint8_t _stage; // 0 = Waiting for first change, 1 = counting, 2 = done
@@ -62,6 +63,7 @@ void lapic_timer(idt_proc_state_t state) {
                 _deadline = pit_time + PIT_PER_SECOND + 1;
                 _callibration_ticks = 1;
             }
+            lapic_eoi();
             break;
         
         case 1:
@@ -76,17 +78,18 @@ void lapic_timer(idt_proc_state_t state) {
             }else{
                 _callibration_ticks ++;
             }
+            lapic_eoi();
             break;
         
         case 2:
-            printk("Tick\n");
+            lapic_eoi();
+            task_timer_yield();
             break;
         
         default:
+            lapic_eoi();
             break;
     }
-    
-    lapic_eoi();
 }
 
 

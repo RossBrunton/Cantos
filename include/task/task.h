@@ -46,5 +46,6 @@ void task_thread_destroy(task_thread_t *thread);
 void __attribute__((noreturn)) task_enter(task_thread_t *thread);
 void task_yield();
 void task_yield_done(uint32_t sp);
+void task_timer_yield();
 
 #endif

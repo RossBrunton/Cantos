@@ -32,7 +32,7 @@
 #define LAPIC_TIMER_MODE_PERIODIC (1 << 17)
 #define LAPIC_TIMER_MODE_ONE_SHOT (0 << 17)
 
-#define LAPIC_SWITCHES_PER_SECOND 1
+#define LAPIC_SWITCHES_PER_SECOND 1000
 
 void lapic_init();
 void lapic_timer();

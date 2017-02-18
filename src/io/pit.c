@@ -9,7 +9,6 @@
 #include "interrupts/lapic.h"
 
 volatile uint32_t pit_time = 0;
-static int seconds = 0;
 
 static void _set_mode(uint8_t channel, uint8_t access_mode, uint8_t operating_mode) {
     uint8_t hold = 0;
@@ -32,9 +31,5 @@ void pit_interrupt(idt_proc_state_t state) {
     (void)state;
     pit_time ++;
     
-    if(!(pit_time % PIT_PER_SECOND)) {
-        seconds ++;
-        printk("PIT fire! %d\n", seconds);
-    }
     lapic_eoi();
 }

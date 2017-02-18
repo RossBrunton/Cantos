@@ -10,6 +10,8 @@
 #include "mem/object.h"
 #include "main/panic.h"
 
+#define _INIT_FLAGS 0x0;
+
 task_process_t kernel_process;
 
 static uint32_t thread_counter;
@@ -79,10 +81,12 @@ task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry)
     *sp = entry;
     sp --;
     *sp = (addr_logical_t)task_asm_entry_point;
+    sp --;
+    *sp = _INIT_FLAGS;
     sp -= (sizeof(pstate) / 4);
     _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
     
-    thread->stack_pointer = TASK_STACK_TOP - sizeof(void *) * 2 - sizeof(pstate);
+    thread->stack_pointer = TASK_STACK_TOP - sizeof(void *) * 3 - sizeof(pstate);
     
     page_kuninstall(stack_installed, thread->stack->pages->page);
     
@@ -167,3 +171,18 @@ void task_yield_done(uint32_t sp) {
     
     task_enter(next);
 }
+
+
+void task_timer_yield() {
+    cpu_status_t *info;
+    info = cpu_info();
+    
+    if(!info->thread) {
+        // Not running a thread, do nothing
+        return;
+    }
+    
+    task_yield();
+}
+
+#undef _INIT_FLAGS;
