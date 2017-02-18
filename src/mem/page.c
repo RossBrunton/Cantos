@@ -344,6 +344,8 @@ void page_kuninstall(void *base, page_t *page) {
     for(i = 0; i < page->consecutive; i ++) {
         table_entry->block = 0;
         table_entry ++;
+        __asm__ volatile("invlpg (%0)" ::"r" (base) : "memory");
+        base = (void *)((addr_phys_t)base + PAGE_SIZE);
     }
     
     // Try to flatten the free entries
@@ -351,7 +353,7 @@ void page_kuninstall(void *base, page_t *page) {
     if(prev) _merge_free_slots(prev);
     
     if(page->next) {
-        page_kuninstall((void *)(((addr_logical_t)base) + (page->consecutive * PAGE_SIZE)), page->next);
+        page_kuninstall(base, page->next);
     }
 }
 
