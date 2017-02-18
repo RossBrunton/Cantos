@@ -21,6 +21,6 @@
 
 void pit_init();
 void pit_interrupt(idt_proc_state_t state);
-extern volatile int pit_time;
+extern volatile uint32_t pit_time;
 
 #endif

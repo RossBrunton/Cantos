@@ -8,7 +8,7 @@
 #include "interrupts/wrapper.h"
 #include "interrupts/lapic.h"
 
-volatile int pit_time = 0;
+volatile uint32_t pit_time = 0;
 static int seconds = 0;
 
 static void _set_mode(uint8_t channel, uint8_t access_mode, uint8_t operating_mode) {
