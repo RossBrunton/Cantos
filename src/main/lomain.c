@@ -4,6 +4,7 @@
 
 #include "mem/page.h"
 #include "mem/kmem.h"
+#include "io/acpi.h"
 
 extern char _startofro;
 extern char _endofro;
@@ -93,6 +94,9 @@ volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi) {
         _memcpy(&(low_mb_mem_table[i]), mm_entry, sizeof(mm_entry_t));
         mm_entry = (mm_entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
     }
+    
+    // Find ACPI tables
+    low_acpi_setup();
     
     // Fill in kernel map
     map_low.kernel_ro_start = low_ro_start;

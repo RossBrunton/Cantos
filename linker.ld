@@ -16,6 +16,7 @@ SECTIONS {
         *(.multiboot)
         obj/main/boot.o(.text)
         obj/main/lomain.o(.text)
+        obj/io/loacpi.o(.text)
     }
     
     /* Read-only data. */
@@ -23,6 +24,7 @@ SECTIONS {
     {
         obj/main/lomain.o(.rodata)
         obj/main/boot.o(.rodata)
+        obj/io/loacpi.o(.rodata)
     }
     
     /* Read-write data (initialized) */
@@ -30,6 +32,7 @@ SECTIONS {
     {
         obj/main/lomain.o(.data)
         obj/main/boot.o(.data)
+        obj/io/loacpi.o(.data)
     }
     
     /* Read-write data (uninitialized) and stack */
@@ -37,8 +40,10 @@ SECTIONS {
     {
         obj/main/lomain.o(COMMON)
         obj/main/boot.o(COMMON)
+        obj/io/loacpi.o(COMMON)
         obj/main/lomain.o(.bss)
         obj/main/boot.o(.bss)
+        obj/io/loacpi.o(.bss)
     }
     
     /* HIGH MEMORY */
