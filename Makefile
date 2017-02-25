@@ -10,6 +10,9 @@ CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 AFLAGS=-g
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-libgcc
 
+CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
+CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
+
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
 		obj/structures/stream.o\
@@ -36,7 +39,8 @@ OBJECTS=obj/main/boot.o\
 		obj/io/ioapic.o\
 		obj/interrupts/lapic.o\
 		obj/io/pit.o\
-		obj/io/loacpi.o
+		obj/io/loacpi.o\
+		obj/main/cpp.o
 
 obj/%.o: src/%.cpp
 	$(CPPC) $(CPPFLAGS) -o $@ $^
@@ -60,10 +64,10 @@ dirs:
 	test -e obj/task || mkdir obj/task
 	test -e obj/structures || mkdir obj/structures
 
-all: dirs all_objects
+all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 
 all_objects: $(OBJECTS)
-	$(CC) -o bin/cantos.bin $^ $(LDFLAGS)
+	$(CC) -o bin/cantos.bin obj/main/crti.o $(CRTBEGIN_OBJ) $^ $(CRTEND_OBJ) obj/main/crtn.o $(LDFLAGS)
 
 grub: all
 	mkdir -p isodir/boot/grub

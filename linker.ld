@@ -51,12 +51,27 @@ SECTIONS {
     
     _startofro = ALIGN(4K);
     
-    /* First put the multiboot header, as it is required to be put very early
-       early in the image or the bootloader won't recognize the file format.
-       Next we'll put the .text section. */
     .hi-text BLOCK(4K) : AT(ADDR(.hi-text) - _high_offset)
     {
         *(.text)
+        *(.text*)
+    }
+    
+    /** Init data */
+    .hi-init : AT(ADDR(.hi-init) - _high_offset)
+    {
+        *(.init)
+    }
+    
+    /** Finish data */
+    .hi-fini : AT(ADDR(.hi-fini) - _high_offset)
+    {
+        *(.fini)
+    }
+    
+    .eh_frame : AT(ADDR(.eh_frame) - _high_offset)
+    {
+        *(.eh_frame)
     }
     
     /* Read-only data. */
@@ -81,6 +96,18 @@ SECTIONS {
         *(.hi-bss)
         *(COMMON)
         *(.bss)
+    }
+    
+    .jcr BLOCK(4K) : AT(ADDR(.jcr) - _high_offset) {
+        *(.jcr)
+    }
+    
+    .ctors : AT(ADDR(.ctors) - _high_offset) {
+        *(.ctors)
+    }
+    
+    .dtors : AT(ADDR(.dtors) - _high_offset) {
+        *(.dtors)
     }
     
     _endofrw = ALIGN(4K);

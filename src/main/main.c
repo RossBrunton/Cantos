@@ -29,6 +29,7 @@
 #endif
 
 extern char _endofelf;
+extern void _init();
 
 void t2() {
     int i = 0;
@@ -77,6 +78,8 @@ void __attribute__((noreturn)) kernel_main() {
     mb_copy_into_high();
     
     kmem_init();
+    
+    _init();
     
     serial_init();
     gdt_init();
