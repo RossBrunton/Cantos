@@ -1,15 +1,19 @@
 CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
+CPPC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-as
 
 DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
-CFLAGS=-g -std=c99 -ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format
+COMMON_FLAGS=-ffreestanding  -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format -Wno-unused-parameter
+CFLAGS=-g -std=c99 $(COMMON_FLAGS)
+CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 AFLAGS=-g
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-libgcc
 
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
 		obj/structures/stream.o\
+		obj/structures/stream_old.o\
 		obj/main/vga.o\
 		obj/main/printk.o\
 		obj/mem/page.o\
@@ -33,6 +37,9 @@ OBJECTS=obj/main/boot.o\
 		obj/interrupts/lapic.o\
 		obj/io/pit.o\
 		obj/io/loacpi.o
+
+obj/%.o: src/%.cpp
+	$(CPPC) $(CPPFLAGS) -o $@ $^
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

@@ -13,7 +13,11 @@
 /** The current error code */
 extern volatile int errno;
 
+/** The type used to represent errors */
+typedef uint32_t error_t;
+
 /** Operation not permitted. */
+#define EOK 0
 #define EPERM 1
 
 #endif

@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "structures/stream.h"
 #include "main/vga.h"
 #include "main/multiboot.h"
 #include "main/printk.h"
