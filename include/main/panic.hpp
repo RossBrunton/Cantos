@@ -1,5 +1,5 @@
-#ifndef _H_MAIN_PANIC_
-#define _H_MAIN_PANIC_
+#ifndef _HPP_MAIN_PANIC_
+#define _HPP_MAIN_PANIC_
 
 /** @file main/panic.h
  *
@@ -21,6 +21,6 @@
  * @param[in] fmt The format string
  * @param[in] ... The values to use with the format
  */
-void __attribute__((format(printf, 1, 2))) panic(const char *fmt, ...);
+extern "C" void __attribute__((format(printf, 1, 2))) panic(const char *fmt, ...);
 
 #endif

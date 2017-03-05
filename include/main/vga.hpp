@@ -1,5 +1,5 @@
-#ifndef _H_MAIN_VGA_
-#define _H_MAIN_VGA_
+#ifndef _HPP_MAIN_VGA_
+#define _HPP_MAIN_VGA_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -34,21 +34,21 @@ namespace vga {
     uint8_t entry_colour(colour_t fg, colour_t bg);
     uint16_t add_colour(uint8_t uc, uint8_t color);
 
-    void init();
+    extern "C" void vga_init();
     void put_at(uint16_t c, size_t x, size_t y);
 
-    class EntryStream : protected stream::Stream {
+    class EntryStream : public stream::Stream {
     public:
         error_t write(const void *buff, size_t len, uint32_t flags, void *data, uint32_t *written);
     };
 
-    class StringStream : protected stream::Stream {
+    class StringStream : public stream::Stream {
     public:
         error_t write(const void *buff, size_t len, uint32_t flags, void *data, uint32_t *written);
     };
 
-    EntryStream entryStream;
-    StringStream stringStream;
+    extern EntryStream entry_stream;
+    extern StringStream string_stream;
 }
 
 #endif

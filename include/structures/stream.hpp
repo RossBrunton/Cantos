@@ -88,7 +88,7 @@ namespace stream {
          * @param[in] fmt The format string.
          * @param[in] va The argument list from va_start.
          */
-        void __attribute__((format(printf, 4, 0))) vwritef(uint32_t flags, void *data, char *fmt, va_list va);
+        void __attribute__((format(printf, 4, 0))) writef(uint32_t flags, void *data, const char *fmt, va_list va);
         
         /** Writes to the given stream using printf semantics.
          *
@@ -122,7 +122,7 @@ namespace stream {
          * @param[in] fmt The format string.
          * @param[in] ... The format parameters.
          */
-        void __attribute__((format(printf, 4, 5))) writef(uint32_t flags, void *data, char *fmt, ...);
+        void __attribute__((format(printf, 4, 5))) writef(uint32_t flags, void *data, const char *fmt, ...);
     };
 }
 

@@ -36,17 +36,17 @@ namespace stream {
         if(uppercase) return value + 0x41 - 0xa;
         return value + 0x61 - 0xa;
     }
-    
+
     #define _NUM_BUFFER_SIZE 20
-    
-    void __attribute__((format(printf, 4, 5))) Stream::writef(uint32_t flags, void *data, char *fmt, ...) {
+
+    void __attribute__((format(printf, 4, 5))) Stream::writef(uint32_t flags, void *data, const char *fmt, ...) {
         va_list va;
         va_start(va, fmt);
-        this->vwritef(flags, data, fmt, va);
+        this->writef(flags, data, fmt, va);
         va_end(va);
     }
-    
-    void __attribute__((format(printf, 4, 0))) Stream::vwritef(uint32_t flags, void *data, char *fmt, va_list ap) {
+
+    void __attribute__((format(printf, 4, 0))) Stream::writef(uint32_t flags, void *data, const char *fmt, va_list ap) {
         size_t p = 0;
         int written = 0;
         unsigned long long val;
@@ -55,10 +55,10 @@ namespace stream {
         uint32_t tmp;
         int *slot;
         uint8_t *str;
-        
+
         for(p = 0; fmt[p]; p++) {
             char cur = fmt[p];
-            
+
             if(cur == '%') {
                 length = 0;
                 start: {
@@ -91,10 +91,10 @@ namespace stream {
                             if(length == 1) val = va_arg(ap, unsigned long);
                             if(length == 2) val = va_arg(ap, unsigned long long);
                             base = 10;
-                            
+
                             if(cur == 'x' || cur == 'X' || cur == 'p') base = 16;
                             if(cur == 'o') base = 8;
-                            
+
                             if(cur == 'd' || cur == 'i') {
                                 signed int vals = val;
                                 if(vals < 0) {
@@ -103,7 +103,7 @@ namespace stream {
                                     written ++;
                                 }
                             }
-                            
+
                             {
                                 int start = 0;
                                 uint8_t output[_NUM_BUFFER_SIZE];
@@ -111,9 +111,9 @@ namespace stream {
                                     output[i] = _num_to_str(val % base, cur == 'X');
                                     val = val / base;
                                 }
-                                
+
                                 while(output[start] == '0' && start < _NUM_BUFFER_SIZE - 1) start ++;
-                                
+
                                 this->write(output + start, _NUM_BUFFER_SIZE - start, flags, data, &tmp);
                                 written += _NUM_BUFFER_SIZE - start;
                             }
@@ -131,9 +131,9 @@ namespace stream {
                 written ++;
             }
         }
-        
+
         va_end(ap);
     }
-    
+
     #undef _NUM_BUFFER_SIZE
 }

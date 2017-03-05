@@ -16,7 +16,6 @@ CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
 OBJECTS=obj/main/boot.o\
 		obj/main/main.o\
 		obj/structures/stream.o\
-		obj/structures/stream_old.o\
 		obj/main/vga.o\
 		obj/main/printk.o\
 		obj/mem/page.o\
@@ -40,8 +39,7 @@ OBJECTS=obj/main/boot.o\
 		obj/interrupts/lapic.o\
 		obj/io/pit.o\
 		obj/io/loacpi.o\
-		obj/main/cpp.o\
-		obj/main/vga_old.o
+		obj/main/cpp.o
 
 obj/%.o: src/%.cpp
 	$(CPPC) $(CPPFLAGS) -o $@ $^
