@@ -40,7 +40,8 @@ OBJECTS=obj/main/boot.o\
 		obj/interrupts/lapic.o\
 		obj/io/pit.o\
 		obj/io/loacpi.o\
-		obj/main/cpp.o
+		obj/main/cpp.o\
+		obj/main/vga_old.o
 
 obj/%.o: src/%.cpp
 	$(CPPC) $(CPPFLAGS) -o $@ $^
