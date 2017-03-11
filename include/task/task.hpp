@@ -3,10 +3,11 @@
 
 #include <stddef.h>
 
+#include "mem/vm.hpp"
+#include "mem/object.hpp"
+
 extern "C" {
     #include "mem/page.h"
-    #include "mem/vm.h"
-    #include "mem/object.h"
 }
 
 namespace task {
@@ -36,9 +37,9 @@ namespace task {
         uint32_t thread_id;
         uint32_t task_id;
 
-        vm_map_t *vm;
+        vm::Map *vm;
 
-        object_t *stack;
+        object::Object *stack;
         addr_logical_t stack_pointer;
 
         Thread *next_in_process;

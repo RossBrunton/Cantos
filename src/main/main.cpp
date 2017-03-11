@@ -4,6 +4,7 @@
 
 #include "task/task.hpp"
 #include "main/cpu.hpp"
+#include "mem/object.hpp"
 
 extern "C" {
     #include "main/vga.h"
@@ -16,7 +17,6 @@ extern "C" {
     #include "interrupts/exceptions.h"
     #include "io/pic.h"
     #include "io/serial.h"
-    #include "mem/object.h"
     #include "interrupts/wrapper.h"
     #include "interrupts/lapic.h"
     #include "io/ioapic.h"
@@ -49,20 +49,21 @@ void t1() {
 }
 
 void object_test() {
-    object_t *obj;
+    object::Object *obj;
     task::Thread *t;
-    vm_map_t *vm;
+    vm::Map *vm;
     task::Thread *thread;
 
     t = cpu::info()->thread;
 
     while(1) {
-        obj = object_alloc(object_gen_empty, object_del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, PAGE_TABLE_RW, 0);
-        object_generate(obj, 0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
-        object_add_to_vm(obj, t->vm, 0x0);
-        object_free(obj);
-        vm = vm_map_alloc(0, 0, true);
-        vm_map_free(vm);
+        obj = new object::Object(object::gen_empty, object::del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, PAGE_TABLE_RW, 0);
+        obj->generate(0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
+        obj->add_to_vm(t->vm, 0x0);
+        delete obj;
+
+        vm = new vm::Map(0, 0, true);
+        delete vm;
 
         thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);
         task::task_yield();

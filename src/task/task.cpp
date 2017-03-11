@@ -5,13 +5,13 @@
 #include "main/panic.hpp"
 #include "main/cpu.hpp"
 #include "main/printk.hpp"
+#include "mem/object.hpp"
 
 extern "C" {
     #include "mem/kmem.h"
     #include "interrupts/idt.h"
     #include "mem/gdt.h"
     #include "task/asm.h"
-    #include "mem/object.h"
 }
 
 namespace task {
@@ -71,12 +71,12 @@ namespace task {
         this->task_id = ++task_counter;
 
         // Create the virtual memory map
-        this->vm = vm_map_alloc(process->process_id, this->task_id, kernel);
+        this->vm = new vm::Map(process->process_id, this->task_id, kernel);
 
         // Create the stack object
-        this->stack = object_alloc(object_gen_empty, object_del_free, 1, PAGE_TABLE_RW, OBJECT_FLAG_AUTOFREE);
-        object_generate(this->stack, 0, 1);
-        object_add_to_vm(this->stack, this->vm, TASK_STACK_TOP - PAGE_SIZE);
+        this->stack = new object::Object(object::gen_empty, object::del_free, 1, PAGE_TABLE_RW, object::FLAG_AUTOFREE);
+        this->stack->generate(0, 1);
+        this->stack->add_to_vm(this->vm, TASK_STACK_TOP - PAGE_SIZE);
 
         stack_installed = page_kinstall(this->stack->pages->page, 0);
 
@@ -131,7 +131,7 @@ namespace task {
         }
 
         // And delete the memory map
-        vm_map_free(this->vm);
+        delete this->vm;
     }
 
 
@@ -142,7 +142,7 @@ namespace task {
         info->thread = thread;
 
         // Load the task's memory map
-        vm_table_switch(thread->vm->physical_dir->mem_base);
+        vm::table_switch(thread->vm->physical_dir->mem_base);
 
         // And then hop into it
         task_asm_enter(thread->stack_pointer);
@@ -167,7 +167,7 @@ namespace task {
         info->thread = NULL;
 
         // And then use the "normal" memory map
-        vm_table_clear();
+        vm::table_clear();
 
         next = _next_task(current);
 
