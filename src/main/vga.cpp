@@ -23,7 +23,7 @@ namespace vga {
     static size_t terminal_column;
     static volatile uint16_t *terminal_buffer;
 
-    extern "C" void vga_init() {
+    void init() {
         terminal_row = 0;
         terminal_column = 0;
         page_t *page;

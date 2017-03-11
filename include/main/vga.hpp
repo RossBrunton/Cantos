@@ -34,7 +34,7 @@ namespace vga {
     uint8_t entry_colour(colour_t fg, colour_t bg);
     uint16_t add_colour(uint8_t uc, uint8_t color);
 
-    extern "C" void vga_init();
+    void init();
     void put_at(uint16_t c, size_t x, size_t y);
 
     class EntryStream : public stream::Stream {

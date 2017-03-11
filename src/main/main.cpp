@@ -5,9 +5,9 @@
 #include "task/task.hpp"
 #include "main/cpu.hpp"
 #include "mem/object.hpp"
+    #include "main/vga.hpp"
 
 extern "C" {
-    #include "main/vga.h"
     #include "main/multiboot.h"
     #include "main/printk.h"
     #include "mem/page.h"
@@ -90,7 +90,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     idt_init();
     except_init();
 
-    vga_init();
+    vga::init();
     printk("Cantos\n");
     printk("Booted by %s [%s]\n", mb_boot_loader_name, mb_cmdline);
     printk("Initial memory state:\n");
