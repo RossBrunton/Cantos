@@ -3,47 +3,9 @@
 
 #include <stddef.h>
 
-#include "mem/page.h"
-#include "mem/vm.h"
-#include "mem/object.h"
+#include "main/common.h"
 
-#define TASK_STACK_TOP KERNEL_VM_BASE
-
-typedef struct task_process_s task_process_t;
-typedef struct task_thread_s task_thread_t;
-
-struct task_process_s {
-    task_thread_t *thread;
-    uint32_t process_id;
-    uint32_t owner;
-    uint32_t group;
-    uint32_t thread_counter;
-    
-    task_process_t *next;
-};
-
-struct task_thread_s {
-    task_process_t *process;
-    uint32_t thread_id;
-    uint32_t task_id;
-    
-    vm_map_t *vm;
-    
-    object_t *stack;
-    addr_logical_t stack_pointer;
-    
-    task_thread_t *next_in_process;
-    task_thread_t *next_in_tasks;
-};
-
-
-extern task_process_t kernel_process;
-
-void task_init();
-task_process_t *task_proc_create(uint32_t owner, uint32_t group);
-task_thread_t *task_thread_create(task_process_t *process, addr_logical_t entry);
-void task_thread_destroy(task_thread_t *thread);
-void __attribute__((noreturn)) task_enter(task_thread_t *thread);
+void __attribute__((noreturn)) task_enter(void *thread);
 void task_yield();
 void task_yield_done(uint32_t sp);
 void task_timer_yield();

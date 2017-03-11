@@ -8,6 +8,10 @@
 #include "main/printk.h"
 #include "main/panic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @todo Handle page flags
  */
@@ -179,3 +183,7 @@ void object_del_free(page_t *page, object_t *object) {
     (void)object;
     page_free(page);
 }
+
+#ifdef __cplusplus
+}
+#endif
