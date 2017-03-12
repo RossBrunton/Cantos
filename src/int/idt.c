@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "interrupts/idt.h"
+#include "int/idt.h"
 #include "mem/page.h"
 #include "main/common.h"
 #include "main/panic.h"

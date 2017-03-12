@@ -4,7 +4,7 @@
 #include "structures/stream.hpp"
 #include "main/vga.hpp"
 #include "main/printk.hpp"
-#include "io/serial.hpp"
+#include "hw/serial.hpp"
 
 static uint8_t clr = vga::COLOUR_WHITE | (vga::COLOUR_BLACK << 4);
 static uint8_t clr_warn = vga::COLOUR_MAGENTA | (vga::COLOUR_BLACK << 4);

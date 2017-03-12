@@ -1,6 +1,6 @@
 .section .text
 
-#include "interrupts/numbers.h"
+#include "int/numbers.h"
 
 .macro handle vec, name
 .globl idt_asm_interrupt_\name

@@ -1,5 +1,5 @@
-#include "io/utils.h"
-#include "io/ports.h"
+#include "hw/utils.h"
+#include "hw/ports.h"
 
 #include <stdint.h>
 

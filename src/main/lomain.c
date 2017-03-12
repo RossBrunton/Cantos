@@ -4,7 +4,7 @@
 
 #include "mem/page.h"
 #include "mem/kmem.h"
-#include "io/acpi.h"
+#include "hw/acpi.h"
 
 extern char _startofro;
 extern char _endofro;

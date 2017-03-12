@@ -1,7 +1,7 @@
 #ifndef _H_IO_IOAPIC_
 #define _H_IO_IOAPIC_
 
-#include "interrupts/idt.h"
+#include "int/idt.h"
 
 void ioapic_init();
 

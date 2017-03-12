@@ -13,14 +13,14 @@ extern "C" {
     #include "mem/page.h"
     #include "mem/kmem.h"
     #include "mem/gdt.h"
-    #include "interrupts/idt.h"
-    #include "interrupts/exceptions.h"
-    #include "interrupts/numbers.h"
-    #include "io/pic.h"
-    #include "io/serial.h"
-    #include "interrupts/lapic.h"
-    #include "io/ioapic.h"
-    #include "io/pit.h"
+    #include "int/idt.h"
+    #include "int/exceptions.h"
+    #include "int/numbers.h"
+    #include "int/pic.h"
+    #include "hw/serial.h"
+    #include "int/lapic.h"
+    #include "int/ioapic.h"
+    #include "hw/pit.h"
 }
 
 #if defined(__linux__)

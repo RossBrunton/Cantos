@@ -1,12 +1,12 @@
 #include <stdint.h>
 
-#include "io/pit.h"
-#include "io/ports.h"
+#include "hw/pit.h"
+#include "hw/ports.h"
 #include "main/printk.h"
-#include "io/utils.h"
-#include "io/ioapic.h"
-#include "interrupts/lapic.h"
-#include "interrupts/numbers.h"
+#include "hw/utils.h"
+#include "int/ioapic.h"
+#include "int/lapic.h"
+#include "int/numbers.h"
 
 volatile uint32_t pit_time = 0;
 

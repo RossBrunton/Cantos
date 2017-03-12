@@ -1,12 +1,12 @@
 #include <stdint.h>
 
-#include "interrupts/lapic.h"
+#include "int/lapic.h"
 #include "mem/page.h"
 #include "main/printk.h"
-#include "interrupts/exceptions.h"
-#include "interrupts/numbers.h"
+#include "int/exceptions.h"
+#include "int/numbers.h"
 #include "mem/gdt.h"
-#include "io/pit.h"
+#include "hw/pit.h"
 #include "task/task.h"
 
 static volatile uint32_t *_base;

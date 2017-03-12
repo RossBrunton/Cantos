@@ -1,7 +1,7 @@
 #ifndef _H_INTERRUPTS_NUMBERS_
 #define _H_INTERRUPTS_NUMBERS_
 
-/** @file interrupts/numbers.h
+/** @file int/numbers.h
  *
  * Constants representing all the exceptions that can be raised.
  * 

@@ -1,9 +1,9 @@
 #include <stdint.h>
 
-#include "io/serial.hpp"
+#include "hw/serial.hpp"
 #include "main/printk.hpp"
-#include "io/ports.h"
-#include "io/utils.h"
+#include "hw/ports.h"
+#include "hw/utils.h"
 
 namespace serial {
     const int _PORT_COUNT = 4;

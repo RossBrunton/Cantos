@@ -1,7 +1,7 @@
 #ifndef _H_INTERRUPTS_IDT_
 #define _H_INTERRUPTS_IDT_
 
-/** @file interrupts/idt.h
+/** @file int/idt.h
  *
  * Handles setting up the IDT, and managing interrupts.
  *

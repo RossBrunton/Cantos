@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "io/acpi.h"
+#include "hw/acpi.h"
 #include "main/common.h"
 
 void low_acpi_setup() {

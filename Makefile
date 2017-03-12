@@ -13,33 +13,33 @@ LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-lib
 CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
 
-OBJECTS=obj/main/boot.o\
-		obj/main/main.o\
-		obj/structures/stream.o\
-		obj/main/vga.o\
-		obj/main/printk.o\
-		obj/mem/page.o\
-		obj/mem/kmem.o\
-		obj/main/lomain.o\
-		obj/main/multiboot.o\
-		obj/main/panic.o\
-		obj/mem/gdt.o\
-		obj/interrupts/idt.o\
-		obj/interrupts/wrapper.o\
-		obj/interrupts/exceptions.o\
-		obj/io/utils.o\
-		obj/io/pic.o\
-		obj/io/serial.o\
-		obj/task/task.o\
-		obj/task/asm.o\
-		obj/main/cpu.o\
-		obj/mem/vm.o\
-		obj/mem/object.o\
-		obj/io/ioapic.o\
-		obj/interrupts/lapic.o\
-		obj/io/pit.o\
-		obj/io/loacpi.o\
-		obj/main/cpp.o
+OBJECTS=obj/hw/loacpi.o\
+	obj/hw/pit.o\
+	obj/hw/serial.o\
+	obj/hw/utils.o\
+	obj/int/exceptions.o\
+	obj/int/idt.o\
+	obj/int/ioapic.o\
+	obj/int/lapic.o\
+	obj/int/pic.o\
+	obj/int/wrapper.o\
+	obj/main/boot.o\
+	obj/main/cpp.o\
+	obj/main/cpu.o\
+	obj/main/lomain.o\
+	obj/main/main.o\
+	obj/main/multiboot.o\
+	obj/main/panic.o\
+	obj/main/printk.o\
+	obj/main/vga.o\
+	obj/mem/gdt.o\
+	obj/mem/kmem.o\
+	obj/mem/object.o\
+	obj/mem/page.o\
+	obj/mem/vm.o\
+	obj/structures/stream.o\
+	obj/task/asm.o\
+	obj/task/task.o
 
 obj/%.o: src/%.cpp
 	$(CPPC) $(CPPFLAGS) -o $@ $^
@@ -61,8 +61,8 @@ clean:
 dirs:
 	test -e obj/main || mkdir obj/main
 	test -e obj/mem || mkdir obj/mem
-	test -e obj/interrupts || mkdir obj/interrupts
-	test -e obj/io || mkdir obj/io
+	test -e obj/int || mkdir obj/int
+	test -e obj/hw || mkdir obj/hw
 	test -e obj/task || mkdir obj/task
 	test -e obj/structures || mkdir obj/structures
 

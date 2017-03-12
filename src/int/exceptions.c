@@ -1,10 +1,10 @@
 #include <stdint.h>
 
-#include "interrupts/exceptions.h"
-#include "interrupts/idt.h"
+#include "int/exceptions.h"
+#include "int/idt.h"
 #include "main/panic.h"
 #include "mem/gdt.h"
-#include "interrupts/numbers.h"
+#include "int/numbers.h"
 
 void except_div0(idt_proc_state_t state) {
     (void)state;

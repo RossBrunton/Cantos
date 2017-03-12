@@ -1,7 +1,7 @@
 #ifndef _H_INTERRUPTS_EXCEPTIONS_
 #define _H_INTERRUPTS_EXCEPTIONS_
 
-/** @file interrupts/exceptions.h
+/** @file int/exceptions.h
  *
  * Constants representing CPU exceptions that can occur, and handler functions which will be called when they do.
  *
@@ -14,7 +14,7 @@
  * @sa http://wiki.osdev.org/Exceptions
  */
 
-#include "interrupts/idt.h"
+#include "int/idt.h"
 #include "main/common.h"
 
 /** Handles \#DE by panicing

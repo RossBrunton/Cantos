@@ -1,11 +1,11 @@
 #include <stdint.h>
 
-#include "io/utils.h"
-#include "io/pic.h"
-#include "io/ports.h"
+#include "hw/utils.h"
+#include "int/pic.h"
+#include "hw/ports.h"
 #include "main/printk.h"
 #include "main/common.h"
-#include "interrupts/numbers.h"
+#include "int/numbers.h"
 
 void pic_init() {
     uint8_t mm;

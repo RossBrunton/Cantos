@@ -1,13 +1,13 @@
 #include <stdint.h>
 
-#include "io/utils.h"
-#include "io/ioapic.h"
-#include "io/ports.h"
-#include "io/pic.h"
+#include "hw/utils.h"
+#include "int/ioapic.h"
+#include "hw/ports.h"
+#include "int/pic.h"
 #include "main/printk.h"
 #include "mem/page.h"
-#include "interrupts/exceptions.h"
-#include "interrupts/numbers.h"
+#include "int/exceptions.h"
+#include "int/numbers.h"
 #include "mem/gdt.h"
 
 #define _DATA 0x4 /* 4 bytes */
