@@ -5,12 +5,13 @@
 #include "io/ports.h"
 #include "main/printk.h"
 #include "main/common.h"
+#include "interrupts/numbers.h"
 
 void pic_init() {
     uint8_t mm;
     uint8_t sm;
     
-    mm = ~(1 << IRQ_CASCADE);
+    mm = ~(1 << INT_IRQ_CASCADE);
     sm = ~0;
     
     outb(IO_PORT_MPIC_COM, PIC_ICW1_INIT + PIC_ICW1_ICW4);

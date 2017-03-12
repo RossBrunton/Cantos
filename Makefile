@@ -1,13 +1,13 @@
 CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
 CPPC=$(CROSS_PREFIX)-gcc
-AS=$(CROSS_PREFIX)-as
+AS=$(CROSS_PREFIX)-gcc
 
 DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
-COMMON_FLAGS=-ffreestanding  -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format -Wno-unused-parameter
+COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format -Wno-unused-parameter
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
 CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
-AFLAGS=-g
+AFLAGS=-c -g -Iinclude/
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-libgcc
 
 CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
@@ -48,6 +48,9 @@ obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 obj/%.o: src/%.s
+	$(AS) $(AFLAGS) -o $@ $^
+
+obj/%.o: src/%.S
 	$(AS) $(AFLAGS) -o $@ $^
 
 clean:

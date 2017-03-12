@@ -7,7 +7,7 @@
 #include "main/printk.h"
 #include "mem/page.h"
 #include "interrupts/exceptions.h"
-#include "interrupts/wrapper.h"
+#include "interrupts/numbers.h"
 #include "mem/gdt.h"
 
 #define _DATA 0x4 /* 4 bytes */
@@ -33,6 +33,22 @@ static uint32_t _read(uint32_t reg) {
 void ioapic_init() {
     page_t *page;
     
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_KEYBOARD, iokeyboard);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_INTERRUPT_TIMER_IOAPIC, iotimer);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_COM2, iocom1);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_COM1, iocom2);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_LPT2, iolpt2);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_FLOPPY, iofloppy);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_LPT1, iolpt1);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_CMOS, iocmos);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_9, io9);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_10, io10);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_11, io11);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_MOUSE, iomouse);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_FPU, iofpu);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_PATA, iopata);
+    IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_SATA, iosata);
+    
     page = page_create(0xfec00000, PAGE_FLAG_KERNEL, 1);
     _base = page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
     
@@ -47,9 +63,9 @@ void ioapic_disable(uint8_t irq) {
     _write(_REG_IRQ(irq), IOAPIC_MASK);
 }
 
-void ioapic_enable_func(uint8_t irq, void (* func)(), uint64_t flags) {
-    idt_install(EXCEPT_IOAPIC_BASE + irq, (uint32_t)func, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    ioapic_enable(irq, EXCEPT_IOAPIC_BASE + irq, flags);
+void ioapic_enable_func(uint8_t irq, idt_interrupt_handler_t func, uint64_t flags) {
+    idt_install(INT_IOAPIC_BASE + irq, func, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    ioapic_enable(irq, INT_IOAPIC_BASE + irq, flags);
 }
 
 void ioapic_keyboard(idt_proc_state_t state) {

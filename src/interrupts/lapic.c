@@ -4,7 +4,7 @@
 #include "mem/page.h"
 #include "main/printk.h"
 #include "interrupts/exceptions.h"
-#include "interrupts/wrapper.h"
+#include "interrupts/numbers.h"
 #include "mem/gdt.h"
 #include "io/pit.h"
 #include "task/task.h"
@@ -32,12 +32,14 @@ static void _write(uint32_t reg, uint32_t val) {
 static void _set_timer(uint32_t timer, uint32_t divide) {
     _write(LAPIC_TIMER_INITIAL, timer);
     _write(LAPIC_TIMER_DIVIDE_CONFIGURATION, divide);
-    _write(LAPIC_LVT_TIMER, LAPIC_TIMER_MODE_PERIODIC | EXCEPT_LAPIC_BASE);
+    _write(LAPIC_LVT_TIMER, LAPIC_TIMER_MODE_PERIODIC | INT_LAPIC_BASE);
 }
 
 
 void lapic_init() {
     page_t *page;
+    
+    IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_TIMER, ltimer);
     
     page = page_create(LAPIC_BASE, PAGE_FLAG_KERNEL, 1);
     _base = page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
@@ -48,7 +50,7 @@ void lapic_init() {
     
     // Set up the timer
     _deadline = pit_time;
-    idt_install(EXCEPT_LAPIC_BASE, (uint32_t)int_wrap_lapic_timer, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_LAPIC_BASE, lapic_timer, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
     _set_timer(_CAL_INIT, _CAL_DIV);
 }
 

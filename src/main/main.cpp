@@ -5,7 +5,7 @@
 #include "task/task.hpp"
 #include "main/cpu.hpp"
 #include "mem/object.hpp"
-    #include "main/vga.hpp"
+#include "main/vga.hpp"
 
 extern "C" {
     #include "main/multiboot.h"
@@ -15,9 +15,9 @@ extern "C" {
     #include "mem/gdt.h"
     #include "interrupts/idt.h"
     #include "interrupts/exceptions.h"
+    #include "interrupts/numbers.h"
     #include "io/pic.h"
     #include "io/serial.h"
-    #include "interrupts/wrapper.h"
     #include "interrupts/lapic.h"
     #include "io/ioapic.h"
     #include "io/pit.h"
@@ -118,7 +118,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
         page_free(page);
     }*/
 
-    ioapic_enable_func(IRQ_KEYBOARD, int_wrap_io_keyboard, 0);
+    ioapic_enable_func(INT_IRQ_KEYBOARD, ioapic_keyboard, 0);
 
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {

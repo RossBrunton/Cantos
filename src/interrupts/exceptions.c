@@ -1,10 +1,10 @@
 #include <stdint.h>
 
 #include "interrupts/exceptions.h"
-#include "interrupts/wrapper.h"
 #include "interrupts/idt.h"
 #include "main/panic.h"
 #include "mem/gdt.h"
+#include "interrupts/numbers.h"
 
 void except_div0(idt_proc_state_t state) {
     (void)state;
@@ -70,19 +70,32 @@ void except_floating_point(idt_proc_state_t state) {
 }
 
 void except_init() {
-    idt_install(EXCEPT_DIV0, (uint32_t)int_wrap_div0, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_NMI, (uint32_t)int_wrap_nmi, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_OVERFLOW, (uint32_t)int_wrap_overflow, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_BOUND_RANGE_EXCEEDED,
-        (uint32_t)int_wrap_bound_range_exceeded, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_INVALID_OPCODE, (uint32_t)int_wrap_invalid_opcode, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_DOUBLE_FAULT, (uint32_t)int_wrap_double_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_INVALID_TSS, (uint32_t)int_wrap_invalid_tss, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_SEGMENT_NOT_PRESENT,
-        (uint32_t)int_wrap_segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_STACK_SEGMENT_NOT_PRESENT,
-        (uint32_t)int_wrap_stack_segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_GPF, (uint32_t)int_wrap_gpf, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_PAGE_FAULT, (uint32_t)int_wrap_page_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-    idt_install(EXCEPT_FLOATING_POINT, (uint32_t)int_wrap_floating_point, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    IDT_ALLOW_INTERRUPT(INT_DIV0, div0);
+    IDT_ALLOW_INTERRUPT(INT_NMI, nmi);
+    IDT_ALLOW_INTERRUPT(INT_OVERFLOW, overflow);
+    IDT_ALLOW_INTERRUPT(INT_BOUND_RANGE_EXCEEDED, bre);
+    IDT_ALLOW_INTERRUPT(INT_INVALID_OPCODE, invalidop);
+    IDT_ALLOW_INTERRUPT(INT_DOUBLE_FAULT, doublefault);
+    IDT_ALLOW_INTERRUPT(INT_INVALID_TSS, invalidtss);
+    IDT_ALLOW_INTERRUPT(INT_SEGMENT_NOT_PRESENT, snp);
+    IDT_ALLOW_INTERRUPT(INT_STACK_SEGMENT_NOT_PRESENT, ssnp);
+    IDT_ALLOW_INTERRUPT(INT_GPF, gpf);
+    IDT_ALLOW_INTERRUPT(INT_PAGE_FAULT, pagefault);
+    IDT_ALLOW_INTERRUPT(INT_FLOATING_POINT, floatingpoint);
+    
+    idt_install(INT_DIV0, except_div0, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_NMI, except_nmi, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_OVERFLOW, except_overflow, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_BOUND_RANGE_EXCEEDED,
+        except_bound_range_exceeded, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_INVALID_OPCODE, except_invalid_opcode, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_DOUBLE_FAULT, except_double_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_INVALID_TSS, except_invalid_tss, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_SEGMENT_NOT_PRESENT,
+        except_segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_STACK_SEGMENT_NOT_PRESENT,
+        except_stack_segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_GPF, except_gpf, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install_with_error(INT_PAGE_FAULT, except_page_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt_install(INT_FLOATING_POINT, except_floating_point, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
 }

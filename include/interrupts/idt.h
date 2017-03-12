@@ -19,6 +19,11 @@
 
 #include <stdint.h>
 
+#include "main/common.h"
+
+typedef void (* idt_interrupt_handler_t)(idt_proc_state_t);
+typedef void (* idt_interrupt_handler_err_t)(idt_proc_state_t, uint32_t);
+
 /** An IDT descriptor, as used by the `LIDT` instruction.
  */
 typedef struct __attribute__((packed)) idt_descriptor_s {
@@ -51,14 +56,32 @@ typedef struct idt_entry_s {
 /** 32 bit trap gate */
 #define IDT_GATE_32_TRAP 0xf
 
+/** Enables the interrupt in general.
+ *
+ * This adds an entry to the system IDT for that interrupt.
+ *
+ * @todo Document this more.
+ */
+#define IDT_ALLOW_INTERRUPT(id, name) do {\
+    extern void idt_asm_interrupt_ ## name ();\
+    idt_enable_entry(id, (uint32_t) idt_asm_interrupt_ ## name);\
+} while(0)
+
+/** Sets the appropriate entry point for the given entry.
+ *
+ * Typically you should use the ALLOW_INTERRUPT or ALLOW_INTERRUPT_ERR macros to call this.
+ *
+ * @param[in] vector The vector to enable.
+ * @param[in] offset The address of the function to jump to.
+ */
+void idt_enable_entry(uint8_t vector, uint32_t offset);
 /** Sets the appropriate values on the given entry.
  *
  * @param[in,out] entry The entry to set the values for, must be a valid pointer.
- * @param[in] offset The address of the function to jump to.
  * @param[in] selector The segment selector to use.
  * @param[in] type_attr The value to set as the type attr.
  */
-void idt_set_entry(idt_entry_t *entry, uint32_t offset, uint16_t selector, uint8_t type_attr);
+void idt_update_entry(idt_entry_t *entry, uint16_t selector, uint8_t type_attr);
 /** Installs a handler into the system IDT.
  *
  * @ref idt_init must have been called first.
@@ -68,12 +91,20 @@ void idt_set_entry(idt_entry_t *entry, uint32_t offset, uint16_t selector, uint8
  * @param[in] selector The segment selector to use.
  * @param[in] type_attr The value to set as the type attr.
  */
-void idt_install(uint8_t id, uint32_t offset, uint16_t selector, uint8_t type_attr);
+void idt_install(uint8_t id, idt_interrupt_handler_t offset, uint16_t selector, uint8_t type_attr);
+
+void idt_install_with_error(uint8_t id, idt_interrupt_handler_err_t offset, uint16_t selector, uint8_t type_attr);
 /** Sets up and enables the system IDT.
  *
  * The created IDT will be enabled and loaded into the CPU (using LIDT), and all of its entries will be marked as "not
  *  present".
  */
 void idt_init();
+
+void idt_handle(uint32_t vector, idt_proc_state_t state);
+void idt_handle_with_error(uint32_t vector, idt_proc_state_t state, uint32_t errcode);
+
+void idt_asm_handle();
+void idt_asm_handle_err();
 
 #endif

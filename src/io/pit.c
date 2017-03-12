@@ -5,8 +5,8 @@
 #include "main/printk.h"
 #include "io/utils.h"
 #include "io/ioapic.h"
-#include "interrupts/wrapper.h"
 #include "interrupts/lapic.h"
+#include "interrupts/numbers.h"
 
 volatile uint32_t pit_time = 0;
 
@@ -20,7 +20,7 @@ static void _set_mode(uint8_t channel, uint8_t access_mode, uint8_t operating_mo
 }
 
 void pit_init() {
-    ioapic_enable_func(IRQ_INTERRUPT_TIMER_IOAPIC, int_wrap_io_pit, 0);
+    ioapic_enable_func(INT_IRQ_INTERRUPT_TIMER_IOAPIC, pit_interrupt, 0);
     _set_mode(0, PIT_ACCESS_LOWHIGH, PIT_MODE_RATE_GEN);
     outb(IO_PORT_PIT_0, PIT_DIVISOR && 0xff);
     outb(IO_PORT_PIT_0, PIT_DIVISOR >> 8);
