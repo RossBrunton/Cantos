@@ -1,20 +1,20 @@
 #include <stdint.h>
 
 #include "main/cpu.hpp"
+#include "hw/pit.hpp"
 
 extern "C" {
     #include "int/lapic.h"
     #include "mem/page.h"
     #include "main/printk.h"
-    #include "int/exceptions.h"
     #include "int/numbers.h"
     #include "mem/gdt.h"
-    #include "hw/pit.h"
     #include "task/task.h"
     #include "main/lomain.h"
     #include "mem/gdt.h"
     #include "hw/acpi.h"
     #include "hw/utils.h"
+    #include "int/idt.h"
 }
 
 static volatile uint32_t *_base;
@@ -75,7 +75,7 @@ void lapic_init() {
     _write(LAPIC_SPURIOUS_INT_VECTOR, 0x1ff);
     
     // Set up the timer
-    _deadline = pit_time;
+    _deadline = pit::time;
     idt_install(INT_LAPIC_BASE, lapic_timer, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
     _set_timer(_CAL_INIT, _CAL_DIV);
 }
@@ -86,7 +86,7 @@ void lapic_setup() {
     lapic_eoi();
     
     // Set up the timer
-    _deadline = pit_time;
+    _deadline = pit::time;
     _set_timer(_CAL_INIT, _CAL_DIV);
 }
 
@@ -97,16 +97,16 @@ void lapic_timer(idt_proc_state_t state) {
     if(cpu::id() == 0) {
         switch(_stage) {
             case 0:
-                if(_deadline < pit_time) {
+                if(_deadline < pit::time) {
                     _stage = 1;
-                    _deadline = pit_time + PIT_PER_SECOND + 1;
+                    _deadline = pit::time + pit::PER_SECOND + 1;
                     _callibration_ticks = 1;
                 }
                 lapic_eoi();
                 break;
             
             case 1:
-                if(_deadline < pit_time) {
+                if(_deadline < pit::time) {
                     _stage = 2;
                     _ticks_per_sec = _callibration_ticks * _CAL_INIT * _CAL_DIV;
                     printk("LAPIC calibration results: %d in one second (setting timer to %d)\n", _ticks_per_sec,

@@ -6,6 +6,10 @@
 #include "main/cpu.hpp"
 #include "mem/object.hpp"
 #include "main/vga.hpp"
+#include "hw/pit.hpp"
+#include "int/exceptions.hpp"
+#include "int/pic.hpp"
+#include "int/ioapic.hpp"
 
 extern "C" {
     #include "main/multiboot.h"
@@ -14,14 +18,10 @@ extern "C" {
     #include "mem/kmem.h"
     #include "mem/gdt.h"
     #include "int/idt.h"
-    #include "int/exceptions.h"
     #include "int/numbers.h"
-    #include "int/pic.h"
     #include "hw/serial.h"
     #include "int/lapic.h"
-    #include "int/ioapic.h"
     #include "hw/acpi.h"
-    #include "hw/pit.h"
 }
 
 #if defined(__linux__)
@@ -91,7 +91,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     gdt_setup();
     idt_init();
     idt_setup();
-    except_init();
+    exceptions::init();
 
     vga::init();
     printk("Cantos\n");
@@ -109,11 +109,11 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("MMap Entries:\n");
 
     cpu::init();
-    pic_init();
+    pic::init();
     lapic_init();
     lapic_setup();
-    ioapic_init();
-    pit_init();
+    ioapic::init();
+    pit::init();
 
     task::init();
 
@@ -127,7 +127,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
         page_free(page);
     }*/
 
-    ioapic_enable_func(INT_IRQ_KEYBOARD, ioapic_keyboard, 0);
+    ioapic::enable_func(INT_IRQ_KEYBOARD, ioapic::keyboard, 0);
 
     entry = &(mb_mem_table[0]);
     for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
