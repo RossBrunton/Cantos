@@ -20,6 +20,7 @@ extern "C" {
     #include "hw/serial.h"
     #include "int/lapic.h"
     #include "int/ioapic.h"
+    #include "hw/acpi.h"
     #include "hw/pit.h"
 }
 
@@ -87,7 +88,9 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     serial_init();
     gdt_init();
+    gdt_setup();
     idt_init();
+    idt_setup();
     except_init();
 
     vga::init();
@@ -100,15 +103,21 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("Kernel VM table end: %x\n", kmem_map.vm_end);
     printk("Memory start: %x\n", kmem_map.memory_start);
     printk("Memory end: %x\n", kmem_map.memory_end);
+
+    printk("Machine has %d cores and %d ioapics\n", acpi::acpi_proc_count, acpi::acpi_ioapic_count);
+
     printk("MMap Entries:\n");
 
+    cpu::init();
     pic_init();
     lapic_init();
+    lapic_setup();
     ioapic_init();
     pit_init();
 
-    cpu::init();
     task::init();
+
+    lapic_awaken_others();
 
     /*while(1) {
         page_t *page = page_alloc(0, 1);
@@ -133,4 +142,19 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     new task::Thread(&task::kernel_process, (addr_logical_t)&t2);
     printk("--- Second thread created!\n");
     task_enter(thread);
+}
+
+extern "C" void __attribute__((noreturn)) ap_main() {
+    cpu::info()->awoken = true;
+
+    idt_setup();
+    gdt_setup();
+    lapic_setup();
+
+    asm("sti");
+
+    while(true) {
+        asm("hlt");
+        //printk("%d,", cpu::id());
+    }
 }

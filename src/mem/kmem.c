@@ -123,7 +123,6 @@ void kmem_init() {
     kmem_free_t free_block;
     ptrdiff_t end_pointer = 0;
     addr_logical_t mem_base;
-    page_dir_t *dir;
     
     // Fill in kernel map
     kmem_map.kernel_ro_start = (addr_logical_t)&_startofro;
@@ -170,15 +169,20 @@ void kmem_init() {
     // Create the kernel memory table
     kmem_map.memory_end = free_list->base + free_list->size;
     
-    // Clear the first 1MiB
-    dir = (page_dir_t *)kmem_map.vm_start;
-    dir->entries[0].table = 0x0;
-    
     // Set the initial memory values
     memory_total = PAGE_SIZE;
     memory_used = end_pointer;
     
     _verify(__func__);
+}
+
+
+void kmem_clear_bottom() {
+    // Clear the first 1MiB
+    page_dir_t *dir;
+    
+    dir = (page_dir_t *)kmem_map.vm_start;
+    dir->entries[0].table = 0x0;
 }
 
 

@@ -49,7 +49,9 @@ void idt_init() {
     
     descriptor.size = sizeof(table) - 1;
     descriptor.offset = ((uint32_t)&table);
-    
+}
+
+void idt_setup() {
     __asm__ volatile ("lidt (descriptor)");
 }
 

@@ -62,10 +62,17 @@ typedef struct idt_entry_s {
  *
  * @todo Document this more.
  */
+#ifdef __cplusplus
+#define IDT_TELL_INTERRUPT(name) extern "C" void idt_asm_interrupt_ ## name ()
+#define IDT_ALLOW_INTERRUPT(id, name) do {\
+    idt_enable_entry(id, (uint32_t) idt_asm_interrupt_ ## name);\
+} while(0)
+#else
 #define IDT_ALLOW_INTERRUPT(id, name) do {\
     extern void idt_asm_interrupt_ ## name ();\
     idt_enable_entry(id, (uint32_t) idt_asm_interrupt_ ## name);\
 } while(0)
+#endif
 
 /** Sets the appropriate entry point for the given entry.
  *
@@ -100,6 +107,8 @@ void idt_install_with_error(uint8_t id, idt_interrupt_handler_err_t offset, uint
  *  present".
  */
 void idt_init();
+
+void idt_setup();
 
 void idt_handle(uint32_t vector, idt_proc_state_t state);
 void idt_handle_with_error(uint32_t vector, idt_proc_state_t state, uint32_t errcode);

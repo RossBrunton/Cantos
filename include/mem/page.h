@@ -31,12 +31,6 @@ struct page_s {
 #define PAGE_TABLE_MASK 0x3ff
 #define PAGE_DIR_SHIFT 22
 
-#define TOTAL_VM_SIZE 0x100000000
-#define KERNEL_VM_SIZE 0x40000000
-#define KERNEL_VM_PAGES (KERNEL_VM_SIZE / PAGE_SIZE)
-#define KERNEL_VM_PAGE_TABLES (KERNEL_VM_PAGES / PAGE_TABLE_LENGTH)
-#define KERNEL_VM_BASE (TOTAL_VM_SIZE - KERNEL_VM_SIZE) // Higher half kernel
-
 typedef struct page_table_entry_s {
     uint32_t block;
 } page_table_entry_t;

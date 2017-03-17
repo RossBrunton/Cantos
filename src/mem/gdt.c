@@ -5,7 +5,7 @@
 #define _GDT_LENGTH 3
 
 static volatile gdt_table_entry_t table[_GDT_LENGTH];
-static volatile gdt_descriptor_t descriptor;
+volatile gdt_descriptor_t gdt_descriptor;
 
 void gdt_set_entry(gdt_table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access) {
     uint64_t desc = 0;
@@ -47,10 +47,12 @@ void gdt_init() {
         GDT_ACCESS_PRESENT | GDT_ACCESS_PRIV(0) | GDT_ACCESS_EXECUTABLE | GDT_ACCESS_DC | GDT_ACCESS_RW
     );
     
-    descriptor.size = sizeof(gdt_table_entry_t) * _GDT_LENGTH;
-    descriptor.offset = (uint32_t)table;
-    
-    __asm__ volatile ("lgdt (descriptor)");
+    gdt_descriptor.size = sizeof(gdt_table_entry_t) * _GDT_LENGTH;
+    gdt_descriptor.offset = (uint32_t)table;
+}
+
+void gdt_setup() {
+    __asm__ volatile ("lgdt (gdt_descriptor)");
     __asm__ volatile goto ("ljmp $0x10, $%l0" :::: next);
     next:
     __asm__ volatile ("mov $0x8, %ax");

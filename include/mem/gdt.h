@@ -28,5 +28,6 @@ typedef struct gdt_table_entry_e {
 
 void gdt_set_entry(gdt_table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access);
 void gdt_init();
+void gdt_setup();
 
 #endif

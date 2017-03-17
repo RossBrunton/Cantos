@@ -1,8 +1,6 @@
 #ifndef _H_INTERRUPTS_LAPIC_
 #define _H_INTERRUPTS_LAPIC_
 
-#define LAPIC_BASE 0xfee00000
-
 #define LAPIC_ID 0x20
 #define LAPIC_VER 0x30
 #define LAPIC_TPR 0x80
@@ -35,7 +33,9 @@
 #define LAPIC_SWITCHES_PER_SECOND 1000
 
 void lapic_init();
-void lapic_timer();
+void lapic_setup();
+void lapic_timer(idt_proc_state_t state);
 void lapic_eoi();
+void lapic_awaken_others();
 
 #endif

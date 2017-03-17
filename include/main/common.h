@@ -37,4 +37,12 @@ typedef uintptr_t addr_phys_t;
  */
 typedef uintptr_t addr_logical_t;
 
+#define TOTAL_VM_SIZE 0x100000000
+#define KERNEL_VM_SIZE 0x40000000
+#define KERNEL_VM_PAGES (KERNEL_VM_SIZE / PAGE_SIZE)
+#define KERNEL_VM_PAGE_TABLES (KERNEL_VM_PAGES / PAGE_TABLE_LENGTH)
+#define KERNEL_VM_BASE (TOTAL_VM_SIZE - KERNEL_VM_SIZE) // Higher half kernel
+
+#define MAX_CORES 32
+
 #endif

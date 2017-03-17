@@ -110,5 +110,20 @@ SECTIONS {
         *(.dtors)
     }
     
-    _endofrw = ALIGN(4K);
+    _startofap = .;
+    
+    . = 4K;
+    /* AP start area sections (VERY low) */
+    .ap-text-start : AT(_startofap - _high_offset) {
+       *(.ap-text-start)
+    }
+    
+    .ap-data-start : AT(_startofap - _high_offset + SIZEOF(.ap-text-start)) {
+       *(.ap-data-start)
+    }
+    
+    _endofap = _startofap + SIZEOF(.ap-text-start) + SIZEOF(.ap-data-start);
+    . = _endofap;
+    . = ALIGN(4K);
+    _endofrw = .;
 }

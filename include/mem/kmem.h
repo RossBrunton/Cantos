@@ -37,5 +37,6 @@ extern kmem_map_t kmem_map;
 void kmem_init();
 void *__attribute__((alloc_size(1), malloc)) kmalloc(size_t size, uint8_t flags) ;
 void kfree(void *ptr);
+void kmem_clear_bottom();
 
 #endif

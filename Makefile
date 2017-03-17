@@ -13,7 +13,8 @@ LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-lib
 CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
 
-OBJECTS=obj/hw/loacpi.o\
+OBJECTS=obj/hw/acpi.o\
+	obj/hw/loacpi.o\
 	obj/hw/pit.o\
 	obj/hw/serial.o\
 	obj/hw/utils.o\
@@ -23,6 +24,7 @@ OBJECTS=obj/hw/loacpi.o\
 	obj/int/lapic.o\
 	obj/int/pic.o\
 	obj/int/wrapper.o\
+	obj/main/ap.o\
 	obj/main/boot.o\
 	obj/main/cpp.o\
 	obj/main/cpu.o\
