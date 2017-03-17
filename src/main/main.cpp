@@ -10,6 +10,7 @@
 #include "int/exceptions.hpp"
 #include "int/pic.hpp"
 #include "int/ioapic.hpp"
+#include "int/idt.hpp"
 
 extern "C" {
     #include "main/multiboot.h"
@@ -17,7 +18,6 @@ extern "C" {
     #include "mem/page.h"
     #include "mem/kmem.h"
     #include "mem/gdt.h"
-    #include "int/idt.h"
     #include "int/numbers.h"
     #include "hw/serial.h"
     #include "int/lapic.h"
@@ -89,8 +89,8 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     serial_init();
     gdt_init();
     gdt_setup();
-    idt_init();
-    idt_setup();
+    idt::init();
+    idt::setup();
     exceptions::init();
 
     vga::init();
@@ -147,7 +147,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 extern "C" void __attribute__((noreturn)) ap_main() {
     cpu::info()->awoken = true;
 
-    idt_setup();
+    idt::setup();
     gdt_setup();
     lapic_setup();
 

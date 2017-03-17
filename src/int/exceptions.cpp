@@ -2,9 +2,9 @@
 
 #include "int/exceptions.hpp"
 #include "main/panic.hpp"
+#include "int/idt.hpp"
 
 extern "C" {
-    #include "int/idt.h"
     #include "mem/gdt.h"
     #include "int/numbers.h"
     #include "main/common.h"
@@ -101,20 +101,20 @@ namespace exceptions {
         IDT_ALLOW_INTERRUPT(INT_PAGE_FAULT, pagefault);
         IDT_ALLOW_INTERRUPT(INT_FLOATING_POINT, floatingpoint);
         
-        idt_install(INT_DIV0, div0, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install(INT_NMI, nmi, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install(INT_OVERFLOW, overflow, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install(INT_BOUND_RANGE_EXCEEDED,
-            bound_range_exceeded, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install(INT_INVALID_OPCODE, invalid_opcode, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_DOUBLE_FAULT, double_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_INVALID_TSS, invalid_tss, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_SEGMENT_NOT_PRESENT,
-            segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_STACK_SEGMENT_NOT_PRESENT,
-            stack_segment_not_present, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_GPF, gpf, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install_with_error(INT_PAGE_FAULT, page_fault, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
-        idt_install(INT_FLOATING_POINT, floating_point, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+        idt::install(INT_DIV0, div0, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_NMI, nmi, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_OVERFLOW, overflow, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_BOUND_RANGE_EXCEEDED,
+            bound_range_exceeded, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_INVALID_OPCODE, invalid_opcode, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_DOUBLE_FAULT, double_fault, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_INVALID_TSS, invalid_tss, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_SEGMENT_NOT_PRESENT,
+            segment_not_present, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_STACK_SEGMENT_NOT_PRESENT,
+            stack_segment_not_present, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_GPF, gpf, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install_with_error(INT_PAGE_FAULT, page_fault, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_FLOATING_POINT, floating_point, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
     }
 }

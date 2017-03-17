@@ -2,6 +2,7 @@
 
 #include "main/cpu.hpp"
 #include "hw/pit.hpp"
+#include "int/idt.hpp"
 
 extern "C" {
     #include "int/lapic.h"
@@ -14,7 +15,6 @@ extern "C" {
     #include "mem/gdt.h"
     #include "hw/acpi.h"
     #include "hw/utils.h"
-    #include "int/idt.h"
 }
 
 static volatile uint32_t *_base;
@@ -76,7 +76,7 @@ void lapic_init() {
     
     // Set up the timer
     _deadline = pit::time;
-    idt_install(INT_LAPIC_BASE, lapic_timer, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    idt::install(INT_LAPIC_BASE, lapic_timer, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
     _set_timer(_CAL_INIT, _CAL_DIV);
 }
 

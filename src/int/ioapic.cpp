@@ -3,6 +3,7 @@
 #include "int/ioapic.hpp"
 
 #include "main/printk.hpp"
+#include "int/idt.hpp"
 
 extern "C" {
 #include "hw/utils.h"
@@ -10,7 +11,6 @@ extern "C" {
 #include "mem/page.h"
 #include "int/numbers.h"
 #include "mem/gdt.h"
-#include "int/idt.h"
 }
 
 namespace ioapic {
@@ -83,8 +83,8 @@ namespace ioapic {
         _write(_REG_IRQ(irq), MASK);
     }
 
-    void enable_func(uint8_t irq, idt_interrupt_handler_t func, uint64_t flags) {
-        idt_install(INT_IOAPIC_BASE + irq, func, GDT_SELECTOR(0, 0, 2), IDT_GATE_32_INT);
+    void enable_func(uint8_t irq, idt::interrupt_handler_t func, uint64_t flags) {
+        idt::install(INT_IOAPIC_BASE + irq, func, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         enable(irq, INT_IOAPIC_BASE + irq, flags);
     }
 

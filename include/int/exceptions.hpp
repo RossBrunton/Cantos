@@ -2,7 +2,6 @@
 #define _HPP_INTERRUPTS_EXCEPTIONS_
 
 extern "C" {
-    #include "int/idt.h"
     #include "main/common.h"
 }
 

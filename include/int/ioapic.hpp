@@ -1,9 +1,7 @@
 #ifndef _HPP_IO_IOAPIC_
 #define _HPP_IO_IOAPIC_
 
-extern "C" {
-#include "int/idt.h"
-}
+#include "int/idt.hpp"
 
 namespace ioapic {
     const uint32_t MODE_FIXED = (0x0 << 8);
@@ -29,7 +27,7 @@ namespace ioapic {
     void enable(uint8_t irq, uint8_t vector, uint64_t flags);
     void disable(uint8_t irq);
 
-    void enable_func(uint8_t irq, idt_interrupt_handler_t func, uint64_t flags);
+    void enable_func(uint8_t irq, idt::interrupt_handler_t func, uint64_t flags);
 
     void keyboard(idt_proc_state_t state);
 }
