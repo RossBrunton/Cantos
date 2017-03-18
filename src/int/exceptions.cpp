@@ -3,9 +3,9 @@
 #include "int/exceptions.hpp"
 #include "main/panic.hpp"
 #include "int/idt.hpp"
+#include "mem/gdt.hpp"
 
 extern "C" {
-    #include "mem/gdt.h"
     #include "int/numbers.h"
     #include "main/common.h"
 }

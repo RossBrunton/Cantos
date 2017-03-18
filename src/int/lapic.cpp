@@ -5,14 +5,13 @@
 #include "int/idt.hpp"
 #include "int/lapic.hpp"
 #include "main/printk.hpp"
+#include "mem/gdt.hpp"
 
 extern "C" {
     #include "mem/page.h"
     #include "int/numbers.h"
-    #include "mem/gdt.h"
     #include "task/task.h"
     #include "main/lomain.h"
-    #include "mem/gdt.h"
     #include "hw/acpi.h"
     #include "hw/utils.h"
 }

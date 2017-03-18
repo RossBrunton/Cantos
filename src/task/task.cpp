@@ -9,7 +9,6 @@
 
 extern "C" {
     #include "mem/kmem.h"
-    #include "mem/gdt.h"
     #include "task/asm.h"
 }
 

@@ -4,13 +4,13 @@
 
 #include "main/printk.hpp"
 #include "int/idt.hpp"
+#include "mem/gdt.hpp"
 
 extern "C" {
 #include "hw/utils.h"
 #include "hw/ports.h"
 #include "mem/page.h"
 #include "int/numbers.h"
-#include "mem/gdt.h"
 }
 
 namespace ioapic {
