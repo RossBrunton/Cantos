@@ -1,9 +1,7 @@
 #include <stddef.h>
 
-extern "C" {
-    #include "main/panic.h"
-    #include "mem/kmem.h"
-}
+#include "main/panic.hpp"
+#include "mem/kmem.hpp"
 
 extern "C" void __cxa_pure_virtual() {
     panic((char *)"__cxa_pure_virtual called.");

@@ -6,11 +6,7 @@
 #include <stdbool.h>
 
 #include "mem/vm.hpp"
-
-extern "C" {
-    #include "main/multiboot.h"
-    #include "mem/page.h"
-}
+#include "mem/page.hpp"
 
 namespace object {
     const uint8_t FLAG_AUTOFREE = 0x1;

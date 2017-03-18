@@ -3,11 +3,7 @@
 #include "main/cpu.hpp"
 #include "task/task.hpp"
 #include "hw/acpi.h"
-
-extern "C" {
-    #include "mem/kmem.h"
-    #include "mem/page.h"
-}
+#include "mem/page.hpp"
 
 /** @file main/cpu.c
  *

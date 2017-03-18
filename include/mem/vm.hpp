@@ -5,10 +5,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-extern "C" {
-    #include "main/multiboot.h"
-    #include "mem/page.h"
-}
+#include "mem/page.hpp"
 
 namespace object {
     class List; // Defined in object.h

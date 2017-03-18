@@ -4,9 +4,9 @@
 
 #include "structures/stream.hpp"
 #include "main/vga.hpp"
+#include "mem/page.hpp"
 
 extern "C" {
-    #include "mem/page.h"
     #include "main/errno.h"
 }
 

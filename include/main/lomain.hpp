@@ -1,7 +1,7 @@
-#ifndef _H_MAIN_LOMAIN_
-#define _H_MAIN_LOMAIN_
+#ifndef _HPP_MAIN_LOMAIN_
+#define _HPP_MAIN_LOMAIN_
 
-/** @file main/lomain.h
+/** @file main/lomain.hpp
  *
  * Used as part of the initialization, to handle setting up the kernel located in the higher half of memory.
  *
@@ -16,7 +16,9 @@
  * * `boot.s` then calls `kernel_main` which then does everything else
  */
 
+extern "C" {
 #include "mem/kmem.h"
+}
 
 /** Fills in the other structs in this namespace, and sets up a memory map which is returned.
  *
@@ -26,21 +28,6 @@
  * @param[in] mbi The multiboot header, from the bootloader
  * @return The page dir for a page table to use for the kernel
  */
-volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi);
-/** The memory table from the multiboot header.
- *
- * @ref kmem_init copies this into @ref mb_mem_table, see the documentation there for more details.
- */
-extern mm_entry_t low_mb_mem_table[LOCAL_MM_COUNT];
-/** The command line from the multiboot header.
- *
- * @ref kmem_init copies this into @ref mb_cmdline, see the documentation there for more details.
- */
-extern char low_mb_cmdline[LOCAL_CMDLINE_LENGTH];
-/** The bootloader name from the multiboot header.
- *
- * @ref kmem_init copies this into @ref mb_boot_loader_name, see the documentation there for more details.
- */
-extern char low_mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
+extern "C" volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi);
 
 #endif

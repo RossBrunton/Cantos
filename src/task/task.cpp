@@ -6,9 +6,9 @@
 #include "main/cpu.hpp"
 #include "main/printk.hpp"
 #include "mem/object.hpp"
+#include "mem/kmem.hpp"
 
 extern "C" {
-    #include "mem/kmem.h"
     #include "task/asm.h"
 }
 

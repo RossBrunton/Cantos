@@ -13,12 +13,12 @@
 #include "int/idt.hpp"
 #include "int/lapic.hpp"
 #include "mem/gdt.hpp"
+#include "main/multiboot.hpp"
+#include "mem/page.hpp"
+#include "mem/kmem.hpp"
 
 extern "C" {
-    #include "main/multiboot.h"
     #include "main/printk.h"
-    #include "mem/page.h"
-    #include "mem/kmem.h"
     #include "int/numbers.h"
     #include "hw/serial.h"
     #include "hw/acpi.h"
@@ -76,11 +76,11 @@ void object_test() {
 
 extern "C" void __attribute__((noreturn)) kernel_main() {
     unsigned int i;
-    mm_entry_t *entry;
+    multiboot::entry_t *entry;
 
     task::Thread *thread;
 
-    kmem_init();
+    kmem::init();
 
     _init();
 
@@ -93,14 +93,14 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     vga::init();
     printk("Cantos\n");
-    printk("Booted by %s [%s]\n", mb_boot_loader_name, mb_cmdline);
+    printk("Booted by %s [%s]\n", multiboot::boot_loader_name, multiboot::cmdline);
     printk("Initial memory state:\n");
-    printk("Kernel start: %x\n", kmem_map.kernel_ro_start);
-    printk("Kernel end: %x\n", kmem_map.kernel_rw_end);
-    printk("Kernel VM table start: %x\n", kmem_map.vm_start);
-    printk("Kernel VM table end: %x\n", kmem_map.vm_end);
-    printk("Memory start: %x\n", kmem_map.memory_start);
-    printk("Memory end: %x\n", kmem_map.memory_end);
+    printk("Kernel start: %x\n", kmem::map.kernel_ro_start);
+    printk("Kernel end: %x\n", kmem::map.kernel_rw_end);
+    printk("Kernel VM table start: %x\n", kmem::map.vm_start);
+    printk("Kernel VM table end: %x\n", kmem::map.vm_end);
+    printk("Memory start: %x\n", kmem::map.memory_start);
+    printk("Memory end: %x\n", kmem::map.memory_end);
 
     printk("Machine has %d cores and %d ioapics\n", acpi::acpi_proc_count, acpi::acpi_ioapic_count);
 

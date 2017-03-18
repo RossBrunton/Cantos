@@ -5,11 +5,11 @@
 #include "main/printk.hpp"
 #include "int/idt.hpp"
 #include "mem/gdt.hpp"
+#include "mem/page.hpp"
 
 extern "C" {
 #include "hw/utils.h"
 #include "hw/ports.h"
-#include "mem/page.h"
 #include "int/numbers.h"
 }
 

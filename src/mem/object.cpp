@@ -5,11 +5,8 @@
 #include "mem/vm.hpp"
 #include "main/printk.hpp"
 #include "main/panic.hpp"
-
-extern "C" {
-    #include "mem/page.h"
-    #include "mem/kmem.h"
-}
+#include "mem/page.hpp"
+#include "mem/kmem.hpp"
 
 namespace object {
     /**

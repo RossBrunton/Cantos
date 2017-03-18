@@ -2,13 +2,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "mem/page.h"
-#include "mem/kmem.h"
+
+#include "mem/page.hpp"
+#include "mem/kmem.hpp"
 #include "hw/acpi.h"
 
-extern char _startofro;
-extern char _endofro;
-extern char _endofrw;
+extern "C" char _startofro;
+extern "C" char _endofro;
+extern "C" char _endofrw;
 
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
@@ -53,7 +54,7 @@ static char *_strncpy(char *destination, const char *source, size_t n) {
  * @param mbi The multiboot header, from the bootloader
  * @return The kernel page table located at @ref kmem_map.vm_start
  */
-volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi) {
+extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     addr_logical_t low_ro_start = (addr_logical_t)&_startofro - KERNEL_VM_BASE;
     addr_logical_t low_ro_end = (addr_logical_t)&_endofro - KERNEL_VM_BASE;
     addr_logical_t low_rw_end = (addr_logical_t)&_endofrw - KERNEL_VM_BASE;
@@ -62,24 +63,25 @@ volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi) {
     volatile page_dir_t *dir;
     volatile page_table_t *table;
     volatile page_table_entry_t *entry;
-    kmem_map_t map_low;
-    mm_entry_t *mm_entry;
+    kmem::map_t map_low;
+    multiboot::entry_t *mm_entry;
     
     // Load multiboot information
-    _strncpy((char *)&LOW(char, mb_cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
-    LOW(char *, mb_cmdline)[LOCAL_CMDLINE_LENGTH-1] = '\0';
+    _strncpy((char *)&LOW(char, multiboot::cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
+    LOW(char *, multiboot::cmdline)[LOCAL_CMDLINE_LENGTH-1] = '\0';
     
-    _strncpy((char *)&LOW(char, mb_boot_loader_name), (char *)mbi->boot_loader_name, LOCAL_BOOT_LOADER_NAME_LENGTH);
-    LOW(char *, mb_boot_loader_name)[LOCAL_BOOT_LOADER_NAME_LENGTH-1] = '\0';
+    _strncpy((char *)&LOW(char, multiboot::boot_loader_name),
+        (char *)mbi->boot_loader_name, LOCAL_BOOT_LOADER_NAME_LENGTH);
+    LOW(char *, multiboot::boot_loader_name)[LOCAL_BOOT_LOADER_NAME_LENGTH-1] = '\0';
     
-    mm_entry = (mm_entry_t *)mbi->mmap_addr;
+    mm_entry = (multiboot::entry_t *)mbi->mmap_addr;
     for(i = 0; (addr_phys_t)((addr_phys_t)mm_entry - mbi->mmap_addr) < mbi->mmap_length && i < LOCAL_MM_COUNT; i ++) {
-        _memcpy(&(LOW(mm_entry_t, mb_mem_table[i])), mm_entry, sizeof(mm_entry_t));
-        mm_entry = (mm_entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
+        _memcpy(&(LOW(multiboot::entry_t, multiboot::mem_table[i])), mm_entry, sizeof(multiboot::entry_t));
+        mm_entry = (multiboot::entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
     }
     
     // Find ACPI tables
-    low_acpi_setup();
+    acpi::low_acpi_setup();
     
     // Fill in kernel map
     map_low.kernel_ro_start = low_ro_start;

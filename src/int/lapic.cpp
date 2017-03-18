@@ -6,12 +6,12 @@
 #include "int/lapic.hpp"
 #include "main/printk.hpp"
 #include "mem/gdt.hpp"
+#include "mem/kmem.hpp"
+#include "mem/page.hpp"
 
 extern "C" {
-    #include "mem/page.h"
     #include "int/numbers.h"
     #include "task/task.h"
-    #include "main/lomain.h"
     #include "hw/acpi.h"
     #include "hw/utils.h"
 }
@@ -159,7 +159,7 @@ namespace lapic {
             *((uint8_t *)_JUMP_BASE + i) = *(&_startofap + i);
         }
         
-        low_ap_page_table = kmem_map.vm_start - KERNEL_VM_BASE;
+        low_ap_page_table = kmem::map.vm_start - KERNEL_VM_BASE;
         
         // Loop through and wake them all up (except number 0)
         for(i = 1; i < acpi::acpi_proc_count; i ++) {

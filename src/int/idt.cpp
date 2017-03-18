@@ -1,11 +1,11 @@
 #include <stdint.h>
 
 #include "int/idt.hpp"
+#include "mem/page.hpp"
+#include "main/panic.hpp"
 
 extern "C" {
-#include "mem/page.h"
 #include "main/common.h"
-#include "main/panic.h"
 }
 
 namespace idt {

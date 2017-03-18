@@ -5,10 +5,7 @@
 
 #include "mem/vm.hpp"
 #include "mem/object.hpp"
-
-extern "C" {
-    #include "mem/page.h"
-}
+#include "mem/page.hpp"
 
 namespace task {
     const uint32_t TASK_STACK_TOP = KERNEL_VM_BASE;

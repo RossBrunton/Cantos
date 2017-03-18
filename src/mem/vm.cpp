@@ -3,12 +3,11 @@
 
 #include "mem/vm.hpp"
 #include "mem/object.hpp"
+#include "mem/page.hpp"
+#include "mem/kmem.hpp"
 
 extern "C" {
-    #include "mem/page.h"
-    #include "mem/kmem.h"
     #include "main/printk.h"
-    #include "main/multiboot.h"
     #include "main/panic.h"
 }
 
