@@ -72,11 +72,11 @@ namespace task {
         this->vm = new vm::Map(process->process_id, this->task_id, kernel);
 
         // Create the stack object
-        this->stack = new object::Object(object::gen_empty, object::del_free, 1, PAGE_TABLE_RW, object::FLAG_AUTOFREE);
+        this->stack = new object::Object(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, object::FLAG_AUTOFREE);
         this->stack->generate(0, 1);
         this->stack->add_to_vm(this->vm, TASK_STACK_TOP - PAGE_SIZE);
 
-        stack_installed = page_kinstall(this->stack->pages->page, 0);
+        stack_installed = page::kinstall(this->stack->pages->page, 0);
 
         // Initial stack format:
         // [pushad values]
@@ -92,7 +92,7 @@ namespace task {
 
         this->stack_pointer = TASK_STACK_TOP - sizeof(void *) * 3 - sizeof(pstate);
 
-        page_kuninstall(stack_installed, this->stack->pages->page);
+        page::kuninstall(stack_installed, this->stack->pages->page);
 
         this->next_in_tasks = tasks;
         tasks = this;

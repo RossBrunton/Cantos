@@ -112,7 +112,7 @@ namespace object {
 
         // Now erase all the page table entries
         for(page_entry = this->pages; page_entry; page_entry = page_entry->next) {
-            map->clear(mentry->base + page_entry->offset, page_count(page_entry->page));
+            map->clear(mentry->base + page_entry->offset, page_entry->page->count());
         }
 
         delete oentry;
@@ -129,7 +129,7 @@ namespace object {
         PageEntry *new_entry;
         PageEntry *next = NULL;
         PageEntry *prev = NULL;
-        page_t *page;
+        page::Page *page;
         MapEntry *map_entry;
 
         if((addr / PAGE_SIZE) + count > this->max_pages) {
@@ -163,14 +163,14 @@ namespace object {
     }
 
 
-    page_t *gen_empty(addr_logical_t addr, Object *object, uint32_t count) {
+    page::Page *gen_empty(addr_logical_t addr, Object *object, uint32_t count) {
         (void)addr;
         (void)object;
-        return page_alloc(0, count);
+        return page::alloc(0, count);
     }
 
-    void del_free(page_t *page, Object *object) {
+    void del_free(page::Page *page, Object *object) {
         (void)object;
-        page_free(page);
+        page::free(page);
     }
 }

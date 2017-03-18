@@ -54,15 +54,15 @@ static char *_strncpy(char *destination, const char *source, size_t n) {
  * @param mbi The multiboot header, from the bootloader
  * @return The kernel page table located at @ref kmem_map.vm_start
  */
-extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
+extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     addr_logical_t low_ro_start = (addr_logical_t)&_startofro - KERNEL_VM_BASE;
     addr_logical_t low_ro_end = (addr_logical_t)&_endofro - KERNEL_VM_BASE;
     addr_logical_t low_rw_end = (addr_logical_t)&_endofrw - KERNEL_VM_BASE;
     uint32_t i;
     uint32_t j;
-    volatile page_dir_t *dir;
-    volatile page_table_t *table;
-    volatile page_table_entry_t *entry;
+    volatile page::page_dir_t *dir;
+    volatile page::page_table_t *table;
+    volatile page::page_table_entry_t *entry;
     kmem::map_t map_low;
     multiboot::entry_t *mm_entry;
     
@@ -90,30 +90,30 @@ extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     map_low.kernel_rw_end = low_rw_end;
     map_low.vm_start = low_rw_end;
     map_low.vm_end = map_low.vm_start;
-    map_low.vm_end += sizeof(page_dir_entry_t) * PAGE_TABLE_LENGTH;
-    map_low.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
+    map_low.vm_end += sizeof(page::page_dir_entry_t) * PAGE_TABLE_LENGTH;
+    map_low.vm_end += (sizeof(page::page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
     map_low.memory_start = map_low.vm_end;
     
-    dir = (volatile page_dir_t *)map_low.vm_start;
-    table = (volatile page_table_t *)(map_low.vm_start + sizeof(page_dir_t));
+    dir = (volatile page::page_dir_t *)map_low.vm_start;
+    table = (volatile page::page_table_t *)(map_low.vm_start + sizeof(page::page_dir_t));
     
     // Set up page mapping for the first 1MB
-    dir->entries[0].table = 0x0 | PAGE_TABLE_RW | PAGE_TABLE_PRESENT | PAGE_TABLE_SIZE;
+    dir->entries[0].table = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT | page::PAGE_TABLE_SIZE;
     
     // And now set up the page directory and any page entries
     for(i = 1; i < PAGE_TABLE_LENGTH; i ++) {
         if(i >= (KERNEL_VM_BASE / PAGE_DIR_SIZE)) {
-            dir->entries[i].table = (uint32_t)table | PAGE_TABLE_RW | PAGE_TABLE_PRESENT;
+            dir->entries[i].table = (uint32_t)table | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
             
-            entry = (page_table_entry_t *)table;
+            entry = (page::page_table_entry_t *)table;
             for(j = 0; j < PAGE_TABLE_LENGTH; j ++) {
                 addr_phys_t addr = (i * PAGE_DIR_SIZE) + (j * PAGE_SIZE) - KERNEL_VM_BASE;
                 if(addr >= map_low.kernel_ro_start && addr < map_low.kernel_ro_end + PAGE_SIZE) {
                     // Kernel text
-                    entry->block = addr | PAGE_TABLE_PRESENT;
+                    entry->block = addr | page::PAGE_TABLE_PRESENT;
                 }else if(addr >= map_low.kernel_rw_start && addr < map_low.vm_end + PAGE_SIZE) {
                     // Page table
-                    entry->block = addr | PAGE_TABLE_RW | PAGE_TABLE_PRESENT;
+                    entry->block = addr | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
                 }else{
                     // Absent
                     entry->block = (uint32_t)(0x0);
@@ -123,7 +123,7 @@ extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
             
             table ++;
         }else{
-            dir->entries[i].table = 0x0 | PAGE_TABLE_RW | PAGE_TABLE_SIZE;
+            dir->entries[i].table = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_SIZE;
         }
     }
     

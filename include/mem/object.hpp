@@ -21,13 +21,13 @@ namespace object {
     class PageEntry {
     public:
         uint32_t offset;
-        page_t *page;
+        page::Page *page;
         PageEntry *next;
     };
 
     class Object;
-    typedef page_t *(* object_generator_t)(addr_logical_t addr, Object *object, uint32_t count);
-    typedef void (* object_deleter_t)(page_t *page, Object *object);
+    typedef page::Page *(* object_generator_t)(addr_logical_t addr, Object *object, uint32_t count);
+    typedef void (* object_deleter_t)(page::Page *page, Object *object);
 
     class Object {
     public:
@@ -56,8 +56,8 @@ namespace object {
         List *next;
     };
 
-    page_t *gen_empty(addr_logical_t addr, Object *object, uint32_t count);
-    void del_free(page_t *page, Object *object);
+    page::Page *gen_empty(addr_logical_t addr, Object *object, uint32_t count);
+    void del_free(page::Page *page, Object *object);
 }
 
 #endif

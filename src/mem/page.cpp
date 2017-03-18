@@ -7,17 +7,16 @@
 #include "main/multiboot.hpp"
 #include "main/panic.hpp"
 
-//namespace page {
-    //static page_t *free_start;
-    static page_t *used_start;
-    static page_t static_page;
+namespace page {
+    static Page *used_start;
+    static Page static_page;
     static int page_id_counter;
     static addr_phys_t allocation_pointer;
     static page_table_entry_t *cursor;
     static multiboot::entry_t *current_map;
     static addr_logical_t virtual_pointer;
     page_dir_t *page_dir;
-    static page_t *page_free_head;
+    static Page *page_free_head;
 
     typedef struct _empty_virtual_slot_s _empty_virtual_slot_t;
     struct _empty_virtual_slot_s {
@@ -39,8 +38,8 @@
     static void _verify(const char *func) {
         (void)func;
     #if DEBUG_MEM
-        page_t *now;
-        page_t *prev = NULL;
+        Page *now;
+        Page *prev = NULL;
         for(now = page_free_head; now; ((prev = now), (now = now->next))) {
             if(now->next) {
                 if(now->next->mem_base < now->mem_base) {
@@ -56,9 +55,9 @@
     }
 
 
-    static void _merge_free(page_t *first) {
+    static void _merge_free(Page *first) {
         if(first->next && first->mem_base + (first->consecutive * PAGE_SIZE) == first->next->mem_base) {
-            page_t *hold = first->next;
+            Page *hold = first->next;
             first->consecutive += hold->consecutive;
             first->next = hold->next;
             kfree(hold);
@@ -78,7 +77,7 @@
     }
 
 
-    void page_init() {
+    void init() {
         page_table_t *page_table;
         
         allocation_pointer = (addr_phys_t)kmem::map.memory_start - KERNEL_VM_BASE;
@@ -93,19 +92,19 @@
         page_table = (page_table_t *)PAGE_TABLE_NOFLAGS(
             page_dir->entries[kmem::map.vm_end >> PAGE_DIR_SHIFT].table) + KERNEL_VM_BASE;
         cursor = (page_table_entry_t *)((addr_logical_t)(
-            &(page_table->entries[((kmem::map.vm_end >> PAGE_TABLE_SHIFT) & PAGE_TABLE_MASK)]))
+            &(page_table->entries[((kmem::map.vm_end >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK)]))
                 + (addr_logical_t)KERNEL_VM_BASE);
         virtual_pointer = kmem::map.vm_end;
     }
 
 
-    page_t *page_create(uint32_t base, uint8_t flags, unsigned int count) {
-        page_t *write;
+    Page *create(uint32_t base, uint8_t flags, unsigned int count) {
+        Page *write;
         
-        write = (page_t *)kmalloc(sizeof(page_t), KMALLOC_RESERVED);
+        write = (Page *)kmalloc(sizeof(Page), KMALLOC_RESERVED);
         write->page_id = page_id_counter ++;
         write->mem_base = base;
-        write->flags = PAGE_FLAG_ALLOCATED | flags;
+        write->flags = FLAG_ALLOCATED | flags;
         write->consecutive = count;
         write->next = NULL;
     #if DEBUG_MEM
@@ -116,8 +115,8 @@
     }
 
 
-    page_t *page_alloc_nokmalloc(uint8_t flags, unsigned int count) {
-        page_t *write = &static_page;
+    Page *alloc_nokmalloc(uint8_t flags, unsigned int count) {
+        Page *write = &static_page;
         unsigned int size = count * PAGE_SIZE;
         
         if((allocation_pointer + size) >= (current_map->base + current_map->length)) {
@@ -126,7 +125,7 @@
         
         write->page_id = page_id_counter ++;
         write->mem_base = allocation_pointer;
-        write->flags = PAGE_FLAG_ALLOCATED | flags;
+        write->flags = FLAG_ALLOCATED | flags;
         write->consecutive = size / PAGE_SIZE;
         write->next = NULL;
         allocation_pointer = write->mem_base + size;
@@ -154,9 +153,9 @@
     }
 
 
-    page_t *page_alloc(uint8_t flags, unsigned int count) {
-        page_t *new_page;
-        uint8_t alloc_flag = (flags & PAGE_FLAG_RESERVED) ? KMALLOC_RESERVED : 0;
+    Page *alloc(uint8_t flags, unsigned int count) {
+        Page *new_page;
+        uint8_t alloc_flag = (flags & page::FLAG_RESERVED) ? KMALLOC_RESERVED : 0;
         
         if(count == 0) {
             return NULL;
@@ -165,7 +164,7 @@
         // Collect all the pages in the free list
         if(page_free_head) {
             if(page_free_head->consecutive > count) {
-                new_page = (page_t *)kmalloc(sizeof(page_t), alloc_flag);
+                new_page = (Page *)kmalloc(sizeof(Page), alloc_flag);
                 new_page->page_id = page_id_counter ++;
                 new_page->mem_base = page_free_head->mem_base;
                 new_page->consecutive = count;
@@ -179,29 +178,29 @@
             new_page->next = NULL;
             _verify(__func__);
         }else{
-            new_page = (page_t *)kmalloc(sizeof(page_t), alloc_flag);
-            page_alloc_nokmalloc(flags, count);
-            _memcpy(new_page, &static_page, sizeof(page_t));
+            new_page = (Page *)kmalloc(sizeof(Page), alloc_flag);
+            alloc_nokmalloc(flags, count);
+            _memcpy(new_page, &static_page, sizeof(Page));
         }
         
         if(new_page->consecutive < count) {
-            new_page->next = page_alloc(flags, count - new_page->consecutive);
+            new_page->next = alloc(flags, count - new_page->consecutive);
         }
         
         return new_page;
     }
 
 
-    void page_free(page_t *page) {
-        page_t *now;
-        page_t *prev = NULL;
+    void free(Page *page) {
+        Page *now;
+        Page *prev = NULL;
         
         if(!page) {
             return;
         }
         
         if(page->next) {
-            page_free(page->next);
+            free(page->next);
         }
         
         for(now = page_free_head; now && now->mem_base < page->mem_base; ((prev = now), (now = now->next)));
@@ -218,17 +217,17 @@
     }
 
 
-    void page_used(page_t *page) {
-        page_t *old_next = page->next;
+    void used(Page *page) {
+        Page *old_next = page->next;
         page->next = used_start;
         used_start = page;
         if(old_next) {
-            page_used(old_next);
+            used(old_next);
         }
     }
 
 
-    void *page_kinstall_append(page_t *page, uint8_t page_flags) {
+    void *kinstall_append(Page *page, uint8_t page_flags) {
         uint32_t i;
         addr_logical_t first = 0;
         addr_phys_t base = 0;
@@ -237,7 +236,7 @@
                 panic("Ran out of kernel virtual address space!");
             }
             
-            cursor->block = (page->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT;
+            cursor->block = (page->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
             if(!first) {
                 first = virtual_pointer;
                 base = page->mem_base;
@@ -251,7 +250,7 @@
         kmem::map.memory_end = virtual_pointer;
         
         if(page->next) {
-            page_kinstall_append(page->next, page_flags);
+            kinstall_append(page->next, page_flags);
         }
         
     #if DEBUG_MEM
@@ -262,8 +261,8 @@
     }
 
 
-    void *page_kinstall(page_t *page, uint8_t page_flags) {
-        page_t *current = page;
+    void *kinstall(Page *page, uint8_t page_flags) {
+        Page *current = page;
         _empty_virtual_slot_t *slot = empty_slot;
         _empty_virtual_slot_t *prev_slot = NULL;
         unsigned int total_pages = 0;
@@ -273,7 +272,7 @@
         unsigned int i;
         
         // Count the total number of pages we need
-        total_pages = page_count(page);
+        total_pages = page->count();
         
         // And search for an empty hole in virtual memory for it
         for(; slot && (slot->pages < total_pages); (prev_slot = slot), (slot = slot->next));
@@ -299,7 +298,7 @@
                 
                 for(current = page; current; current = current->next) {
                     for(i = 0; i < page->consecutive; i ++) {
-                        table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | PAGE_TABLE_PRESENT;
+                        table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
                         table_entry ++;
                     }
                 }
@@ -309,11 +308,11 @@
         }
         
         // No free spaces could be found
-        return page_kinstall_append(page, page_flags);
+        return kinstall_append(page, page_flags);
     }
 
 
-    void page_kuninstall(void *base, page_t *page) {
+    void kuninstall(void *base, Page *page) {
         _empty_virtual_slot_t *now;
         _empty_virtual_slot_t *prev = NULL;
         _empty_virtual_slot_t *new_slot;
@@ -354,16 +353,17 @@
         if(prev) _merge_free_slots(prev);
         
         if(page->next) {
-            page_kuninstall(base, page->next);
+            kuninstall(base, page->next);
         }
     }
 
 
-    uint32_t page_count(page_t *page) {
+    uint32_t Page::count() {
         uint32_t sum = 0;
+        Page *n = this;
         
-        for(; page; page = page->next) sum += page->consecutive;
+        for(; n; n = n->next) sum += n->consecutive;
         
         return sum;
     }
-//}
+}

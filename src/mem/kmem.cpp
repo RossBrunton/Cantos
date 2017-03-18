@@ -8,7 +8,7 @@
 namespace kmem {
     #define _MINIMUM_PAGES 2
 
-    static page_t *kernel_start;
+    static page::Page *kernel_start;
     static kmem_free_t *free_list;
     static kmem_free_t *free_end;
     static kmem_free_t *free_free_structs;
@@ -119,7 +119,7 @@ namespace kmem {
 
 
     void init() {
-        page_t *initial;
+        page::Page *initial;
         kmem_header_t header;
         kmem_free_t free_block;
         ptrdiff_t end_pointer = 0;
@@ -132,26 +132,26 @@ namespace kmem {
         map.kernel_rw_end = (addr_logical_t)&_endofrw;
         map.vm_start = (addr_logical_t)&_endofrw;
         map.vm_end = map.vm_start;
-        map.vm_end += sizeof(page_dir_entry_t) * PAGE_TABLE_LENGTH;
-        map.vm_end += (sizeof(page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
+        map.vm_end += sizeof(page::page_dir_entry_t) * PAGE_TABLE_LENGTH;
+        map.vm_end += (sizeof(page::page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
         map.memory_start = map.vm_end;
         
         // Set up paging
-        page_init();
+        page::init();
         
         // Create a page for memory
-        initial = page_alloc_nokmalloc(PAGE_FLAG_KERNEL, 1);
-        mem_base = (addr_logical_t)page_kinstall_append(initial, PAGE_TABLE_RW);
+        initial = page::alloc_nokmalloc(page::FLAG_KERNEL, 1);
+        mem_base = (addr_logical_t)page::kinstall_append(initial, page::PAGE_TABLE_RW);
         
         // Memory header for the page header
-        header.size = sizeof(page_t);
+        header.size = sizeof(page::Page);
         _memcpy((void *)mem_base, &header, sizeof(kmem_header_t));
         end_pointer += sizeof(kmem_header_t);
         
         // And the struct
-        _memcpy((void *)(mem_base+end_pointer), initial, sizeof(page_t));
-        kernel_start = (page_t *)(mem_base + end_pointer);
-        end_pointer += sizeof(page_t);
+        _memcpy((void *)(mem_base+end_pointer), initial, sizeof(page::Page));
+        kernel_start = (page::Page *)(mem_base + end_pointer);
+        end_pointer += sizeof(page::Page);
         
         // And now for the initial free block thing's header
         header.size = sizeof(kmem_free_t);
@@ -180,9 +180,9 @@ namespace kmem {
 
     void clear_bottom() {
         // Clear the first 1MiB
-        page_dir_t *dir;
+        page::page_dir_t *dir;
         
-        dir = (page_dir_t *)map.vm_start;
+        dir = (page::page_dir_t *)map.vm_start;
         dir->entries[0].table = 0x0;
     }
 
@@ -193,7 +193,7 @@ namespace kmem {
         size_t size_needed = 0;
         size_t pages_needed = 0;
         kmem_header_t *hdr = NULL;
-        page_t *new_page;
+        page::Page *new_page;
         addr_logical_t installed_loc;
     #if DEBUG_VMEM
         printk("Allocating %d bytes.\n", size);
@@ -207,7 +207,7 @@ namespace kmem {
         // And ensure the size is at least the size of a page, so some nasty person doesn't pollute the memory with
         //  2 word entries followed by a 2 word gap, meaning that more pages can't be allocated despite there seeming to be
         //  room
-        if(size < sizeof(page_t)) size = sizeof(page_t);
+        if(size < sizeof(page::Page)) size = sizeof(page::Page);
         
         size_needed = size + sizeof(kmem_header_t);
         
@@ -266,9 +266,9 @@ namespace kmem {
         
         // Allocate a new page
         if(prev && prev->base + prev->size == map.memory_end) {
-            pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t) - prev->size) / PAGE_SIZE;
+            pages_needed = (size_needed + sizeof(page::Page) + sizeof(kmem_free_t) - prev->size) / PAGE_SIZE;
         }else{
-            pages_needed = (size_needed + sizeof(page_t) + sizeof(kmem_free_t)) / PAGE_SIZE;
+            pages_needed = (size_needed + sizeof(page::Page) + sizeof(kmem_free_t)) / PAGE_SIZE;
         }
         pages_needed += _MINIMUM_PAGES;
         
@@ -277,8 +277,8 @@ namespace kmem {
     #endif
         
         // This calls kmalloc, be careful!
-        new_page = page_alloc(PAGE_FLAG_KERNEL | PAGE_FLAG_RESERVED, pages_needed);
-        installed_loc = (addr_logical_t)page_kinstall_append(new_page, PAGE_TABLE_RW);
+        new_page = page::alloc(page::FLAG_KERNEL | page::FLAG_RESERVED, pages_needed);
+        installed_loc = (addr_logical_t)page::kinstall_append(new_page, page::PAGE_TABLE_RW);
         memory_total += pages_needed * PAGE_SIZE;
         
         if(prev && prev->base + prev->size == installed_loc) {
@@ -304,7 +304,7 @@ namespace kmem {
         }
         
         _verify("kmalloc@end");
-        page_used(new_page);
+        page::used(new_page);
         return kmalloc(size, flags);
     }
 

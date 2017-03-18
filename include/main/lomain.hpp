@@ -28,6 +28,6 @@ extern "C" {
  * @param[in] mbi The multiboot header, from the bootloader
  * @return The page dir for a page table to use for the kernel
  */
-extern "C" volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi);
+extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi);
 
 #endif

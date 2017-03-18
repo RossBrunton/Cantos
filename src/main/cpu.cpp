@@ -47,14 +47,14 @@ namespace cpu {
     /** Sets up the (at the moment) only CPU status struct and create a stack for it.
      */
      void init() {
-        page_t *page;
+        page::Page *page;
         uint32_t i;
 
         for(i = 0; i < acpi::acpi_proc_count; i ++) {
-            page = page_alloc(0, 1);
+            page = page::alloc(0, 1);
             cpu_status[i] = new cpu::Status();
             cpu_status[i]->cpu_id = i;
-            cpu_status[i]->stack = page_kinstall(page, PAGE_TABLE_RW);
+            cpu_status[i]->stack = page::kinstall(page, page::PAGE_TABLE_RW);
             cpu_status[i]->awoken = false;
             stacks[i] = (addr_logical_t *)(cpu_status[i]->stack);
             cpu_status[i]->thread = NULL;

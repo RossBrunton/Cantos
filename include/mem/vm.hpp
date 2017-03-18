@@ -14,16 +14,16 @@ namespace object {
 namespace vm {
     class Map {
     public:
-        page_t *physical_dir;
-        page_dir_t *logical_dir;
-        page_logical_tables_t *logical_tables;
+        page::Page *physical_dir;
+        page::page_dir_t *logical_dir;
+        page::logical_tables_t *logical_tables;
         uint32_t pid;
         uint32_t task_id;
         object::List *objects;
 
         Map(uint32_t pid, uint32_t task_id, bool kernel);
         ~Map();
-        void insert(addr_logical_t addr, page_t *page, uint8_t page_flags);
+        void insert(addr_logical_t addr, page::Page *page, uint8_t page_flags);
         void clear(addr_logical_t addr, uint32_t pages);
     };
 

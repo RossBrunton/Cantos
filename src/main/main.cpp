@@ -58,7 +58,7 @@ void object_test() {
     t = cpu::info()->thread;
 
     while(1) {
-        obj = new object::Object(object::gen_empty, object::del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, PAGE_TABLE_RW, 0);
+        obj = new object::Object(object::gen_empty, object::del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, page::PAGE_TABLE_RW, 0);
         obj->generate(0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
         obj->add_to_vm(t->vm, 0x0);
         delete obj;
@@ -116,9 +116,9 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     lapic::awaken_others();
 
     /*while(1) {
-        page_t *page = page_alloc(0, 1);
-        void *loc = page_kinstall(page, 0);
-        //loc = page_kinstall(page, 0);
+        page::Page *page = page::alloc(0, 1);
+        void *loc = page::kinstall(page, 0);
+        //loc = page::kinstall(page, 0);
         page_kuninstall(loc, page);
         page_free(page);
     }*/

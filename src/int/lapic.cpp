@@ -62,12 +62,12 @@ namespace lapic {
 
     IDT_TELL_INTERRUPT(ltimer);
     void init() {
-        page_t *page;
+        page::Page *page;
         
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_TIMER, ltimer);
         
-        page = page_create(acpi::acpi_lapic_base, PAGE_FLAG_KERNEL, 1);
-        _base = (uint32_t *)page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
+        page = page::create(acpi::acpi_lapic_base, page::FLAG_KERNEL, 1);
+        _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
         
         printk("LAPIC ID: %x, Version: %x\n", _read(ID), _read(VER));
         // Set the spurious interrupt vector in order to get interrupts

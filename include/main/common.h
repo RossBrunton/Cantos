@@ -37,11 +37,16 @@ typedef uintptr_t addr_phys_t;
  */
 typedef uintptr_t addr_logical_t;
 
+#define PAGE_SIZE 0x1000
+#define PAGE_DIR_SIZE 0x400000
+#define PAGE_TABLE_LENGTH 0x400
+
 #define TOTAL_VM_SIZE 0x100000000
 #define KERNEL_VM_SIZE 0x40000000
 #define KERNEL_VM_PAGES (KERNEL_VM_SIZE / PAGE_SIZE)
 #define KERNEL_VM_PAGE_TABLES (KERNEL_VM_PAGES / PAGE_TABLE_LENGTH)
 #define KERNEL_VM_BASE (TOTAL_VM_SIZE - KERNEL_VM_SIZE) // Higher half kernel
+
 
 // Cast to the low address of a variable
 #define LOW(t, x) (*(t *)((addr_phys_t)&x - (addr_phys_t)KERNEL_VM_BASE))

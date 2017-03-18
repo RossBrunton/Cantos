@@ -26,10 +26,10 @@ namespace vga {
     void init() {
         terminal_row = 0;
         terminal_column = 0;
-        page_t *page;
+        page::Page *page;
 
-        page = page_create(0xB8000, PAGE_FLAG_KERNEL, (128 * 1024) / PAGE_SIZE);
-        terminal_buffer = (volatile uint16_t *)page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
+        page = page::create(0xB8000, page::FLAG_KERNEL, (128 * 1024) / PAGE_SIZE);
+        terminal_buffer = (volatile uint16_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
 
         for (size_t y = 0; y < HEIGHT; y++) {
             for (size_t x = 0; x < WIDTH; x++) {

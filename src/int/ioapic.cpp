@@ -51,7 +51,7 @@ namespace ioapic {
     IDT_TELL_INTERRUPT(iosata);
 
     void init() {
-        page_t *page;
+        page::Page *page;
 
         IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_KEYBOARD, iokeyboard);
         IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_INTERRUPT_TIMER_IOAPIC, iotimer);
@@ -69,8 +69,8 @@ namespace ioapic {
         IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_PATA, iopata);
         IDT_ALLOW_INTERRUPT(INT_IOAPIC_BASE + INT_IRQ_SATA, iosata);
 
-        page = page_create(0xfec00000, PAGE_FLAG_KERNEL, 1);
-        _base = (uint32_t *)page_kinstall(page, PAGE_TABLE_CACHEDISABLE | PAGE_TABLE_RW);
+        page = page::create(0xfec00000, page::FLAG_KERNEL, 1);
+        _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
 
         printk("IOAPIC ID: %x, Version: %x (%x)\n", _read(_REG_ID), _read(_REG_VER), _read(_REG_IRQ(0)));
     }
