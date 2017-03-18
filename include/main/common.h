@@ -43,6 +43,9 @@ typedef uintptr_t addr_logical_t;
 #define KERNEL_VM_PAGE_TABLES (KERNEL_VM_PAGES / PAGE_TABLE_LENGTH)
 #define KERNEL_VM_BASE (TOTAL_VM_SIZE - KERNEL_VM_SIZE) // Higher half kernel
 
+// Cast to the low address of a variable
+#define LOW(t, x) (*(t *)((addr_phys_t)&x - (addr_phys_t)KERNEL_VM_BASE))
+
 #define MAX_CORES 32
 
 #endif

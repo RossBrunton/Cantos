@@ -99,8 +99,6 @@ typedef struct acpi_mdat_entry {
 void low_acpi_setup();
 
 // Data to be used
-#define ACPI_LOW(t, x) (*(t *)((addr_phys_t)&x - (addr_phys_t)KERNEL_VM_BASE))
-
 extern acpi_mdat_proc_t acpi_procs[ACPI_MDAT_COPY];
 extern acpi_mdat_ioapic_t acpi_ioapics[ACPI_MDAT_COPY];
 extern acpi_mdat_iso_t acpi_isos[ACPI_MDAT_COPY];

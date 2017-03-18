@@ -10,23 +10,6 @@ extern char _startofro;
 extern char _endofro;
 extern char _endofrw;
 
-/** Low memory slot for the memory table.
- *
- * Just a fixed length array, it's not scattered across entire memory. Since stuff is copied in here, it won't be
- *  accidently erased like the "real" mbi memory tables would be.
- */
-mm_entry_t low_mb_mem_table[LOCAL_MM_COUNT];
-/** Low memory slot for the command line.
- *
- * Will always be null terminated.
- */
-char low_mb_cmdline[LOCAL_CMDLINE_LENGTH];
-/** Low memory slot for the bootloader name.
- *
- * Will always be null terminated
- */
-char low_mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
-
 static void *_memcpy(void *destination, const void *source, size_t num) {
     size_t i;
     for(i = 0; i < num; i ++) {
@@ -83,15 +66,15 @@ volatile page_dir_t *low_kernel_main(multiboot_info_t *mbi) {
     mm_entry_t *mm_entry;
     
     // Load multiboot information
-    _strncpy((char *)&low_mb_cmdline, (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
-    low_mb_cmdline[LOCAL_CMDLINE_LENGTH-1] = '\0';
+    _strncpy((char *)&LOW(char, mb_cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
+    LOW(char *, mb_cmdline)[LOCAL_CMDLINE_LENGTH-1] = '\0';
     
-    _strncpy((char *)&low_mb_boot_loader_name, (char *)mbi->boot_loader_name, LOCAL_BOOT_LOADER_NAME_LENGTH);
-    low_mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH-1] = '\0';
+    _strncpy((char *)&LOW(char, mb_boot_loader_name), (char *)mbi->boot_loader_name, LOCAL_BOOT_LOADER_NAME_LENGTH);
+    LOW(char *, mb_boot_loader_name)[LOCAL_BOOT_LOADER_NAME_LENGTH-1] = '\0';
     
     mm_entry = (mm_entry_t *)mbi->mmap_addr;
     for(i = 0; (addr_phys_t)((addr_phys_t)mm_entry - mbi->mmap_addr) < mbi->mmap_length && i < LOCAL_MM_COUNT; i ++) {
-        _memcpy(&(low_mb_mem_table[i]), mm_entry, sizeof(mm_entry_t));
+        _memcpy(&(LOW(mm_entry_t, mb_mem_table[i])), mm_entry, sizeof(mm_entry_t));
         mm_entry = (mm_entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
     }
     

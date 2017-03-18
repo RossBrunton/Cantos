@@ -7,11 +7,11 @@
  *  which have been extracted from it.
  *
  * There is no way to actually get the multiboot header except as part of the boot process in @ref lomain.h, which
- *  exctacts values which may be needed and stores them into "low" entries, which @ref mb_copy_into_high copies them
- *  into entries in this namespace.
+ *  exctacts values which may be needed and stores them into appropriate values.
  */
 
 #include <stddef.h>
+#include <stdint.h>
 
 /** The multiboot information structure, as defined in the multiboot specification.
  *
@@ -81,35 +81,19 @@ typedef struct mm_entry_s {
  * Entries in this array are always `sizeof(@ref mm_entry_t)` bytes long, no matter what the structure itself says. The
  *  size field will not be updated to respect this fact. The first entry in these objects (that is, offset 0) will
  *  be the `size` value.
- *
- * This will be populated by @ref mb_copy_into_high, and will be undefined before then.
  */
 extern mm_entry_t mb_mem_table[LOCAL_MM_COUNT];
 /** The command line as given by the multiboot bootloader.
  *
  * It will be null terminated, even if the original is longer than @ref LOCAL_BOOT_LOADER_NAME_LENGTH or the original
  *  string is not terminated (in which case you likely have lots of garbage data).
- *
- * This will be populated by @ref mb_copy_into_high and will be undefined before then.
  */
 extern char mb_cmdline[LOCAL_CMDLINE_LENGTH];
 /** The boot loader name as given by the multiboot bootloader.
  *
  * It will be null terminated, even if the original is longer than @ref LOCAL_BOOT_LOADER_NAME_LENGTH or the original
  *  string is not terminated (in which case you likely have lots of garbage data).
- *
- * This will be populated by @ref mb_copy_into_high and will be undefined before then.
  */
 extern char mb_boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
-
-/** Copies information from the fields in @ref lomain.h to high memory, making them available after low memory is
- * cleared.
- *
- * Specifically, the following fields are populated:
- * * @ref mb_mem_table
- * * @ref mb_cmdline
- * * @ref mb_boot_loader_name
- */
-void mb_copy_into_high();
 
 #endif

@@ -68,7 +68,7 @@ void low_acpi_setup() {
                 acpi_mdat_t *mdat = (acpi_mdat_t *)hdata;
                 addr_phys_t p = (addr_phys_t)(mdat+1);
                 
-                ACPI_LOW(uint32_t, acpi_lapic_base) = mdat->local_controller_address;
+                LOW(uint32_t, acpi_lapic_base) = mdat->local_controller_address;
                 
                 while(p < (addr_phys_t)mdat + mdat->h.length) {
                     acpi_mdat_entry_t *entry = (acpi_mdat_entry_t *)p;
@@ -76,21 +76,21 @@ void low_acpi_setup() {
                     switch(entry->type) {
                         case ACPI_MDAT_PROC:
                             _memcpy(
-                                &(ACPI_LOW(acpi_mdat_proc_t *, acpi_procs[pc])),
+                                &(LOW(acpi_mdat_proc_t *, acpi_procs[pc])),
                                 &(entry->dat), sizeof(acpi_mdat_proc_t));
                             pc ++;
                             break;
                         
                         case ACPI_MDAT_IOAPIC:
                             _memcpy(
-                                &(ACPI_LOW(acpi_mdat_ioapic_t*, acpi_ioapics[ic])),
+                                &(LOW(acpi_mdat_ioapic_t*, acpi_ioapics[ic])),
                                 &(entry->dat), sizeof(acpi_mdat_ioapic_t));
                             ic ++;
                             break;
                         
                         case ACPI_MDAT_ISO:
                             _memcpy(
-                                &(ACPI_LOW(acpi_mdat_iso_t*, acpi_isos[sc])),
+                                &(LOW(acpi_mdat_iso_t*, acpi_isos[sc])),
                                 &(entry->dat), sizeof(acpi_mdat_iso_t));
                             sc ++;
                             break;
@@ -99,9 +99,9 @@ void low_acpi_setup() {
                     p += entry->length;
                 }
                 
-                ACPI_LOW(uint32_t, acpi_proc_count) = pc;
-                ACPI_LOW(uint32_t, acpi_ioapic_count) = ic;
-                ACPI_LOW(uint32_t, acpi_iso_count) = sc;
+                LOW(uint32_t, acpi_proc_count) = pc;
+                LOW(uint32_t, acpi_ioapic_count) = ic;
+                LOW(uint32_t, acpi_iso_count) = sc;
                 
                 break;
         }

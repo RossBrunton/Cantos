@@ -80,8 +80,6 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     task::Thread *thread;
 
-    mb_copy_into_high();
-
     kmem_init();
 
     _init();
@@ -106,8 +104,6 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     printk("Machine has %d cores and %d ioapics\n", acpi::acpi_proc_count, acpi::acpi_ioapic_count);
 
-    printk("MMap Entries:\n");
-
     cpu::init();
     pic::init();
     lapic::init();
@@ -128,13 +124,6 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     }*/
 
     ioapic::enable_func(INT_IRQ_KEYBOARD, ioapic::keyboard, 0);
-
-    entry = &(mb_mem_table[0]);
-    for(i = 0; i < LOCAL_MM_COUNT && entry->size; i ++) {
-        printk("> [%p:%d] Entry %d: 0x%llx-0x%llx @ %d\n", entry, entry->size, i, entry->base,
-            entry->base + entry->length, entry->type);
-        entry ++;
-    }
 
     printk("--- Before thread\n");
     thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);
