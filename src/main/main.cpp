@@ -11,6 +11,7 @@
 #include "int/pic.hpp"
 #include "int/ioapic.hpp"
 #include "int/idt.hpp"
+#include "int/lapic.hpp"
 
 extern "C" {
     #include "main/multiboot.h"
@@ -20,7 +21,6 @@ extern "C" {
     #include "mem/gdt.h"
     #include "int/numbers.h"
     #include "hw/serial.h"
-    #include "int/lapic.h"
     #include "hw/acpi.h"
 }
 
@@ -110,14 +110,14 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     cpu::init();
     pic::init();
-    lapic_init();
-    lapic_setup();
+    lapic::init();
+    lapic::setup();
     ioapic::init();
     pit::init();
 
     task::init();
 
-    lapic_awaken_others();
+    lapic::awaken_others();
 
     /*while(1) {
         page_t *page = page_alloc(0, 1);
@@ -149,7 +149,7 @@ extern "C" void __attribute__((noreturn)) ap_main() {
 
     idt::setup();
     gdt_setup();
-    lapic_setup();
+    lapic::setup();
 
     asm("sti");
 

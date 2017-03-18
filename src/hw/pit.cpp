@@ -3,11 +3,11 @@
 #include "hw/pit.hpp"
 #include "main/printk.hpp"
 #include "int/ioapic.hpp"
+#include "int/lapic.hpp"
 
 extern "C" {
     #include "hw/ports.h"
     #include "hw/utils.h"
-    #include "int/lapic.h"
     #include "int/numbers.h"
 }
 
@@ -35,6 +35,6 @@ namespace pit {
         (void)state;
         time ++;
         
-        lapic_eoi();
+        lapic::eoi();
     }
 }
