@@ -39,6 +39,7 @@ OBJECTS=obj/hw/acpi.o\
 	obj/mem/object.o\
 	obj/mem/page.o\
 	obj/mem/vm.o\
+	obj/structures/mutex.o\
 	obj/structures/stream.o\
 	obj/task/asm.o\
 	obj/task/task.o
