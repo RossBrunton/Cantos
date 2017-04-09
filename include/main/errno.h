@@ -19,5 +19,6 @@ typedef uint32_t error_t;
 /** Operation not permitted. */
 #define EOK 0
 #define EPERM 1
+#define EBUSY 2
 
 #endif
