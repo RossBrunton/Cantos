@@ -8,10 +8,10 @@
 #include "mem/gdt.hpp"
 #include "mem/kmem.hpp"
 #include "mem/page.hpp"
+#include "task/task.hpp"
 
 extern "C" {
     #include "int/numbers.h"
-    #include "task/task.h"
     #include "hw/acpi.h"
     #include "hw/utils.h"
 }
@@ -108,9 +108,6 @@ namespace lapic {
                     if(_deadline < pit::time) {
                         _stage = 2;
                         _ticks_per_sec = _callibration_ticks * _CAL_INIT * _CAL_DIV;
-                        printk("LAPIC calibration results: %d in one second (setting timer to %d)\n", _ticks_per_sec,
-                            _ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND);
-                        //_set_timer(_ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND, _CAL_DIV);
                         _write(TIMER_INITIAL, _ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND);
                         _callibration_ticks = 0;
                     }else{
@@ -121,24 +118,22 @@ namespace lapic {
                 
                 case 2:
                     eoi();
-                    task_timer_yield();
+                    task::task_timer_yield();
                     break;
-                
+
                 default:
                     eoi();
                     break;
             }
         }else{
-            uint32_t id = cpu::id();
-            
+            volatile uint32_t id = cpu::id();
+
             if(_calibrated[id]) {
                 eoi();
-                task_timer_yield();
+                task::task_timer_yield();
             }else{
                 if(_ticks_per_sec) {
-                    printk("AP: %d in one second (setting timer to %d)\n", _ticks_per_sec,
-                            _ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND);
-                    //_set_timer(_ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND, _CAL_DIV);
+                    _set_timer(_ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND, _CAL_DIV);
                     _write(TIMER_INITIAL, _ticks_per_sec / _CAL_DIV / SWITCHES_PER_SECOND);
                     _calibrated[id] = true;
                 }else{
@@ -152,25 +147,25 @@ namespace lapic {
 
     void awaken_others() {
         uint32_t i;
-        
+
         // Lets see if this works...
         for(i = 0; i < (uint32_t)&_endofap - (uint32_t)&_startofap; i ++) {
             //printk("0x%x: 0x%x\n", ((uint8_t *)_JUMP_BASE + i), *(&_startofap + i));
             *((uint8_t *)_JUMP_BASE + i) = *(&_startofap + i);
         }
-        
+
         low_ap_page_table = kmem::map.vm_start - KERNEL_VM_BASE;
-        
+
         // Loop through and wake them all up (except number 0)
         for(i = 1; i < acpi::acpi_proc_count; i ++) {
             uint32_t id = acpi::acpi_procs[i].apic_id;
-            
+
             _ipi(0, 5, 1, id);
             io_wait();
             _ipi((uint32_t)_JUMP_BASE / PAGE_SIZE, 6, 1, id);
+
+            while(!cpu::info_of(id)->awoken);
         }
-        
-        while(true) {};
     }
 
 

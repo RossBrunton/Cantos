@@ -7,6 +7,7 @@
 #include "main/printk.hpp"
 #include "mem/object.hpp"
 #include "mem/kmem.hpp"
+#include "structures/mutex.hpp"
 
 extern "C" {
     #include "task/asm.h"
@@ -22,6 +23,7 @@ namespace task {
     static uint32_t task_counter;
 
     static Thread *tasks;
+    static mutex::Mutex _mutex;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
         size_t i;
@@ -62,6 +64,9 @@ namespace task {
         idt_proc_state_t pstate = {0, 0, 0, 0, 0, 0, 0, 0};
         void *stack_installed;
 
+        _mutex.lock();
+        this->in_use = false;
+
         this->next_in_process = process->thread;
         process->thread = this;
         this->process = process;
@@ -96,12 +101,16 @@ namespace task {
 
         this->next_in_tasks = tasks;
         tasks = this;
+
+        _mutex.unlock();
     }
 
 
     Thread::~Thread() {
         Thread *now;
         Thread *prev = NULL;
+
+        _mutex.lock();
 
         // Remove it from the process thread list
         for(now = this->process->thread; now != this; (prev = now), (now = now->next_in_process));
@@ -130,6 +139,7 @@ namespace task {
 
         // And delete the memory map
         delete this->vm;
+        _mutex.unlock();
     }
 
 
@@ -150,26 +160,76 @@ namespace task {
         cpu::Status *info;
         info = cpu::info();
 
+        // Do nothing if we are not in a task
+        if(!info->thread) {
+            return;
+        }
+
         // Call the exit function to move over the stack, will call task_yield_done
         task_asm_yield((uint32_t)info->stack + PAGE_SIZE - 4);
     }
 
-    extern "C" void task_yield_done(uint32_t sp) {
+    extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
         cpu::Status *info;
         Thread *current;
-        Thread *next;
         info = cpu::info();
-
-        info->thread->stack_pointer = sp;
         current = info->thread;
         info->thread = NULL;
+
+        _mutex.lock();
+
+        current->stack_pointer = sp;
 
         // And then use the "normal" memory map
         vm::table_clear();
 
-        next = _next_task(current);
+        current->in_use = false;
 
-        task_enter(next);
+        _mutex.unlock();
+
+        schedule(current);
+    }
+
+    void __attribute__((noreturn)) schedule(Thread *base) {
+        while(true) {
+            Thread *next;
+            bool ok = false;
+
+            if(tasks == NULL) {
+                continue;
+            }
+
+            _mutex.lock();
+
+            if(!base) {
+                base = tasks;
+            }
+
+            ok = false;
+            for(next = _next_task(base); true; next = _next_task(next)) {
+                ok = true;
+
+                if(next->in_use) {
+                    ok = false;
+                }
+
+                if(next == base || ok) {
+                    break;
+                }
+            }
+
+            if(ok) {
+                next->in_use = true;
+            }
+
+            _mutex.unlock();
+
+            if(ok) {
+                task_enter(next);
+            }else{
+                asm volatile ("hlt");
+            }
+        }
     }
 
 

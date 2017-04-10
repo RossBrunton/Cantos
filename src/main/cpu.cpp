@@ -19,9 +19,9 @@ namespace cpu {
     addr_logical_t *stacks[MAX_CORES] = {};
 
     uint32_t id() {
-        uint32_t id;
+        uint32_t volatile id;
 
-        __asm__ ("\
+        __asm__ volatile ("\
             mov $1, %%eax\n\
             cpuid\n\
             shr $24, %%ebx\n\

@@ -16,6 +16,7 @@
 #include "main/multiboot.hpp"
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
+#include "structures/mutex.hpp"
 
 extern "C" {
     #include "main/printk.h"
@@ -38,14 +39,16 @@ extern "C" void _init();
 void t2() {
     int i = 0;
     while(1) {
-        //printk("Thread 2 [%d]!\n", i++);
+        //printk("Thread 2 [%d] by %d!\n", i++, cpu::id());
+        asm("hlt");
     }
 }
 
 void t1() {
     int i = 0;
     while(1) {
-        //printk("Thread 1 [%d]!\n", i++);
+        //printk("Thread 1 [%d] by %d!\n", i++, cpu::id());
+        asm("hlt");
     }
 }
 
@@ -113,7 +116,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     task::init();
 
-    lapic::awaken_others();
+    //lapic::awaken_others();
 
     /*while(1) {
         page::Page *page = page::alloc(0, 1);
@@ -130,7 +133,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("--- Thread created\n");
     new task::Thread(&task::kernel_process, (addr_logical_t)&t2);
     printk("--- Second thread created!\n");
-    task_enter(thread);
+    task::schedule(NULL);
 }
 
 extern "C" void __attribute__((noreturn)) ap_main() {
@@ -142,8 +145,5 @@ extern "C" void __attribute__((noreturn)) ap_main() {
 
     asm("sti");
 
-    while(true) {
-        asm("hlt");
-        //printk("%d,", cpu::id());
-    }
+    task::schedule(NULL);
 }

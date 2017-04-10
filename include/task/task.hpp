@@ -42,6 +42,8 @@ namespace task {
         Thread *next_in_process;
         Thread *next_in_tasks;
 
+        bool in_use;
+
         Thread(Process *process, addr_logical_t entry);
         ~Thread();
     };
@@ -52,8 +54,9 @@ namespace task {
 
     extern "C" void __attribute__((noreturn)) task_enter(Thread *thread);
     extern "C" void task_yield();
-    extern "C" void task_yield_done(uint32_t sp);
+    extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp);
     extern "C" void task_timer_yield();
+    void __attribute__((noreturn)) schedule(Thread *base);
 }
 
 #endif
