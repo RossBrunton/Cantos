@@ -6,6 +6,7 @@
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
 #include "hw/acpi.h"
+#include "structures/elf.hpp"
 
 extern "C" char _startofro;
 extern "C" char _endofro;
@@ -29,6 +30,8 @@ static char *_strncpy(char *destination, const char *source, size_t n) {
     }
     return destination;
 }
+
+kmem::map_t map_low;
 
 /** Copies values into the various low memory structures, and sets up and returns a page table for the kernel.
  *
@@ -63,8 +66,9 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     volatile page::page_dir_t *dir;
     volatile page::page_table_t *table;
     volatile page::page_table_entry_t *entry;
-    kmem::map_t map_low;
     multiboot::entry_t *mm_entry;
+    addr_logical_t info_end = 0;
+    addr_logical_t lowest_info = 0xffffffff;
     
     // Load multiboot information
     _strncpy((char *)&LOW(char, multiboot::cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
@@ -80,15 +84,37 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
         mm_entry = (multiboot::entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
     }
     
+    _memcpy(&LOW(multiboot::info_t, multiboot::header), mbi, sizeof(multiboot::info_t));
+    
+    // Now need to look through and find the highest/lowest offset of all the section header table things
+    for(i = 0; i < mbi->elf_num; i ++) {
+        elf::SectionHeader *sect = (elf::SectionHeader *)(mbi->elf_addr + (i * mbi->elf_size));
+        uint32_t load_addr = sect->addr;
+        
+        if(load_addr >= KERNEL_VM_BASE) load_addr -= KERNEL_VM_BASE;
+        
+        if(load_addr + sect->size > info_end) {
+            info_end = load_addr + sect->size;
+        }
+        
+        if(load_addr < lowest_info) {
+            lowest_info = load_addr;
+        }
+    }
+    
+    info_end = info_end + PAGE_SIZE - (info_end % PAGE_SIZE);
+    
     // Find ACPI tables
     acpi::low_acpi_setup();
     
     // Fill in kernel map
-    map_low.kernel_ro_start = low_ro_start;
+    map_low.kernel_ro_start = lowest_info;
     map_low.kernel_ro_end = low_ro_end;
     map_low.kernel_rw_start = low_ro_end;
     map_low.kernel_rw_end = low_rw_end;
-    map_low.vm_start = low_rw_end;
+    map_low.kernel_info_start = low_rw_end;
+    map_low.kernel_info_end = info_end;
+    map_low.vm_start = info_end;
     map_low.vm_end = map_low.vm_start;
     map_low.vm_end += sizeof(page::page_dir_entry_t) * PAGE_TABLE_LENGTH;
     map_low.vm_end += (sizeof(page::page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;

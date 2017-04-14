@@ -16,9 +16,7 @@
  * * `boot.s` then calls `kernel_main` which then does everything else
  */
 
-extern "C" {
-#include "mem/kmem.h"
-}
+#include "mem/kmem.hpp"
 
 /** Fills in the other structs in this namespace, and sets up a memory map which is returned.
  *
@@ -28,6 +26,8 @@ extern "C" {
  * @param[in] mbi The multiboot header, from the bootloader
  * @return The page dir for a page table to use for the kernel
  */
-extern "C" volatile page_dir_t *low_kernel_main(multiboot::info_t *mbi);
+extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi);
+
+extern kmem::map_t map_low;
 
 #endif

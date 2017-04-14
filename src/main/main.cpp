@@ -18,6 +18,7 @@
 #include "mem/kmem.hpp"
 #include "structures/mutex.hpp"
 #include "main/printk.hpp"
+#include "structures/elf.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -100,6 +101,8 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("Initial memory state:\n");
     printk("Kernel start: %x\n", kmem::map.kernel_ro_start);
     printk("Kernel end: %x\n", kmem::map.kernel_rw_end);
+    printk("Kernel symbol info start: %x\n", kmem::map.kernel_info_start);
+    printk("Kernel symbol info end: %x\n", kmem::map.kernel_info_end);
     printk("Kernel VM table start: %x\n", kmem::map.vm_start);
     printk("Kernel VM table end: %x\n", kmem::map.vm_end);
     printk("Memory start: %x\n", kmem::map.memory_start);
@@ -115,6 +118,9 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     pit::init();
 
     task::init();
+
+    elf::load_kernel_elf(
+        multiboot::header.elf_num, multiboot::header.elf_size, multiboot::header.elf_addr, multiboot::header.elf_shndx);
 
     //lapic::awaken_others();
 

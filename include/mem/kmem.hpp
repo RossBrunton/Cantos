@@ -28,6 +28,8 @@ namespace kmem {
         addr_logical_t kernel_ro_end;
         addr_logical_t kernel_rw_start;
         addr_logical_t kernel_rw_end;
+        addr_logical_t kernel_info_start;
+        addr_logical_t kernel_info_end;
         addr_logical_t vm_start;
         addr_logical_t vm_end;
         addr_logical_t memory_start;

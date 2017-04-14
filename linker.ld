@@ -126,4 +126,9 @@ SECTIONS {
     . = _endofap;
     . = ALIGN(4K);
     _endofrw = .;
+    
+    .padding BLOCK(4K) : AT(ADDR(.padding) - _high_offset) {
+        BYTE(0xff);
+        FILL(0x00);
+    }
 }

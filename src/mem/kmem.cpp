@@ -4,6 +4,7 @@
 #include "mem/kmem.hpp"
 #include "mem/page.hpp"
 #include "main/panic.hpp"
+#include "main/lomain.hpp"
 
 namespace kmem {
     #define _MINIMUM_PAGES 2
@@ -126,11 +127,13 @@ namespace kmem {
         addr_logical_t mem_base;
         
         // Fill in kernel map
-        map.kernel_ro_start = (addr_logical_t)&_startofro;
+        map.kernel_ro_start = (addr_logical_t)&_endofro - (map_low.kernel_ro_end - map_low.kernel_ro_start);
         map.kernel_ro_end = (addr_logical_t)&_endofro;
         map.kernel_rw_start = (addr_logical_t)&_endofro;
         map.kernel_rw_end = (addr_logical_t)&_endofrw;
-        map.vm_start = (addr_logical_t)&_endofrw;
+        map.kernel_info_start = (addr_logical_t)&_endofrw;
+        map.kernel_info_end = map.kernel_info_start + (map_low.kernel_info_end - map_low.kernel_info_start);
+        map.vm_start = map.kernel_info_end;
         map.vm_end = map.vm_start;
         map.vm_end += sizeof(page::page_dir_entry_t) * PAGE_TABLE_LENGTH;
         map.vm_end += (sizeof(page::page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;

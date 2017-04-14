@@ -96,6 +96,8 @@ namespace multiboot {
      *  original string is not terminated (in which case you likely have lots of garbage data).
      */
     extern char boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
+    
+    extern info_t header;
 }
 
 #endif
