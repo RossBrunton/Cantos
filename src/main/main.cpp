@@ -17,9 +17,9 @@
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
 #include "structures/mutex.hpp"
+#include "main/printk.hpp"
 
 extern "C" {
-    #include "main/printk.h"
     #include "int/numbers.h"
     #include "hw/serial.h"
     #include "hw/acpi.h"

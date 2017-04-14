@@ -5,11 +5,8 @@
 #include "mem/object.hpp"
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
-
-extern "C" {
-    #include "main/printk.h"
-    #include "main/panic.h"
-}
+#include "main/printk.hpp"
+#include "main/panic.hpp"
 
 namespace vm {
     Map::Map(uint32_t pid, uint32_t task_id, bool kernel) {

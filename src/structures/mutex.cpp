@@ -4,7 +4,7 @@
 
 #include "structures/mutex.hpp"
 #include "main/errno.h"
-#include "main/printk.h"
+#include "main/printk.hpp"
 #include "main/cpu.hpp"
 #include "task/task.hpp"
 

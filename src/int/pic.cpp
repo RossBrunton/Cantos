@@ -3,7 +3,7 @@
 #include "hw/utils.h"
 #include "int/pic.hpp"
 #include "hw/ports.h"
-#include "main/printk.h"
+#include "main/printk.hpp"
 #include "main/common.h"
 #include "int/numbers.h"
 
