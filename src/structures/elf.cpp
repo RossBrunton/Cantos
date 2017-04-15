@@ -106,9 +106,49 @@ namespace elf {
         return this->runtimeLookupString(sect->link, symbol->name);
     }
 
+    uint32_t Header::runtimeFindSymbolId(uint32_t addr, word_t type) {
+        uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
+        SectionHeader *symtab = this->sectionHeader(section_id);
+        Symbol *best = NULL;
+        uint32_t best_id = 0;
+        uint32_t delta = 0xffffffff;
+
+        for(uint32_t i = 0; i < symtab->entries(); i ++) {
+            Symbol *curr = this->runtimeSymbol(section_id, i);
+
+            if(curr->info != type) {
+                continue;
+            }
+
+            if(curr->value <= addr && ((addr - curr->value) < delta)) {
+                best = curr;
+                best_id = i;
+                delta = addr - curr->value;
+            }
+        }
+
+        return best_id;
+    }
+
+    Symbol *Header::runtimeFindSymbol(uint32_t addr, word_t type) {
+        uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
+
+        return this->runtimeSymbol(section_id, this->runtimeFindSymbolId(addr, type));
+    }
+
+    char *Header::runtimeFindSymbolName(uint32_t addr, word_t type) {
+        uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
+
+        return this->runtimeSymbolName(section_id, this->runtimeFindSymbolId(addr, type));
+    }
+
     uint32_t SectionHeader::entries() {
         return this->size / this->entsize;
     }
+
+    uint8_t st_bind(uint8_t x) {return x << 4;}
+    uint8_t st_type(uint8_t x) {return x & 0xf;}
+    uint8_t st_info(uint8_t b, uint8_t t) {return st_bind(b) + st_type(t);}
 
     void load_kernel_elf(uint32_t num, uint32_t size, addr_logical_t addr, uint32_t shndx) {
         kernel_elf = (Header *)kmalloc((num * size) + sizeof(Header), 0);

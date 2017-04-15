@@ -50,6 +50,10 @@ namespace elf {
         Symbol *runtimeSymbol(uint32_t section, uint32_t offset);
         char *symbolName(uint32_t section, uint32_t offset);
         char *runtimeSymbolName(uint32_t section, uint32_t offset);
+
+        uint32_t runtimeFindSymbolId(uint32_t addr, word_t type);
+        Symbol *runtimeFindSymbol(uint32_t addr, word_t type);
+        char *runtimeFindSymbolName(uint32_t addr, word_t type);
     };
 
     const uint8_t EI_MAG0 = 0;
@@ -147,6 +151,23 @@ namespace elf {
         half_t shndx;
     };
 
+    uint8_t st_bind(uint8_t x);
+    uint8_t st_type(uint8_t x);
+    uint8_t st_info(uint8_t b, uint8_t t);
+
+    const word_t STB_LOCAL = 0;
+    const word_t STB_GLOBAL = 1;
+    const word_t STB_WEAK = 2;
+    const word_t STB_LOPROC = 13;
+    const word_t STB_HIPROC = 15;
+
+    const word_t STT_NOTYPE = 0;
+    const word_t STT_OBJECT = 1;
+    const word_t STT_FUNC = 2;
+    const word_t STT_SECTION = 3;
+    const word_t STT_FILE = 4;
+    const word_t STT_LOPROC = 13;
+    const word_t STT_HIPROC = 15;
 
     extern Header *kernel_elf;
     void load_kernel_elf(uint32_t num, uint32_t size, uint32_t addr, uint32_t shndx);
