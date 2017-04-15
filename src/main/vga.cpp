@@ -42,14 +42,15 @@ namespace vga {
         terminal_buffer[y * WIDTH + x] = c;
     }
 
-    static void _maybe_wrap() {
+    static void _maybe_wrap(uint16_t colour) {
+        colour = colour & 0xff00;
         if(terminal_row >= HEIGHT) {
             for(uint16_t i = WIDTH; i < HEIGHT*WIDTH; i ++) {
                 terminal_buffer[i - WIDTH] = terminal_buffer[i];
             }
 
             for(uint16_t i = (HEIGHT - 1) * WIDTH; i < HEIGHT * WIDTH; i ++) {
-                terminal_buffer[i] = 0x0000;
+                terminal_buffer[i] = colour;
             }
 
             terminal_row = HEIGHT - 1;
@@ -72,7 +73,7 @@ namespace vga {
             }
         }
 
-        _maybe_wrap();
+        _maybe_wrap(c);
     }
 
     error_t EntryStream::write(const void *buff, size_t len, uint32_t flags, void *data, uint32_t *written) {
