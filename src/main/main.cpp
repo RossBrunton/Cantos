@@ -19,6 +19,7 @@
 #include "structures/mutex.hpp"
 #include "main/printk.hpp"
 #include "structures/elf.hpp"
+#include "main/panic.hpp"
 
 extern "C" {
     #include "int/numbers.h"

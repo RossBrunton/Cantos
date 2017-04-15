@@ -47,7 +47,7 @@ namespace elf {
     }
 
     char *Header::runtimeLookupString(uint32_t section, uint32_t offset) {
-        return &((char *)this->runtimeSectionData(section))[offset];
+        return (char *)this->runtimeSectionData(section) + offset;
     }
 
     char *Header::lookupSectionString(uint32_t offset) {

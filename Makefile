@@ -4,7 +4,8 @@ CPPC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-gcc
 
 DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
-COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) -Wno-format -Wno-unused-parameter
+OPTFLAGS=-fno-omit-frame-pointer -Wno-format -Wno-unused-parameter
+COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) $(OPTFLAGS)
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
 CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 AFLAGS=-c -g -Iinclude/
@@ -13,7 +14,8 @@ LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-lib
 CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
 
-OBJECTS=obj/hw/acpi.o\
+OBJECTS=obj/debug/stack.o\
+	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
 	obj/hw/pit.o\
 	obj/hw/serial.o\
@@ -69,6 +71,7 @@ dirs:
 	test -e obj/hw || mkdir obj/hw
 	test -e obj/task || mkdir obj/task
 	test -e obj/structures || mkdir obj/structures
+	test -e obj/debug || mkdir obj/debug
 
 all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 
