@@ -1,6 +1,9 @@
 #ifndef _HPP_MAIN_PANIC_
 #define _HPP_MAIN_PANIC_
 
+#include <stdarg.h>
+#include <stdint.h>
+
 /** @file main/panic.h
  *
  * This defines the panic function, which should be called to stop the kernel when something goes seriously wrong.
@@ -22,5 +25,8 @@
  * @param[in] ... The values to use with the format
  */
 extern "C" void __attribute__((format(printf, 1, 2))) panic(const char *fmt, ...);
+
+extern "C" void vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap);
+extern "C" void __attribute__((format(printf, 3, 4))) panic_at(uint32_t ebp, uint32_t eip, const char *fmt, ...);
 
 #endif

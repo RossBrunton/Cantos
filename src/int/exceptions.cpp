@@ -12,66 +12,66 @@ extern "C" {
 
 namespace exceptions {
     void div0(idt_proc_state_t state) {
-        (void)state;
-        panic("Division by 0");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Division by 0");
     }
 
     void nmi(idt_proc_state_t state) {
-        (void)state;
-        panic("NMI Received (Hardware Failure?)");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "NMI Received (Hardware Failure?)");
     }
 
     void overflow(idt_proc_state_t state) {
-        (void)state;
-        panic("Overflow Exception");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Overflow Exception");
     }
 
     void bound_range_exceeded(idt_proc_state_t state) {
-        (void)state;
-        panic("Bound Range Exceeded Exception");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Bound Range Exceeded Exception");
     }
 
     void invalid_opcode(idt_proc_state_t state) {
-        (void)state;
-        panic("Invalid Opcode");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Invalid Opcode");
     }
 
     void double_fault(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
-        panic("Double Fault %x", errcode);
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
+        panic_at(state.ebp, eip, "Double Fault %x", errcode);
     }
 
     void invalid_tss(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
-        panic("Invalid TSS %x", errcode);
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
+        panic_at(state.ebp, eip, "Invalid TSS %x", errcode);
     }
 
     void segment_not_present(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
-        panic("Segment not Present %x", errcode);
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
+        panic_at(state.ebp, eip, "Segment not Present %x", errcode);
     }
 
     void stack_segment_not_present(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
         (void)errcode;
-        panic("Stack-Segment not Present %x", errcode);
+        panic_at(state.ebp, eip, "Stack-Segment not Present %x", errcode);
     }
 
     void gpf(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
-        panic("General Protection Fault %x", errcode);
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
+        panic_at(state.ebp, eip, "General Protection Fault %x", errcode);
     }
 
     void page_fault(idt_proc_state_t state, uint32_t errcode) {
-        (void)state;
+        uint32_t eip = *(uint32_t *)(state.esp + 4);
         uint32_t addr;
         __asm__("mov %%cr2, %0" : "=r"(addr));
-        panic("Page Fault %x [Address: %p]", errcode, addr);
+        panic_at(state.ebp, eip, "Page Fault %x [Address: %p]", errcode, addr);
     }
 
     void floating_point(idt_proc_state_t state) {
-        (void)state;
-        panic("Floating Point Exception");
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Floating Point Exception");
     }
 
     IDT_TELL_INTERRUPT(div0);
