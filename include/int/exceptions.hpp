@@ -24,6 +24,8 @@ namespace exceptions {
      * @param[in] state The values of all the registers
      */
     void div0(idt_proc_state_t state);
+
+    void debug(idt_proc_state_t state);
     /** Handles an NMI by panicing
      *
      * @param[in] state The values of all the registers

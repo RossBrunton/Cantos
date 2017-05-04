@@ -16,6 +16,11 @@ namespace exceptions {
         panic_at(state.ebp, eip, "Division by 0");
     }
 
+    void debug(idt_proc_state_t state) {
+        uint32_t eip = *(uint32_t *)(state.esp);
+        panic_at(state.ebp, eip, "Debug Exception");
+    }
+
     void nmi(idt_proc_state_t state) {
         uint32_t eip = *(uint32_t *)(state.esp);
         panic_at(state.ebp, eip, "NMI Received (Hardware Failure?)");
@@ -75,6 +80,7 @@ namespace exceptions {
     }
 
     IDT_TELL_INTERRUPT(div0);
+    IDT_TELL_INTERRUPT(debug);
     IDT_TELL_INTERRUPT(nmi);
     IDT_TELL_INTERRUPT(overflow);
     IDT_TELL_INTERRUPT(bre);
@@ -89,6 +95,7 @@ namespace exceptions {
 
     void init() {
         IDT_ALLOW_INTERRUPT(INT_DIV0, div0);
+        IDT_ALLOW_INTERRUPT(INT_DEBUG, debug);
         IDT_ALLOW_INTERRUPT(INT_NMI, nmi);
         IDT_ALLOW_INTERRUPT(INT_OVERFLOW, overflow);
         IDT_ALLOW_INTERRUPT(INT_BOUND_RANGE_EXCEEDED, bre);
@@ -102,6 +109,7 @@ namespace exceptions {
         IDT_ALLOW_INTERRUPT(INT_FLOATING_POINT, floatingpoint);
         
         idt::install(INT_DIV0, div0, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_DEBUG, debug, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         idt::install(INT_NMI, nmi, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         idt::install(INT_OVERFLOW, overflow, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         idt::install(INT_BOUND_RANGE_EXCEEDED,

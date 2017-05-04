@@ -29,6 +29,7 @@ idt_asm_interrupt_\name:
 
 # Processor Exceptions
 handle INT_DIV0 div0
+handle INT_DEBUG debug
 handle INT_NMI nmi
 handle INT_OVERFLOW overflow
 handle INT_BOUND_RANGE_EXCEEDED bre
