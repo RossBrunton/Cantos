@@ -120,8 +120,11 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     task::init();
 
-    elf::load_kernel_elf(
-        multiboot::header.elf_num, multiboot::header.elf_size, multiboot::header.elf_addr, multiboot::header.elf_shndx);
+    if(multiboot::header.flags & (1 << 5)) {
+        elf::load_kernel_elf(
+            multiboot::header.elf_num, multiboot::header.elf_size, multiboot::header.elf_addr,
+            multiboot::header.elf_shndx);
+    }
 
     lapic::awaken_others();
 

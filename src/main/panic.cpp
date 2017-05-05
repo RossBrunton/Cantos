@@ -50,25 +50,29 @@ extern "C" {
                 }
 
                 // Unwind the stack
-                if(eip) {
-                    char * symname = elf::kernel_elf->
-                        runtimeFindSymbolName(eip, elf::st_info(elf::STB_GLOBAL, elf::STT_FUNC));
-                    if(symname) {
-                        vga::string_stream.writef(0, &clr, "\nin %s", symname, 0);
-                    }else{
-                        vga::string_stream.writef(0, &clr, "\nin [unknown frame]");
-                    }
-                }
-
-                if(ebp) {
-                    do {
-                        name = unwinder.methodName(elf::kernel_elf);
-                        if(name) {
-                            vga::string_stream.writef(0, &clr, "\nin %s", name, 0);
+                if(elf::kernel_elf) {
+                    if(eip) {
+                        char * symname = elf::kernel_elf->
+                            runtimeFindSymbolName(eip, elf::st_info(elf::STB_GLOBAL, elf::STT_FUNC));
+                        if(symname) {
+                            vga::string_stream.writef(0, &clr, "\nin %s", symname, 0);
                         }else{
                             vga::string_stream.writef(0, &clr, "\nin [unknown frame]");
                         }
-                    } while(unwinder.unwind());
+                    }
+
+                    if(ebp) {
+                        do {
+                            name = unwinder.methodName(elf::kernel_elf);
+                            if(name) {
+                                vga::string_stream.writef(0, &clr, "\nin %s", name, 0);
+                            }else{
+                                vga::string_stream.writef(0, &clr, "\nin [unknown frame]");
+                            }
+                        } while(unwinder.unwind());
+                    }
+                }else{
+                    vga::string_stream.writef(0, &clr, "\n(no elf headers found, no debug info available)");
                 }
                 break;
 

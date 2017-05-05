@@ -69,6 +69,7 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     multiboot::entry_t *mm_entry;
     addr_logical_t info_end = 0;
     addr_logical_t lowest_info = 0xffffffff;
+    bool sections = false;
     
     // Load multiboot information
     _strncpy((char *)&LOW(char, multiboot::cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
@@ -88,6 +89,7 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     
     // Now need to look through and find the highest/lowest offset of all the section header table things
     for(i = 0; i < mbi->elf_num; i ++) {
+        sections = true;
         elf::SectionHeader *sect = (elf::SectionHeader *)(mbi->elf_addr + (i * mbi->elf_size));
         uint32_t load_addr = sect->addr;
         
@@ -103,6 +105,11 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     }
     
     info_end = info_end + PAGE_SIZE - (info_end % PAGE_SIZE);
+    
+    if(!sections) {
+        lowest_info = low_ro_start;
+        info_end = low_rw_end;
+    }
     
     // Find ACPI tables
     acpi::low_acpi_setup();
