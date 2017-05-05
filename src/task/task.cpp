@@ -22,7 +22,7 @@ namespace task {
     static uint32_t process_counter;
     static uint32_t task_counter;
 
-    static Thread *tasks;
+    static Thread * volatile tasks;
     static mutex::Mutex _mutex;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
@@ -44,7 +44,7 @@ namespace task {
         if(task->next_in_tasks) {
             return task->next_in_tasks;
         }else{
-            return tasks;
+            return (Thread *)tasks;
         }
     }
 
@@ -99,8 +99,8 @@ namespace task {
 
         page::kuninstall(stack_installed, this->stack->pages->page);
 
-        this->next_in_tasks = tasks;
-        tasks = this;
+        this->next_in_tasks = (Thread *)tasks;
+        tasks = (Thread* volatile)this;
 
         _mutex.unlock();
     }
@@ -126,7 +126,7 @@ namespace task {
 
         // And the main thread list
         prev = NULL;
-        for(now = tasks; now != this; (prev = now), (now = now->next_in_tasks));
+        for(now = (Thread *)tasks; now != this; (prev = now), (now = now->next_in_tasks));
         if(prev) {
             prev->next_in_tasks = this->next_in_tasks;
         }else{
@@ -166,7 +166,7 @@ namespace task {
         }
 
         // Call the exit function to move over the stack, will call task_yield_done
-        task_asm_yield((uint32_t)info->stack + PAGE_SIZE - 4);
+        task_asm_yield((uint32_t)info->stack + PAGE_SIZE);
     }
 
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
@@ -191,18 +191,16 @@ namespace task {
     }
 
     void __attribute__((noreturn)) schedule(Thread *base) {
+        while(tasks == NULL);
+
         while(true) {
             Thread *next;
             bool ok = false;
 
-            if(tasks == NULL) {
-                continue;
-            }
-
             _mutex.lock();
 
             if(!base) {
-                base = tasks;
+                base = (Thread *)tasks;
             }
 
             ok = false;

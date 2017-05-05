@@ -60,6 +60,7 @@ enter_protected:
 
     # And then set the stack pointer
     mov (%ebx), %eax
+    add $0x1000, %eax
     mov %eax, %esp
 
     call ap_main

@@ -85,7 +85,6 @@ namespace lapic {
         eoi();
         
         // Set up the timer
-        _deadline = pit::time;
         _set_timer(_CAL_INIT, _CAL_DIV);
     }
 

@@ -123,7 +123,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     elf::load_kernel_elf(
         multiboot::header.elf_num, multiboot::header.elf_size, multiboot::header.elf_addr, multiboot::header.elf_shndx);
 
-    //lapic::awaken_others();
+    lapic::awaken_others();
 
     /*while(1) {
         page::Page *page = page::alloc(0, 1);
@@ -138,7 +138,9 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("--- Before thread\n");
     thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);
     printk("--- Thread created\n");
-    new task::Thread(&task::kernel_process, (addr_logical_t)&t2);
+    for(int i = 0; i < 10; i ++) {
+        new task::Thread(&task::kernel_process, (addr_logical_t)&t2);
+    }
     printk("--- Second thread created!\n");
     task::schedule(NULL);
 }
