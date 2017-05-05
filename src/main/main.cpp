@@ -7,6 +7,7 @@
 #include "mem/object.hpp"
 #include "main/vga.hpp"
 #include "hw/pit.hpp"
+#include "hw/ps2.hpp"
 #include "int/exceptions.hpp"
 #include "int/pic.hpp"
 #include "int/ioapic.hpp"
@@ -136,7 +137,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
         page_free(page);
     }*/
 
-    ioapic::enable_func(INT_IRQ_KEYBOARD, ioapic::keyboard, 0);
+    ps2::init();
 
     printk("--- Before thread\n");
     thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);

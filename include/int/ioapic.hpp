@@ -28,8 +28,6 @@ namespace ioapic {
     void disable(uint8_t irq);
 
     void enable_func(uint8_t irq, idt::interrupt_handler_t func, uint64_t flags);
-
-    void keyboard(idt_proc_state_t state);
 }
 
 #endif

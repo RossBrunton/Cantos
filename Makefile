@@ -18,6 +18,7 @@ OBJECTS=obj/debug/stack.o\
 	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
 	obj/hw/pit.o\
+	obj/hw/ps2.o\
 	obj/hw/serial.o\
 	obj/hw/utils.o\
 	obj/int/exceptions.o\
