@@ -6,6 +6,7 @@
 #include "int/lapic.hpp"
 #include "main/panic.hpp"
 #include "structures/mutex.hpp"
+#include "hw/ps2keyboard.hpp"
 
 extern "C" {
     #include "hw/ports.h"
@@ -150,7 +151,7 @@ namespace ps2 {
         }
 
         // Disable scanning
-        this->_write_ack(DEV_DISABLE_SCAN);
+        this->write_ack(DEV_DISABLE_SCAN);
         if(this->timed_out) {
             kwarn("PS2 timed out during init (disable scan)\n");
             this->enabled = false;
@@ -158,7 +159,7 @@ namespace ps2 {
         }
 
         // Send identify command
-        this->_write_ack(DEV_IDENTIFY);
+        this->write_ack(DEV_IDENTIFY);
         if(this->timed_out) {
             kwarn("PS2 timed out during init (identify)\n");
             this->enabled = false;
@@ -166,10 +167,10 @@ namespace ps2 {
         }
 
         // Read the results into the info array
-        info[0] = this->_read(0xffff);
+        info[0] = this->read(0xffff);
         if(!this->timed_out) {
             info_length = 1;
-            info[1] = this->_read(0xffff);
+            info[1] = this->read(0xffff);
             if(!this->timed_out) {
                 info_length = 2;
             }
@@ -214,6 +215,12 @@ namespace ps2 {
             return;
         }
 
+        // Set a driver
+        if(this->type & TYPE_KEYBOARD) {
+            this->driver = new ps2keyboard::Ps2KeyboardDriver();
+            this->driver->configure(this);
+        }
+
         // Now enable it
         _write_command(COM_READ);
         config = _wait_read_data();
@@ -228,7 +235,7 @@ namespace ps2 {
         printk("Got information about PS2 port %d - [%x, %x]%d\n", this->second, info[0], info[1], info_length);
     }
 
-    uint8_t Ps2Port::_read(uint32_t timeout) {
+    uint8_t Ps2Port::read(uint32_t timeout) {
         this->timed_out = false;
         while(_read_status() & STAT_INBUFF) {
             io_wait();
@@ -242,20 +249,20 @@ namespace ps2 {
         return _read_data();
     }
 
-    void Ps2Port::_write(uint8_t dat) {
+    void Ps2Port::write(uint8_t dat) {
         if(this->second) {
             _write_command(COM_NEXT2IN);
         }
         _write_data(dat);
     }
 
-    void Ps2Port::_write_ack(uint8_t dat) {
+    void Ps2Port::write_ack(uint8_t dat) {
         uint8_t read = 0;
 
         do {
-            this->_write(dat);
+            this->write(dat);
 
-            read = this->_read(0xffff);
+            read = this->read(0xffff);
 
             if(read == ACK || this->timed_out) {
                 return;
@@ -264,7 +271,11 @@ namespace ps2 {
     }
 
     void Ps2Port::handle(idt_proc_state_t state) {
-        printk("Got interrupt!\n");
+        _mutex.lock();
+        if(this->enabled && this->driver) {
+            this->driver->handle();
+        }
+        _mutex.unlock();
         lapic::eoi();
     }
 }

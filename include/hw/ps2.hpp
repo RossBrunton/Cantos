@@ -35,8 +35,8 @@ namespace ps2 {
     const uint8_t ACK = 0xfa;
     const uint8_t RESEND = 0xfe;
 
-    const uint8_t TYPE_MOUSE = 0xf;
-    const uint8_t TYPE_KEYBOARD = 0x8;
+    const uint8_t TYPE_MOUSE = 0x40;
+    const uint8_t TYPE_KEYBOARD = 0x80;
     const uint8_t TYPE_TRANSLATION_KEYBOARD_AT = TYPE_KEYBOARD | 0x00;
     const uint8_t TYPE_STANDARD_MOUSE = TYPE_MOUSE | 0x00;
     const uint8_t TYPE_SCROLL_MOUSE = TYPE_MOUSE | 0x01;
@@ -58,15 +58,15 @@ namespace ps2 {
         void init();
         void handle(idt_proc_state_t state);
 
-    private:
-        uint8_t _read(uint32_t timeout);
-        void _write(uint8_t dat);
-        void _write_ack(uint8_t dat);
+        uint8_t read(uint32_t timeout);
+        void write(uint8_t dat);
+        void write_ack(uint8_t dat);
     };
 
     class Ps2Driver {
     public:
-        virtual void configure(Ps2Port port);
+        virtual void configure(Ps2Port *port);
+        virtual void handle();
     };
 
     extern Ps2Port ports[2];
