@@ -65,8 +65,8 @@ namespace ps2 {
 
     class Ps2Driver {
     public:
-        virtual void configure(Ps2Port *port);
-        virtual void handle();
+        virtual void configure(Ps2Port *port) = 0;
+        virtual void handle() = 0;
     };
 
     extern Ps2Port ports[2];
