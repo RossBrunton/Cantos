@@ -13,6 +13,16 @@ uint8_t inb(uint16_t port) {
     return ret;
 }
 
+void outl(uint16_t port, uint32_t val) {
+    __asm__ volatile ("out %0, %1" : : "a"(val), "d"(port));
+}
+
+uint32_t inl(uint16_t port) {
+    uint32_t ret;
+    __asm__ volatile ("in %1, %0" : "=a"(ret) : "d"(port));
+    return ret;
+}
+
 void io_wait() {
     outb(IO_PORT_CHECKPOINT, 0);
 }

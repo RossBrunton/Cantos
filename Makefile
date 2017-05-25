@@ -17,6 +17,7 @@ CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
 OBJECTS=obj/debug/stack.o\
 	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
+	obj/hw/pci.o\
 	obj/hw/pit.o\
 	obj/hw/ps2.o\
 	obj/hw/ps2keyboard.o\

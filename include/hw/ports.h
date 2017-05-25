@@ -30,4 +30,7 @@
 #define IO_PORT_COM_MODEM_STATUS 0x6
 #define IO_PORT_COM_SCRATCH 0x7
 
+#define IO_PORT_PCI_ADDRESS 0xcf8
+#define IO_PORT_PCI_DATA 0xcfc
+
 #endif

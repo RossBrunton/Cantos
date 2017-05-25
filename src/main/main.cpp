@@ -21,6 +21,7 @@
 #include "main/printk.hpp"
 #include "structures/elf.hpp"
 #include "main/panic.hpp"
+#include "hw/pci.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -118,6 +119,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     lapic::setup();
     ioapic::init();
     pit::init();
+    pci::init();
 
     task::init();
 
