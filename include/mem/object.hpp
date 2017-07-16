@@ -38,9 +38,10 @@ namespace object {
         uint32_t max_pages;
         uint8_t page_flags;
         uint8_t object_flags;
+        uint32_t offset; // In pages
 
         Object(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
-        uint8_t object_flags);
+        uint8_t object_flags, uint32_t offset);
         ~Object();
 
         void add_to_vm(vm::Map *map, uint32_t base);

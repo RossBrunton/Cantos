@@ -14,7 +14,7 @@ namespace object {
      */
 
     Object::Object(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
-    uint8_t object_flags) {
+    uint8_t object_flags, uint32_t offset) {
         this->vm_maps = NULL;
         this->generator = generator;
         this->deleter = deleter;
@@ -22,6 +22,7 @@ namespace object {
         this->max_pages = max_pages;
         this->page_flags = page_flags;
         this->object_flags = object_flags;
+        this->offset = offset;
     }
 
     Object::~Object() {
@@ -124,30 +125,47 @@ namespace object {
         }
     }
 
-
+    // count is in pages, Addr is an address not in pages
     void Object::generate(uint32_t addr, uint32_t count) {
         PageEntry *new_entry;
         PageEntry *next = NULL;
         PageEntry *prev = NULL;
         page::Page *page;
         MapEntry *map_entry;
+        int32_t load_addr;
 
-        if((addr / PAGE_SIZE) + count > this->max_pages) {
+        uint32_t original_addr = addr;
+        load_addr = addr - offset * PAGE_SIZE;
+
+        // If we skip some bytes at the start
+        if(load_addr < 0) {
+            count += (load_addr / PAGE_SIZE);
+            original_addr -= load_addr;
+            load_addr = 0;
+        }
+
+        // If we would go greater than the maximum number of pages, cap it
+        // TODO: Do I really want to do this?
+        if((load_addr / PAGE_SIZE) + count > this->max_pages) {
             count = this->max_pages - (addr / PAGE_SIZE);
         }
 
-        for(next = this->pages; next && next->offset < addr; (prev = next), (next = next->next));
+        // Find the location to insert the page into
+        for(next = this->pages; next && next->offset < load_addr; (prev = next), (next = next->next));
 
-        if(next && addr + (count * PAGE_SIZE) >= next->offset) {
-            count = (next->offset - addr) / PAGE_SIZE;
+        // If we are bumping into the next block of pages, then reduce the amount of pages to load appropriately
+        if(next && load_addr + (count * PAGE_SIZE) >= next->offset) {
+            count = (next->offset - load_addr) / PAGE_SIZE;
         }
 
         if(!count) return;
 
-        page = this->generator(addr, this, count);
+        // Generate the pages
+        page = this->generator(original_addr, this, count);
 
+        // And create a new entry
         new_entry = new PageEntry();
-        new_entry->offset = addr;
+        new_entry->offset = load_addr;
         new_entry->page = page;
         new_entry->next = next;
         if(prev) {
@@ -158,7 +176,7 @@ namespace object {
 
         // Now update the tables
         for(map_entry = this->vm_maps; map_entry; map_entry = map_entry->next) {
-            map_entry->map->insert(map_entry->base + addr, page, this->page_flags);
+            map_entry->map->insert(map_entry->base + load_addr, page, this->page_flags);
         }
     }
 
