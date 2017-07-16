@@ -45,7 +45,12 @@ namespace cpu {
      *  memory allocation to be working.
      */
     void init();
-    
+    /** Returns the currently running thread.
+     *
+     * Reads the "thread" property of the CPU, but disables interrupts to avoid race conditions.
+     */
+    task::Thread *current_thread();
+
     uint32_t id();
 }
 

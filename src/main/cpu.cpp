@@ -60,4 +60,16 @@ namespace cpu {
             cpu_status[i]->thread = NULL;
         }
     }
+
+    /** Returns the currently running thread.
+     *
+     * Reads the "thread" property of the CPU, but disables interrupts to avoid race conditions.
+     */
+    task::Thread *current_thread() {
+        task::Thread *t;
+        __asm__ volatile("cli");
+        t = cpu_status[id()]->thread;
+        __asm__ volatile("sti");
+        return t;
+    }
 }
