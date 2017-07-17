@@ -18,6 +18,7 @@ namespace page {
         Page *next;
         
         uint32_t count();
+        Page *split(uint32_t count);
     };
 
     const uint8_t FLAG_ALLOCATED = 0x01;

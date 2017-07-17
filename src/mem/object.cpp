@@ -125,6 +125,65 @@ namespace object {
         }
     }
 
+
+    void Object::shift_right(uint32_t amount) {
+        PageEntry *page_entry;
+        MapEntry *map_entry;
+        uint32_t reduction;
+        uint32_t old_offset;
+        uint32_t old_count;
+        bool del;
+        page::Page *after;
+        page::Page *before;
+
+        for(page_entry = this->pages; page_entry; page_entry = page_entry->next) {
+            old_offset = page_entry->offset;
+            old_count = page_entry->page->count();
+            del = false;
+
+            if(amount * PAGE_SIZE > page_entry->offset) {
+                // We are cutting off the start of this page entry
+                reduction = amount * PAGE_SIZE - page_entry->offset;
+                page_entry->offset = 0;
+
+                // Check if this page is entirely gone
+                if(reduction > page_entry->page->count() * PAGE_SIZE) {
+                    // It's gone!
+                    this->pages = page_entry->next;
+                    del = true;
+                }else{
+                    // It's been sliced!
+                    after = page_entry->page->split(reduction / PAGE_SIZE);
+                    before = page_entry->page;
+                    page_entry->page = after;
+                    page::free(before);
+                }
+            }else{
+                // We are just moving it to the left, no rush
+                page_entry->offset -= amount * PAGE_SIZE;
+            }
+
+            // Update all the VM maps
+            for(map_entry = this->vm_maps; map_entry; map_entry = map_entry->next) {
+                if(del) {
+                    map_entry->map->clear(map_entry->base + old_offset, old_count);
+                }else{
+                    map_entry->map->clear(map_entry->base + old_offset + (old_count - amount) * PAGE_SIZE, amount);
+                    map_entry->map->insert(map_entry->base + page_entry->offset, page_entry->page, this->page_flags);
+                }
+            }
+
+            if(del) {
+                // Delete the entry and free the pages if required
+                page::free(page_entry->page);
+                delete page_entry;
+            }
+        }
+
+        this->offset += amount;
+    }
+
+
     // count is in pages, Addr is an address not in pages
     void Object::generate(uint32_t addr, uint32_t count) {
         PageEntry *new_entry;

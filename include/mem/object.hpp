@@ -47,6 +47,8 @@ namespace object {
         void add_to_vm(vm::Map *map, uint32_t base);
         void remove_from_vm(vm::Map *map);
 
+        void shift_right(uint32_t amount);
+
         void generate(uint32_t addr, uint32_t count);
     };
 

@@ -366,4 +366,17 @@ namespace page {
         
         return sum;
     }
+
+
+    Page *Page::split(uint32_t count) {
+        if(count > this->consecutive) {
+            return this->next->split(count - this->consecutive);
+        }else{
+            Page *created = create(this->mem_base + count * PAGE_SIZE, this->flags, this->consecutive - count);
+            created->next = this->next;
+            this->next = nullptr;
+            this->consecutive = count;
+            return created;
+        }
+    }
 }
