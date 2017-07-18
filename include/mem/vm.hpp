@@ -25,6 +25,7 @@ namespace vm {
         ~Map();
         void insert(addr_logical_t addr, page::Page *page, uint8_t page_flags);
         void clear(addr_logical_t addr, uint32_t pages);
+        bool resolve_fault(addr_logical_t addr);
     };
 
     void table_switch(addr_phys_t table);

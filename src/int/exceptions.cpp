@@ -4,6 +4,7 @@
 #include "main/panic.hpp"
 #include "int/idt.hpp"
 #include "mem/gdt.hpp"
+#include "main/cpu.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -71,7 +72,10 @@ namespace exceptions {
         uint32_t eip = *(uint32_t *)(state.esp + 4);
         uint32_t addr;
         __asm__("mov %%cr2, %0" : "=r"(addr));
-        panic_at(state.ebp, eip, "Page Fault %x [Address: %p]", errcode, addr);
+
+        if(!(cpu::current_thread() && cpu::current_thread()->vm->resolve_fault(addr))) {
+            panic_at(state.ebp, eip, "Unresolved Page Fault %x [Address: %p]", errcode, addr);
+        }
     }
 
     void floating_point(idt_proc_state_t state) {

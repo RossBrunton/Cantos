@@ -122,6 +122,24 @@ namespace vm {
     }
 
 
+    bool Map::resolve_fault(addr_logical_t addr) {
+        object::List *entry;
+
+        // Loop through the objects and see if any fit
+        for(entry = this->objects; entry; entry = entry->next) {
+            printk("addr: %x, entry->base: %x, max_pages: %x\n", addr, entry->base, entry->object->max_pages);
+            if(addr >= entry->base && addr < entry->base + entry->object->max_pages * PAGE_SIZE) {
+                // OK!
+                uint32_t excess = addr % PAGE_SIZE;
+                entry->object->generate(addr - entry->base + (entry->object->offset * PAGE_SIZE) - excess, 1);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     void table_switch(addr_phys_t table) {
         __asm__ volatile ("mov %0, %%cr3" : : "r"(table));
     }
