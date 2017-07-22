@@ -7,7 +7,7 @@
  *
  * `errno` may be set to one of these values by some functions in the kernel, as per "normal" C library functions.
  *
- * The error codes are from POSIX, although at the current time not all of them are implemented.
+ * Some error codes are from posix, but some are not.
  */
 
 /** The current error code */
@@ -20,5 +20,7 @@ typedef uint32_t error_t;
 #define EOK 0
 #define EPERM 1
 #define EBUSY 2
+#define ENOENT 3
+#define ENOTDIR 4
 
 #endif
