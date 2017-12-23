@@ -63,6 +63,8 @@ namespace pci {
     // PCI to Cardbus bridge (type 0x02)
     const uint8_t TYPE_CBR = 0x02;
 
+    class Driver;
+
     class Device {
     public:
         Device *next;
@@ -76,6 +78,7 @@ namespace pci {
         uint8_t bus;
         uint8_t slot;
         uint8_t multifunction;
+        Driver *driver;
 
         Device(uint8_t bus, uint8_t slot);
         uint8_t get8(uint8_t fn, uint8_t addr);
@@ -84,6 +87,14 @@ namespace pci {
         void set8(uint8_t fn, uint8_t addr, uint8_t val);
         void set16(uint8_t fn, uint8_t addr, uint16_t val);
         void set32(uint8_t fn, uint8_t addr, uint32_t val);
+    };
+
+    class Driver {
+    public:
+        Device *device;
+
+        virtual void configure(Device *device);
+        virtual void handle_interrupt();
     };
 
     void init();
