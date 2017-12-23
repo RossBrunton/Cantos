@@ -89,3 +89,7 @@ grub: all
 	cp grub.cfg isodir/boot/grub/
 	cp bin/cantos.bin isodir/boot/cantos.bin
 	grub-mkrescue -o cantos.iso isodir
+
+docs:
+	-rm -r doc/*
+	doxygen include/Doxyfile
