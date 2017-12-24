@@ -4,6 +4,7 @@
 #include "task/task.hpp"
 #include "hw/acpi.h"
 #include "mem/page.hpp"
+#include "main/panic.hpp"
 
 /** @file main/cpu.c
  *
@@ -35,13 +36,16 @@ namespace cpu {
     }
 
     /** */
-    Status *info() {
-        return cpu_status[id()];
+    Status& info() {
+        return info_of(id());
     }
 
     /** */
-    Status *info_of(uint32_t id) {
-        return cpu_status[id];
+    Status& info_of(uint32_t id) {
+        if(!cpu_status[id]) {
+            panic("Tried to get the status of an invalid or un-inited cpu");
+        }
+        return *cpu_status[id];
     }
 
     /** Sets up the (at the moment) only CPU status struct and create a stack for it.

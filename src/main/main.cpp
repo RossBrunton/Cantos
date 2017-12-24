@@ -152,7 +152,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 }
 
 extern "C" void __attribute__((noreturn)) ap_main() {
-    cpu::info()->awoken = true;
+    cpu::info().awoken = true;
 
     idt::setup();
     gdt::setup();

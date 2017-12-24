@@ -144,10 +144,8 @@ namespace task {
 
 
     extern "C" void __attribute__((noreturn)) task_enter(Thread *thread) {
-        cpu::Status *info;
-
-        info = cpu::info();
-        info->thread = thread;
+        cpu::Status &info = cpu::info();
+        info.thread = thread;
 
         // Load the task's memory map
         vm::table_switch(thread->vm->physical_dir->mem_base);
@@ -157,24 +155,22 @@ namespace task {
     }
 
     extern "C" void task_yield() {
-        cpu::Status *info;
-        info = cpu::info();
+        cpu::Status& info = cpu::info();
 
         // Do nothing if we are not in a task
-        if(!info->thread) {
+        if(!info.thread) {
             return;
         }
 
         // Call the exit function to move over the stack, will call task_yield_done
-        task_asm_yield((uint32_t)info->stack + PAGE_SIZE);
+        task_asm_yield((uint32_t)info.stack + PAGE_SIZE);
     }
 
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
-        cpu::Status *info;
         Thread *current;
-        info = cpu::info();
-        current = info->thread;
-        info->thread = NULL;
+        cpu::Status& info = cpu::info();
+        current = info.thread;
+        info.thread = NULL;
 
         _mutex.lock();
 
@@ -232,10 +228,9 @@ namespace task {
 
 
     extern "C" void task_timer_yield() {
-        cpu::Status *info;
-        info = cpu::info();
+        cpu::Status& info = cpu::info();
 
-        if(!info->thread) {
+        if(!info.thread) {
             // Not running a thread, do nothing
             return;
         }

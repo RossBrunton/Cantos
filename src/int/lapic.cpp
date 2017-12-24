@@ -163,7 +163,7 @@ namespace lapic {
             io_wait();
             _ipi((uint32_t)_JUMP_BASE / PAGE_SIZE, 6, 1, id);
 
-            while(!cpu::info_of(id)->awoken);
+            while(!cpu::info_of(id).awoken);
         }
     }
 

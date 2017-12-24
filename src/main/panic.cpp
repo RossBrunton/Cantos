@@ -31,22 +31,21 @@ extern "C" {
     }
 
     void vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap) {
-        cpu::Status *info;
         char *name;
 
         stack::Unwinder unwinder(ebp);
 
         switch(panicked ++) {
-            case 0:
+            case 0: {
                 vga::string_stream.writef(0, &clr, "\nKERNEL PANIC: ");
                 vga::string_stream.writef(0, &clr, fmt, ap);
                 va_end(ap);
 
-                info = cpu::info();
-                if(info->thread) {
-                    vga::string_stream.writef(0, &clr, " [%d/%d]", info->cpu_id, info->thread->task_id);
+                cpu::Status& info = cpu::info();
+                if(info.thread) {
+                    vga::string_stream.writef(0, &clr, " [%d/%d]", info.cpu_id, info.thread->task_id);
                 }else{
-                    vga::string_stream.writef(0, &clr, " [%d/-]", info->cpu_id);
+                    vga::string_stream.writef(0, &clr, " [%d/-]", info.cpu_id);
                 }
 
                 // Unwind the stack
@@ -75,6 +74,7 @@ extern "C" {
                     vga::string_stream.writef(0, &clr, "\n(no elf headers found, no debug info available)");
                 }
                 break;
+            }
 
             case 1:
                 vga::string_stream.writef(0, &clr, "\n! Panic Handling Panic");

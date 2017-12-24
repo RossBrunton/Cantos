@@ -32,13 +32,13 @@ namespace cpu {
      *
      * @return The CPU's status structure.
      */
-    Status *info();
+    Status& info();
     /** Returns the CPU status structure for another CPU.
      *
      * @param [in] id The CPU id to get status for.
      * @return That CPU's status structure.
      */
-    Status *info_of(uint32_t id);
+    Status& info_of(uint32_t id);
     /** Initializes the "cpu" namespace, call this before using any functions in this file.
      *
      * This also creates a stack for the CPU to use, so it should be called before doing a task switch. It also requires
