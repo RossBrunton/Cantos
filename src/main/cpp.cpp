@@ -2,6 +2,7 @@
 
 #include "main/panic.hpp"
 #include "mem/kmem.hpp"
+#include "main/cpp.hpp"
 
 extern "C" void __cxa_pure_virtual() {
     panic((char *)"__cxa_pure_virtual called.");
