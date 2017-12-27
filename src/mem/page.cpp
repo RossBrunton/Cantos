@@ -101,7 +101,7 @@ namespace page {
     Page *create(uint32_t base, uint8_t flags, unsigned int count) {
         Page *write;
         
-        write = (Page *)kmalloc(sizeof(Page), KMALLOC_RESERVED);
+        write = (Page *)kmalloc(sizeof(Page), kmem::KMALLOC_RESERVED);
         write->page_id = page_id_counter ++;
         write->mem_base = base;
         write->flags = FLAG_ALLOCATED | flags;
@@ -155,7 +155,7 @@ namespace page {
 
     Page *alloc(uint8_t flags, unsigned int count) {
         Page *new_page;
-        uint8_t alloc_flag = (flags & page::FLAG_RESERVED) ? KMALLOC_RESERVED : 0;
+        uint8_t alloc_flag = (flags & page::FLAG_RESERVED) ? kmem::KMALLOC_RESERVED : 0;
         
         if(count == 0) {
             return NULL;
