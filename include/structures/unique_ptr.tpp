@@ -6,6 +6,8 @@ template<class T> unique_ptr<T>& unique_ptr<T>::operator=(unique_ptr<T>&& r) {
     }
     ref = r.ref;
     r.ref = nullptr;
+
+    return *this;
 }
 
 template<class T> unique_ptr<T>& unique_ptr<T>::operator=(nullptr_t r) {
