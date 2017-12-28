@@ -34,6 +34,12 @@ namespace utf8 {
         this->byte_count = copy.byte_count;
     }
 
+    Utf8::Utf8() {
+        this->string = nullptr;
+        this->autofree = false;
+        this->byte_count = 0;
+    }
+
     Utf8::~Utf8() {
         if(this->autofree) {
             kfree((void *)this->string);
@@ -41,7 +47,11 @@ namespace utf8 {
     }
 
     const char *Utf8::to_string() const {
-        return this->string;
+        if(string) {
+            return string;
+        }else{
+            return "(null)";
+        }
     }
 
     uint32_t Utf8::bytes() const {

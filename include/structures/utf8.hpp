@@ -10,6 +10,7 @@ namespace utf8 {
     public:
         Utf8(const char *string, bool autofree=false);
         Utf8(const Utf8 &copy);
+        Utf8();
         ~Utf8();
         const char *to_string() const;
 

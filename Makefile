@@ -3,7 +3,7 @@ CC=$(CROSS_PREFIX)-gcc
 CPPC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-gcc
 
-DEBUGFLAGS=-DDEBUG_MEM -DDEBUG_SERIAL
+DEBUGFLAGS=-DDEBUG_SERIAL -DTESTS
 OPTFLAGS=-fno-omit-frame-pointer -Wno-format -Wno-unused-parameter
 COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) $(OPTFLAGS)
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
@@ -46,11 +46,13 @@ OBJECTS=obj/debug/stack.o\
 	obj/mem/page.o\
 	obj/mem/vm.o\
 	obj/structures/elf.o\
+	obj/structures/list.o\
 	obj/structures/mutex.o\
 	obj/structures/stream.o\
 	obj/structures/utf8.o\
 	obj/task/asm.o\
-	obj/task/task.o
+	obj/task/task.o\
+	obj/test/test.o
 
 obj/%.o: src/%.cpp
 	$(CPPC) $(CPPFLAGS) -o $@ $^
@@ -78,6 +80,7 @@ dirs:
 	test -e obj/structures || mkdir obj/structures
 	test -e obj/debug || mkdir obj/debug
 	test -e obj/fs || mkdir obj/fs
+	test -e obj/test || mkdir obj/test
 
 all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 

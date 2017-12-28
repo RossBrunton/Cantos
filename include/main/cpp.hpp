@@ -1,6 +1,10 @@
 #ifndef _HPP_CPP_
 #define _HPP_CPP_
 
+// Destructors (do nothing)
+extern "C" int __cxa_atexit(void (*destructor) (void *), void *arg, void *dso);
+extern "C" void __cxa_finalize(void *f);
+
 typedef decltype(nullptr) nullptr_t;
 
 template <class T, T v>
