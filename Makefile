@@ -49,6 +49,7 @@ OBJECTS=obj/debug/stack.o\
 	obj/structures/list.o\
 	obj/structures/mutex.o\
 	obj/structures/stream.o\
+	obj/structures/unique_ptr.o\
 	obj/structures/utf8.o\
 	obj/task/asm.o\
 	obj/task/task.o\

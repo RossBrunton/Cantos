@@ -15,6 +15,8 @@ template<class T> unique_ptr<T>& unique_ptr<T>::operator=(nullptr_t r) {
         delete ref;
     }
     ref = nullptr;
+
+    return *this;
 }
 
 template<class T> T *unique_ptr<T>::release() {
