@@ -3,9 +3,8 @@
 
 TEST("Unique_ptr Test", UniquePtrTest, {
     test("Constructing");
-    int *a = new int(7);
-    int *b = new int(8);
 
+    int *a = new int(7);
     unique_ptr<int> ap = unique_ptr<int>(a);
 
     assert(ap);
@@ -27,6 +26,7 @@ TEST("Unique_ptr Test", UniquePtrTest, {
     assert(!ap);
 
     test("Resetting a pointer");
+    int *b = new int(8);
     ap.reset(b);
     assert(*ap == 8);
 
