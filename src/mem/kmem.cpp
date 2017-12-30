@@ -9,6 +9,7 @@
 
 namespace kmem {
     #define _MINIMUM_PAGES 2
+    #define _SENTINEL_VAL 0x4b4d454d
 
     /** @private */
     extern "C" char _startofro;
@@ -22,6 +23,9 @@ namespace kmem {
     /** @private */
     struct kmem_header_t {
         int size;
+#ifdef KMEM_SENTINEL
+        uint32_t sentinel = _SENTINEL_VAL;
+#endif
     };
 
     // Start of the block of free memory, not after any headers
@@ -67,7 +71,7 @@ namespace kmem {
 
     static void _verify(const char *func) {
         (void)func;
-    #if DEBUG_MEM
+#if DEBUG_MEM
         kmem_free_t *now;
         kmem_free_t *prev = NULL;
         kmem_free_t *frees = NULL;
@@ -111,7 +115,7 @@ namespace kmem {
             _print();
             panic("Memory corruption, end of free array not set correctly [%s]", func);
         }
-    #endif
+#endif
     }
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
@@ -217,11 +221,12 @@ namespace kmem {
         kmem_header_t *hdr = NULL;
         page::Page *new_page;
         addr_logical_t installed_loc;
-    #if DEBUG_VMEM
+#if DEBUG_VMEM
         printk("Allocating %d bytes.\n", size);
-    #endif
+#endif
 
         if(size == 0) return NULL;
+        _verify("kmalloc@before alloc");
 
         // Align size to four bytes
         if(size % 4) size += 4 - size % 4;
@@ -236,9 +241,9 @@ namespace kmem {
         if((((uint64_t)memory_used + (uint64_t)size_needed > memory_total - (_MINIMUM_PAGES * PAGE_SIZE))
         || memory_total < (_MINIMUM_PAGES * PAGE_SIZE))
         && !(flags & KMALLOC_RESERVED)) {
-    #if DEBUG_MEM
+#if DEBUG_MEM
             printk("Wanted to kmalloc more than we can safely store.\n");
-    #endif
+#endif
         }else{
             for(; free; (prev = free), (free = free->next)) {
                 if(size_needed <= free->size) {
@@ -266,6 +271,9 @@ namespace kmem {
 
                         // And then do that malloc thing we were going to do
                         hdr = (kmem_header_t *)base;
+#if KMEM_SENTINEL
+                        hdr->sentinel = _SENTINEL_VAL;
+#endif
                         hdr->size = size;
                         _verify("kmalloc@whole block clear");
                         memory_used += size + sizeof(kmem_header_t);
@@ -277,6 +285,9 @@ namespace kmem {
                         free->size -= size_needed;
                         free->base += size_needed;
                         hdr = (kmem_header_t *)base;
+#if KMEM_SENTINEL
+                        hdr->sentinel = _SENTINEL_VAL;
+#endif
                         hdr->size = size;
                         _verify("kmalloc@shrink block");
                         memory_used += size_needed;
@@ -294,9 +305,9 @@ namespace kmem {
         }
         pages_needed += _MINIMUM_PAGES;
 
-    #if DEBUG_MEM
+#if DEBUG_MEM
         printk("Extending memory by %d pages (%x/%x).\n", pages_needed, memory_used, memory_total);
-    #endif
+#endif
 
         // This calls kmalloc, be careful!
         new_page = page::alloc(page::FLAG_KERNEL | page::FLAG_RESERVED, pages_needed);
@@ -312,6 +323,9 @@ namespace kmem {
             int space_allocated = new_page->consecutive * PAGE_SIZE - sizeof(kmem_header_t) - sizeof(kmem_free_t);
             hdr = (kmem_header_t *)installed_loc;
             hdr->size = sizeof(kmem_free_t);
+#if KMEM_SENTINEL
+            hdr->sentinel = _SENTINEL_VAL;
+#endif
             free = (kmem_free_t *)(hdr + 1);
             free->size = space_allocated;
             free->base = (addr_logical_t)(free + 1);
@@ -347,18 +361,27 @@ namespace kmem {
 
 
     void kfree(void *ptr) {
-        kmem_header_t *hdr = (kmem_header_t *)ptr - 1;
+        kmem_header_t *hdr = ((kmem_header_t *)ptr) - 1;
         size_t full_size = hdr->size + sizeof(kmem_header_t);
-        kmem_free_t *new_entry = _get_struct();
+        kmem_free_t *new_entry;
 
-    #if DEBUG_VMEM
+
+#if DEBUG_VMEM
         printk("Freeing %p (%d bytes).\n", ptr, hdr->size);
-    #endif
+#endif
+#if KMEM_SENTINEL
+        if(hdr->sentinel != _SENTINEL_VAL) {
+            panic("Sentinel value was not set correctly!");
+        }
+        hdr->sentinel = 0;
+#endif
 
         if(!ptr) {
             // Ignore NULL
             return;
         }
+
+        new_entry = _get_struct();
 
         _verify("kfree@start of free");
         if(!free_list) {
@@ -395,4 +418,5 @@ namespace kmem {
     }
 
     #undef _MINIMUM_PAGES
+    #undef _SENTINEL_VAL
 }
