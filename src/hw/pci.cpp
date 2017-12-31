@@ -84,7 +84,9 @@ namespace pci {
 
                 // Check if it is a pci to pci bridge
                 if(device->device_class == 0x06 && device->device_subclass == 0x04) {
-                    printk("Found bridge!\n");
+#if DEBUG_PCI
+                    printk("Found PCI bridge!\n");
+#endif
                     _search_bus(device->get8(0, PBR_SECONDARY_BUS_NUM), 0);
                 }
             }
@@ -108,7 +110,9 @@ namespace pci {
         // Lets list them
         Device *device = devices;
         do {
+#if DEBUG_PCI
             printk("PCI Device %x:%x.%x is %x:%x\n", device->bus, device->slot, device->prog_if, device->vendor_id, device->device_id);
+#endif
         } while((device = device->next));
     }
 }

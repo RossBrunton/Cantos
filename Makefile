@@ -3,9 +3,8 @@ CC=$(CROSS_PREFIX)-gcc
 CPPC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-gcc
 
-DEBUGFLAGS=-DDEBUG_SERIAL -DTESTS
 OPTFLAGS=-fno-omit-frame-pointer -Wno-format -Wno-unused-parameter
-COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(DEBUGFLAGS) $(OPTFLAGS)
+COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(OPTFLAGS)
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
 CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 AFLAGS=-c -g -Iinclude/
@@ -56,8 +55,8 @@ OBJECTS=obj/debug/stack.o\
 	obj/task/task.o\
 	obj/test/test.o
 
-obj/%.o: src/%.cpp
-	$(CPPC) $(CPPFLAGS) -o $@ $^
+obj/%.o: src/%.cpp include/config.hpp
+	$(CPPC) $(CPPFLAGS) -o $@ -imacros include/config.hpp $<
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ $^

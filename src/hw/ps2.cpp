@@ -131,9 +131,6 @@ namespace ps2 {
         ioapic::enable_func(INT_IRQ_KEYBOARD, _handle1, 0);
 
         _mutex.unlock();
-
-
-        printk("Status: %x, Config: %x\n", _read_status(), config);
     }
 
 
@@ -232,7 +229,9 @@ namespace ps2 {
         }
         _write_double_command(COM_WRITE, config);
 
+#if DEBUG_PS2
         printk("Got information about PS2 port %d - [%x, %x]%d\n", this->second, info[0], info[1], info_length);
+#endif
     }
 
     uint8_t Ps2Port::read(uint32_t timeout) {

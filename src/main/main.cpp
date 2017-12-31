@@ -65,6 +65,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     vga::init();
     printk("Cantos\n");
     printk("Booted by %s [%s]\n", multiboot::boot_loader_name, multiboot::cmdline);
+#if DEBUG_MAP
     printk("Initial memory state:\n");
     printk("Kernel start: %x\n", kmem::map.kernel_ro_start);
     printk("Kernel end: %x\n", kmem::map.kernel_rw_end);
@@ -74,6 +75,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("Kernel VM table end: %x\n", kmem::map.vm_end);
     printk("Memory start: %x\n", kmem::map.memory_start);
     printk("Memory end: %x\n", kmem::map.memory_end);
+#endif
 
     printk("Machine has %d cores and %d ioapics\n", acpi::acpi_proc_count, acpi::acpi_ioapic_count);
 
@@ -106,7 +108,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     ps2::init();
 
     list<test::TestResult> res = test::run_tests();
-    test::print_results(res, false);
+    test::print_results(res, true);
 
     new task::Thread(&task::kernel_process, (addr_logical_t)&main_thread);
     task::schedule(NULL);
