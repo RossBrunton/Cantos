@@ -22,6 +22,7 @@
 #include "structures/elf.hpp"
 #include "main/panic.hpp"
 #include "hw/pci.hpp"
+#include "test/test.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -40,44 +41,7 @@ extern "C" {
 extern char _endofelf;
 extern "C" void _init();
 
-void t2() {
-    int i = 0;
-    while(1) {
-        //printk("Thread 2 [%d] by %d!\n", i++, cpu::id());
-        asm("hlt");
-    }
-}
-
-void t1() {
-    int i = 0;
-    while(1) {
-        //printk("Thread 1 [%d] by %d!\n", i++, cpu::id());
-        asm("hlt");
-    }
-}
-
-void object_test() {
-    object::Object *obj;
-    task::Thread *t;
-    vm::Map *vm;
-    task::Thread *thread;
-
-    t = cpu::info()->thread;
-
-    while(1) {
-        obj = new object::Object(object::gen_empty, object::del_free, (KERNEL_VM_BASE/ PAGE_SIZE) - 1024*5, page::PAGE_TABLE_RW, 0);
-        obj->generate(0x0, (KERNEL_VM_BASE/ PAGE_SIZE) - 1);
-        obj->add_to_vm(t->vm, 0x0);
-        delete obj;
-
-        vm = new vm::Map(0, 0, true);
-        delete vm;
-
-        thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);
-        task::task_yield();
-        delete thread;
-    }
-
+void __attribute__((noreturn)) main_thread() {
     while(1) {}
 }
 
@@ -141,13 +105,10 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     ps2::init();
 
-    printk("--- Before thread\n");
-    thread = new task::Thread(&task::kernel_process, (addr_logical_t)&t1);
-    printk("--- Thread created\n");
-    for(int i = 0; i < 10; i ++) {
-        new task::Thread(&task::kernel_process, (addr_logical_t)&t2);
-    }
-    printk("--- Second thread created!\n");
+    list<test::TestResult> res = test::run_tests();
+    test::print_results(res, false);
+
+    new task::Thread(&task::kernel_process, (addr_logical_t)&main_thread);
     task::schedule(NULL);
 }
 

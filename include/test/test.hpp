@@ -9,19 +9,30 @@
 
 /** Allows registering and executing of tests
  *
- * To register a test, the @ref TEST macro should be used. It is given a test name, a test class name (which must be
- *  unique across all tests) and a function body. This function body will be the body of a test::TestCase::run_test
- *  function, and have access as appropriate. For example:
+ * To register a test, a subclass of test::TestCase should be created, and its test::TestCase::run_test method must
+ *  be implemented with the tests to run. An object of type test::AddTestCase should then be created with the class
+ *  as its template parameter; this will add the test to the tests lists. All tests should be in the _tests namespace.
+ *
+ * As an example of how to create tests:
  *
  * @code
-TEST("My Module Test", MyModuleTest, {
-    test("Foo Test");
-    assert(foo != bar);
-    assert(bar != foo);
+namespace _tests {
+class FooTest : public test::TestCase {
+public:
+    FooTest() : test::TestCase("Foo Test") {};
 
-    test("Foobar Test");
-    assert(foobar);
-})
+    void run_test() override {
+        test("Foo != Bar Test");
+        assert(foo != bar);
+        assert(bar != foo);
+
+        test("Foobar Test");
+        assert(foobar);
+    }
+};
+
+test::AddTestCase<FooTest> fooTest;
+}
  * @endcode
  *
  * To run these tests, the test::run_tests function should be called, which executes all the tests and provides the
@@ -55,7 +66,6 @@ namespace test {
      */
     class TestCase {
     private:
-        Utf8 name;
         TestResult tr;
         const char *current_test;
         uint32_t asserts;
@@ -68,11 +78,12 @@ namespace test {
         virtual void run_test()=0;
 
     public:
+        Utf8 name;
         /** Create a new test case with the given name
          *
          * @param name The name of the test case
          */
-        TestCase(Utf8 name) : name(name) {};
+        TestCase(const char *name) : name(Utf8(name)) {};
         virtual ~TestCase() {};
 
         /** Run the test, and give a test::TestResult entry based on the result
@@ -111,44 +122,19 @@ namespace test {
 
     /** Class that, as a side effect of its constructor, adds a test
      *
+     * Will do nothing if the macro TESTS is undefined.
+     *
      * Its constructor creates a new instance of T, and adds it to test::tests
      */
     template<class T> class AddTestCase {
     public:
         AddTestCase() {
+#if TESTS
             T *t = new T;
             tests.push_front(t);
+#endif
         }
     };
-
-
-/** @def TEST(name, className, fn)
- *
- * Registers a new test in the tests list if `TESTS` is defined as a compile time constant
- *
- * If `TESTS` is not defined, then the macro evaluates to nothing, and does nothing.
- *
- * To create and add a test, it does the following:
- *  * Creates a new subclass of test::TestCase
- *  * Sets the test function appropriately
- *  * Creates an instance of test::AddTestCase with the new class
- *
- * @param name The name of the test case
- * @param className The name to use as the class of the test case
- * @param fn The body of the function to use as the test case's test::TestCase::run_test function.
- */
-#ifdef TESTS
-#define TEST(name, className, fn) namespace _test_zone {class className: public test::TestCase {\
-public:\
-    className(Utf8 testName = name) : TestCase(testName) {};\
-protected:\
-    virtual void run_test() override fn;\
-};\
-test::AddTestCase<className> className##_adder;}
-
-#else
-#define TEST(name, className, fn)
-#endif
 }
 
 #endif
