@@ -1,11 +1,15 @@
 #include "main/cpp.hpp"
 
 template<class T> shared_ptr<T>::shared_ptr(T *ref) : ref(ref) {
-    data = new Data();
+    if(ref) {
+        data = new Data();
+    }
 }
 
 template<class T> shared_ptr<T>::shared_ptr(shared_ptr<T> &other) : ref(other.ref), data(other.data) {
-    data->uses ++;
+    if(ref) {
+        data->uses ++;
+    }
 }
 
 template<class T> shared_ptr<T>::shared_ptr(shared_ptr<T> &&other) : ref(other.ref), data(other.data) {
@@ -32,7 +36,10 @@ template<class T> shared_ptr<T>& shared_ptr<T>::operator=(shared_ptr<T>& r) {
 
     ref = r.ref;
     data = r.data;
-    data->uses ++;
+
+    if(ref) {
+        data->uses ++;
+    }
 
     return *this;
 }

@@ -42,6 +42,9 @@ extern char _endofelf;
 extern "C" void _init();
 
 void __attribute__((noreturn)) main_thread() {
+    list<test::TestResult> res = test::run_tests();
+    test::print_results(res, false);
+
     while(1) {}
 }
 
@@ -106,9 +109,6 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     }*/
 
     ps2::init();
-
-    list<test::TestResult> res = test::run_tests();
-    test::print_results(res, true);
 
     new task::Thread(&task::kernel_process, (addr_logical_t)&main_thread);
     task::schedule(NULL);

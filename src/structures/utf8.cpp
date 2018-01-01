@@ -9,10 +9,13 @@
 namespace utf8 {
     static const char *_empty_string = "";
 
-    inline size_t _strlen(const char *len) {
+    inline size_t _strlen(const char *str) {
+        if(!str) {
+            panic("Null in _strlen");
+        }
         size_t p = 0;
         while(p < UINT32_MAX) {
-            if(len[p] == '\0') {
+            if(str[p] == '\0') {
                 return p;
             }
             p ++;
