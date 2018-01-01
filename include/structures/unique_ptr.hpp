@@ -1,6 +1,8 @@
 #ifndef _HPP_STRUCT_UNIQUE_PTR_
 #define _HPP_STRUCT_UNIQUE_PTR_
 
+#include <stddef.h>
+
 #include "main/cpp.hpp"
 #include "main/panic.hpp"
 
@@ -92,6 +94,14 @@ public:
             panic("Tried to dereference a null unique_ptr");
         }
         return *get();
+    }
+
+    /** Returns a reference to element idx in an array */
+    T& operator[](ptrdiff_t idx) const {
+        if(!ref) {
+            panic("Tried to dereference a null unique_ptr");
+        }
+        return *(ref + idx);
     }
 
     /** Dereferences the managed object */

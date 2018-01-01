@@ -1,5 +1,7 @@
-#ifndef _HPP_STRUCT_shared_ptr_
-#define _HPP_STRUCT_shared_ptr_
+#ifndef _HPP_STRUCT_SHARED_PTR_
+#define _HPP_STRUCT_SHARED_PTR_
+
+#include <stddef.h>
 
 #include "main/cpp.hpp"
 #include "main/panic.hpp"
@@ -102,6 +104,14 @@ public:
             panic("Tried to dereference a null shared_ptr");
         }
         return *get();
+    }
+
+    /** Returns a reference to element idx in an array */
+    T& operator[](ptrdiff_t idx) const {
+        if(!ref) {
+            panic("Tried to dereference a null shared_ptr");
+        }
+        return *(ref + idx);
     }
 
     /** Dereferences the managed object */
