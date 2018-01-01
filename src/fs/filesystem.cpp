@@ -4,106 +4,65 @@
 #include "structures/utf8.hpp"
 #include "main/printk.hpp"
 #include "main/errno.h"
+#include "test/test.hpp"
 
 namespace filesystem {
     InodeEntry::InodeEntry(uint64_t inode, Utf8 name) : inode(inode), name(name) {}
 
-    Inode::Inode(Filesystem *fs, uint64_t number, InodeType type, uint64_t size) {
-        this->fs = fs;
-        this->inode_no = number;
-        this->type = type;
-        this->size = size;
-    }
-
-    void Inode::adjust_ref(uint32_t delta) {
-        this->ref += delta;
-
-        if(!this->ref) {
-            delete this;
-        }
-    }
+    Inode::Inode(Filesystem *fs, uint64_t number, InodeType type, uint64_t size)
+        : fs(fs), inode_no(number), type(type), size(size) {}
 
 
-    FilePathEntry::FilePathEntry(Utf8 name, FilePathEntry *parent) : name(name), parent(parent) {
-        this->parent->adjust_ref(1);
-    }
-    FilePathEntry::FilePathEntry(Utf8 name, FilePathEntry *parent, Inode* inode)
-        : name(name), parent(parent), inode(inode) {
-        this->parent->adjust_ref(1);
-    }
+    FilePathEntry::FilePathEntry(Utf8 name, shared_ptr<FilePathEntry> parent, shared_ptr<Inode> inode)
+        : name(name), parent(parent), inode(inode) {}
 
-    FilePathEntry::~FilePathEntry() {
-        this->parent->adjust_ref(-1);
-
-        if(this->inode) {
-            this->inode->adjust_ref(-1);
-        }
-    }
-
-    error_t FilePathEntry::populate(FilePathEntry **tip) {
+    error_t FilePathEntry::populate(FilePathEntry& error_loc) {
         error_t err;
-        if(!this->parent) {
-            // Root of the fs tree
-            *tip = this;
-            err = rootfs->root_inode(&this->inode);
-            if(err != 0) {
-                this->inode = nullptr;
-                return err;
-            }
-            return EOK;
+        shared_ptr<Inode> dir;
+
+        if(!parent) {
+            // We have no parent, we can't really get an inode, can we?
+            error_loc = *this;
+            return ENOPATHBASE;
         }else{
-            if(!this->parent->inode) {
+            if(!parent->inode) {
                 // Parent node does not exist, ask it to populate
-                err = this->parent->populate(tip);
+                err = parent->populate(error_loc);
                 if(err != 0) {
                     return err;
                 }
             }
 
-            *tip = this;
+            dir = parent->inode;
+        }
 
-            if(this->parent->inode->type != TYPE_DIRECTORY) {
-                return ENOTDIR;
-            }
+        error_loc = *this;
 
-            InodeEntry *ie = this->parent->inode->children;
-            while(ie) {
-                if(ie->name == this->name) {
-                    err = this->parent->inode->fs->read_inode(this, ie->inode, &this->inode);
+        if(dir->type != TYPE_DIRECTORY) {
+            error_loc = *parent;
+            return ENOTDIR;
+        }
 
-                    if(err) {
-                        this->inode = nullptr;
-                        return err;
-                    }else{
-                        return EOK;
-                    }
+        for(InodeEntry &ie : dir->children) {
+            if(ie.name == name) {
+                err = dir->fs->read_inode(this, ie.inode, inode);
+
+                if(err) {
+                    inode = nullptr;
+                    return err;
+                }else{
+                    return EOK;
                 }
-                ie = ie->next;
             }
-
-            return ENOENT;
         }
+
+        return ENOENT;
     }
 
-    void FilePathEntry::adjust_ref(uint32_t delta) {
-        this->ref += delta;
-
-        if(!this->ref) {
-            delete this;
-        }
-    }
-
-    FilePathEntry *FilePathEntry::copy() {
-        FilePathEntry *cpy = new FilePathEntry(this->name, this->parent, this->inode);
-
-        cpy->adjust_ref(1);
-
-        return cpy;
-    }
-
-    FilePathEntry *parse_path(Utf8 path, FilePathEntry *parent) {
+    shared_ptr<FilePathEntry> parse_path(const Utf8& path, shared_ptr<FilePathEntry>& base) {
         size_t pos = 0;
         size_t oldpos = 0;
+        shared_ptr<FilePathEntry> parent = base;
 
         while((pos = path.find('/', oldpos)) != Utf8::npos) {
             Utf8 fname = path.substr(oldpos, pos - oldpos);
@@ -121,31 +80,80 @@ namespace filesystem {
             parent = new FilePathEntry(fname, parent);
         }
 
-        parent->adjust_ref(1);
         return parent;
     }
 
+    Filesystem *rootfs = nullptr;
+}
 
-    class TestFilesystem : public Filesystem {
-        error_t read_inode(FilePathEntry *path, uint32_t inode_no, Inode **inode) {
-            if(inode_no == 1) {
-                Inode *i = new Inode(this, 1, TYPE_DIRECTORY, 0);
-                i->adjust_ref(1);
-                InodeEntry *x = i->children = new InodeEntry(1, Utf8("."));
-                x = x->next = new InodeEntry(1, Utf8(".."));
-                x->next = new InodeEntry(1, Utf8("a"));
+namespace _tests {
+using namespace filesystem;
 
-                *inode = i;
-                return EOK;
-            }else{
-                return ENOENT;
-            }
+class TestFilesystem : public Filesystem {
+public:
+    TestFilesystem() {
+        info.type = UT_MEM;
+        info.mem.base = 0x0;
+        info.mem.physical = true;
+    }
+
+    error_t read_inode(FilePathEntry *path, uint64_t inode_no, shared_ptr<Inode>& inode) override {
+        if(inode_no == 1) {
+            inode = make_shared<Inode>(this, 1, TYPE_DIRECTORY, 0);
+            inode->children = list<InodeEntry>();
+            inode->children.emplace_back(1, Utf8("."));
+            inode->children.emplace_back(1, Utf8(".."));
+            inode->children.emplace_back(1, Utf8("a"));
+            inode->children.emplace_back(2, Utf8("file"));
+
+            return EOK;
+        }else if(inode_no == 2) {
+            inode = make_shared<Inode>(this, 2, TYPE_FILE, PAGE_SIZE);
+
+            //readwrite::read_data(&(i->contents), 0, PAGE_SIZE, this);
+
+            return EOK;
+        }else{
+            return ENOENT;
         }
+    }
 
-        error_t root_inode(Inode **inode) {
-            return this->read_inode(nullptr, 1, inode);
-        }
-    };
+    error_t root_inode(shared_ptr<Inode>& inode) override {
+        return read_inode(nullptr, 1, inode);
+    }
+};
 
-    Filesystem *rootfs = new TestFilesystem();
+class FilesystemTest : public test::TestCase {
+public:
+    FilesystemTest() : test::TestCase("Filesystem Test") {};
+
+    void run_test() override {
+        TestFilesystem fs;
+        error_t err;
+        shared_ptr<Inode> i;
+        FilePathEntry err_loc;
+
+        test("Root inode");
+        err = fs.root_inode(i);
+        assert(!err);
+        assert(i);
+        assert(i->inode_no == 1);
+
+        test("File paths");
+        shared_ptr<FilePathEntry> root = make_shared<FilePathEntry>(Utf8(""), nullptr, i);
+        assert(root->inode == i);
+
+        shared_ptr<FilePathEntry> child = parse_path(Utf8("./././."), root);
+        err = child->populate(err_loc);
+        assert(!err);
+        assert(child->inode->inode_no == 1);
+
+        child = parse_path(Utf8("./file"), root);
+        err = child->populate(err_loc);
+        assert(!err);
+        assert(child->inode->inode_no == 2);
+    }
+};
+
+test::AddTestCase<FilesystemTest> filesystemTest;
 }

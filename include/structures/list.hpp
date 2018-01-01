@@ -60,7 +60,7 @@ public:
         }
         Iterator operator++(int) {return Iterator(this++);}
         bool operator==(Iterator& other) const {
-            return other.entry == this.entry;
+            return other.entry == entry;
         }
         bool operator!=(Iterator& other) const {
             return other.entry != entry;

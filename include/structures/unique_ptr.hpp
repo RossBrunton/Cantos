@@ -56,6 +56,20 @@ public:
      * It will be deleted.
      */
     unique_ptr& operator=(nullptr_t r);
+    /** Compare two unique_ptrs for equality
+     *
+     * Two unique_ptrs are equal if they own the same object
+     */
+    bool operator==(unique_ptr& r) {
+        return r.ref == ref;
+    }
+    /** Compare two unique_ptrs for inequality
+     *
+     * Two unique_ptrs are not equal if they own different objects
+     */
+    bool operator!=(unique_ptr& r) {
+        return r.ref != ref;
+    }
 
     /** Returns true iff this unique_ptr is not empty
      */

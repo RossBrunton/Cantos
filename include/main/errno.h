@@ -22,5 +22,6 @@ typedef uint32_t error_t;
 #define EBUSY 2
 #define ENOENT 3
 #define ENOTDIR 4
+#define ENOPATHBASE 5 /* No base for path */
 
 #endif

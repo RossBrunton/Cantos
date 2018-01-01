@@ -69,6 +69,20 @@ public:
      * It will be deleted if no other shared_ptrs own it.
      */
     shared_ptr& operator=(nullptr_t r);
+    /** Compare two shared_ptrs for equality
+     *
+     * Two shared_ptrs are equal if they own the same object
+     */
+    bool operator==(shared_ptr& r) {
+        return r.ref == ref;
+    }
+    /** Compare two shared_ptrs for inequality
+     *
+     * Two shared_ptrs are not equal if they own different objects
+     */
+    bool operator!=(shared_ptr& r) {
+        return r.ref != ref;
+    }
 
     /** Returns true iff this shared_ptr is not empty
      */
