@@ -70,27 +70,37 @@ namespace vm {
     }
 
 
-    void Map::insert(addr_logical_t addr, page::Page *page, uint8_t page_flags) {
+    void Map::insert(addr_logical_t addr, page::Page *page, uint8_t page_flags, uint32_t min, uint32_t max) {
         uint32_t dir_slot;
         uint32_t page_slot;
         unsigned int i = 0;
+
+        if(addr >= max) {
+            return;
+        }
 
         for(i = 0; i < page->consecutive; i ++) {
             dir_slot = addr >> page::PAGE_DIR_SHIFT;
             page_slot = (addr >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK;
 
-            if(!logical_tables->pages[dir_slot]) {
-                _new_table(addr, this, page_flags);
+            if(addr >= min) {
+                if(!logical_tables->pages[dir_slot]) {
+                    _new_table(addr, this, page_flags);
+                }
+
+                logical_tables->tables[dir_slot]->entries[page_slot].block =
+                    (page->mem_base + i * PAGE_SIZE) | page_flags | page::PAGE_TABLE_PRESENT;
             }
 
-            logical_tables->tables[dir_slot]->entries[page_slot].block =
-                (page->mem_base + i * PAGE_SIZE) | page_flags | page::PAGE_TABLE_PRESENT;
-
             addr += PAGE_SIZE;
+
+            if(addr >= max) {
+                return;
+            }
         }
 
         if(page->next) {
-            insert(addr, page->next, page_flags);
+            insert(addr, page->next, page_flags, min, max);
         }
     }
 
@@ -114,7 +124,7 @@ namespace vm {
     bool Map::resolve_fault(addr_logical_t addr) {
         // Loop through the objects and see if any fit
         for(unique_ptr<object::ObjectInMap> &oim : objects_in_maps) {
-            if(addr >= oim->base && addr < oim->base + oim->object->max_pages * PAGE_SIZE) {
+            if(addr >= oim->base && addr < oim->base + oim->pages * PAGE_SIZE) {
                 // OK!
                 uint32_t excess = addr % PAGE_SIZE;
                 oim->object->generate(addr - oim->base + (oim->offset * PAGE_SIZE) - excess, 1);
@@ -126,8 +136,8 @@ namespace vm {
     }
 
 
-    void Map::add_object(const shared_ptr<object::Object> object, uint32_t base, uint32_t offset) {
-        unique_ptr<object::ObjectInMap> oim = make_unique<object::ObjectInMap>(object, this, base, offset);
+    void Map::add_object(const shared_ptr<object::Object> object, uint32_t base, uint32_t offset, uint32_t pages) {
+        unique_ptr<object::ObjectInMap> oim = make_unique<object::ObjectInMap>(object, this, base, offset, pages);
 
         objects_in_maps.push_front(move(oim));
     }

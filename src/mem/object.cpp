@@ -208,7 +208,7 @@ namespace object {
 
         // Now update the tables
         for(ObjectInMap *oim : objects_in_maps) {
-            oim->map->insert(oim->base + addr, page, page_flags);
+            oim->map->insert(oim->base + addr, page, page_flags, oim->base, oim->base + oim->pages * PAGE_SIZE);
         }
     }
 
@@ -219,7 +219,8 @@ namespace object {
 
         // Fill in the pages already loaded into the vm
         for(PageEntry *page_entry = pages; page_entry; page_entry = page_entry->next) {
-            map->insert(oim->base + page_entry->offset, page_entry->page, this->page_flags);
+            map->insert(oim->base + page_entry->offset, page_entry->page, this->page_flags,
+                oim->base, oim->base + oim->pages * PAGE_SIZE);
         }
     }
 
@@ -235,8 +236,8 @@ namespace object {
     }
 
 
-    ObjectInMap::ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset)
-        : object(object), map(map), base(base), offset(offset) {
+    ObjectInMap::ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset, uint32_t pages)
+        : object(object), map(map), base(base), offset(offset), pages(pages) {
         object->add_object_in_map(this);
     }
 
@@ -263,17 +264,36 @@ class ObjectTest : public test::TestCase {
 public:
     ObjectTest() : test::TestCase("Kernel Object Test") {};
 
+    static page::Page *gen_inc(addr_logical_t addr, object::Object *object, uint32_t count) {
+        (void)addr;
+        (void)object;
+        page::Page * p = page::alloc(0, count);
+
+        uint32_t *installed = (uint32_t *)page::kinstall(p, 0);
+
+        for(uint32_t i = 0; i < count * PAGE_SIZE / 4; i ++) {
+            installed[i] = addr + (i * 4);
+        }
+
+        page::kuninstall(installed, p);
+
+        return p;
+    }
+
     void run_test() override {
         using namespace object;
+
         test("Creating a simple object");
-        shared_ptr<Object> obj = make_shared<Object>(gen_empty, del_free, 1, page::PAGE_TABLE_RW, 0, 0);
+        shared_ptr<Object> obj = make_shared<Object>(gen_inc, del_free, 5, page::PAGE_TABLE_RW, 0, 0);
 
         test("Installing an object");
         cpu::Status& info = cpu::info();
         vm::Map *map = info.thread->vm;
 
-        map->add_object(obj, 0x2000, 0x0);
-        *(int *)(0x2000) = 0x0;
+        map->add_object(obj, 0x2000, 0x0, 2);
+        assert(*(int *)(0x2000) == 0x0);
+        assert(*(int *)(0x2004) == 0x4);
+        assert(*(int *)(0x3004) == 0x1004);
 
         test("Removing an object");
         map->remove_object(obj);

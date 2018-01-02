@@ -57,8 +57,9 @@ namespace object {
         vm::Map *map;
         uint32_t base;
         uint32_t offset;
+        uint32_t pages;
 
-        ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset);
+        ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset, uint32_t pages);
         ~ObjectInMap();
     };
 }

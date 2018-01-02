@@ -81,7 +81,7 @@ namespace task {
         this->stack = new object::Object(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, 0, 0);
         this->stack->generate(0, 1);
 
-        vm->add_object(shared_ptr<object::Object>(stack), TASK_STACK_TOP - PAGE_SIZE, 0);
+        vm->add_object(shared_ptr<object::Object>(stack), TASK_STACK_TOP - PAGE_SIZE, 0, 1);
 
         stack_installed = page::kinstall(this->stack->pages->page, 0);
 
