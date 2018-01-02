@@ -9,31 +9,27 @@
 #include "main/panic.hpp"
 
 namespace vm {
-    Map::Map(uint32_t pid, uint32_t task_id, bool kernel) {
+    Map::Map(uint32_t pid, uint32_t task_id, bool kernel) : pid(pid), task_id(task_id) {
         uint8_t kernel_flag = kernel ? page::FLAG_KERNEL : 0;
         size_t i;
 
-        this->physical_dir = page::alloc(kernel_flag, 1);
-        this->logical_dir = (page::page_dir_t *)page::kinstall(this->physical_dir, page::PAGE_TABLE_RW);
-        this->logical_tables = (page::logical_tables_t *)kmalloc(sizeof(page::logical_tables_t), 0);
-
-        this->pid = pid;
-        this->task_id = task_id;
-        this->objects = NULL;
+        physical_dir = page::alloc(kernel_flag, 1);
+        logical_dir = (page::page_dir_t *)page::kinstall(this->physical_dir, page::PAGE_TABLE_RW);
+        logical_tables = make_unique<page::logical_tables_t>();
 
         // Load the kernel tables into it
         for(i = 0; i < PAGE_TABLE_LENGTH; i ++) {
             if(i >= PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES) {
-                this->logical_dir->entries[i].table = page::page_dir->entries[i].table;
+                logical_dir->entries[i].table = page::page_dir->entries[i].table;
             }else{
-                this->logical_dir->entries[i].table = 0;
+                logical_dir->entries[i].table = 0;
             }
         }
 
         // And zero the logical tables
-        for(i = 0; i < (sizeof(this->logical_tables->tables) / sizeof(this->logical_tables->tables[0])); i ++) {
-            this->logical_tables->tables[i] = NULL;
-            this->logical_tables->pages[i] = NULL;
+        for(i = 0; i < (sizeof(logical_tables->tables) / sizeof(logical_tables->tables[0])); i ++) {
+            logical_tables->tables[i] = NULL;
+            logical_tables->pages[i] = NULL;
         }
     }
 
@@ -42,24 +38,17 @@ namespace vm {
         page::Page *page;
         page::page_table_t *table;
 
-        // Remove all the objects
-        while(this->objects) {
-            this->objects->object->remove_from_vm(this);
-        }
-
-        page::kuninstall(this->logical_dir, this->physical_dir);
-        page::free(this->physical_dir);
+        page::kuninstall(logical_dir, physical_dir);
+        page::free(physical_dir);
 
         for(int i = 0; i < PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES; i ++) {
-            if(this->logical_tables->pages[i]) {
-                page = this->logical_tables->pages[i];
-                table = this->logical_tables->tables[i];
+            if(logical_tables->pages[i]) {
+                page = logical_tables->pages[i];
+                table = logical_tables->tables[i];
                 page::kuninstall(table, page);
                 page::free(page);
             }
         }
-
-        kfree(this->logical_tables);
     }
 
 
@@ -90,18 +79,18 @@ namespace vm {
             dir_slot = addr >> page::PAGE_DIR_SHIFT;
             page_slot = (addr >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK;
 
-            if(!this->logical_tables->pages[dir_slot]) {
+            if(!logical_tables->pages[dir_slot]) {
                 _new_table(addr, this, page_flags);
             }
 
-            this->logical_tables->tables[dir_slot]->entries[page_slot].block =
+            logical_tables->tables[dir_slot]->entries[page_slot].block =
                 (page->mem_base + i * PAGE_SIZE) | page_flags | page::PAGE_TABLE_PRESENT;
 
             addr += PAGE_SIZE;
         }
 
         if(page->next) {
-            this->insert(addr, page->next, page_flags);
+            insert(addr, page->next, page_flags);
         }
     }
 
@@ -115,7 +104,7 @@ namespace vm {
             dir_slot = addr >> page::PAGE_DIR_SHIFT;
             page_slot = (addr >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK;
 
-            this->logical_tables->tables[dir_slot]->entries[page_slot].block = 0;
+            logical_tables->tables[dir_slot]->entries[page_slot].block = 0;
 
             addr += PAGE_SIZE;
         }
@@ -123,20 +112,35 @@ namespace vm {
 
 
     bool Map::resolve_fault(addr_logical_t addr) {
-        object::List *entry;
-
         // Loop through the objects and see if any fit
-        for(entry = this->objects; entry; entry = entry->next) {
-            printk("addr: %x, entry->base: %x, max_pages: %x\n", addr, entry->base, entry->object->max_pages);
-            if(addr >= entry->base && addr < entry->base + entry->object->max_pages * PAGE_SIZE) {
+        for(unique_ptr<object::ObjectInMap> &oim : objects_in_maps) {
+            if(addr >= oim->base && addr < oim->base + oim->object->max_pages * PAGE_SIZE) {
                 // OK!
                 uint32_t excess = addr % PAGE_SIZE;
-                entry->object->generate(addr - entry->base + (entry->object->offset * PAGE_SIZE) - excess, 1);
+                oim->object->generate(addr - oim->base + (oim->offset * PAGE_SIZE) - excess, 1);
                 return true;
             }
         }
 
         return false;
+    }
+
+
+    void Map::add_object(const shared_ptr<object::Object> object, uint32_t base, uint32_t offset) {
+        unique_ptr<object::ObjectInMap> oim = make_unique<object::ObjectInMap>(object, this, base, offset);
+
+        objects_in_maps.push_front(move(oim));
+    }
+
+    void Map::remove_object(const shared_ptr<object::Object> object) {
+        for(auto i = objects_in_maps.begin(); i != objects_in_maps.end(); ) {
+            if((*i)->object == object) {
+                i = objects_in_maps.erase(i);
+                break;
+            }else{
+                i ++;
+            }
+        }
     }
 
 

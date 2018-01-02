@@ -26,7 +26,8 @@ private:
         unique_ptr<Entry> next;
         T object;
 
-        Entry(T obj) : object(obj) {};
+        Entry(const T& obj) : object(obj) {};
+        Entry(T&& obj) : object(move(obj)) {};
     };
 
     unique_ptr<Entry> head = nullptr;
@@ -39,6 +40,8 @@ public:
      * See list::begin for more details.
      */
     class Iterator {
+    friend list;
+
     private:
         Entry* entry;
 
@@ -58,11 +61,15 @@ public:
             entry = entry->next.get();
             return *this;
         }
-        Iterator operator++(int) {return Iterator(this++);}
-        bool operator==(Iterator& other) const {
+        Iterator operator++(int) {
+            Iterator result(*this);
+            ++(*this);
+            return result;
+        }
+        bool operator==(const Iterator& other) const {
             return other.entry == entry;
         }
-        bool operator!=(Iterator& other) const {
+        bool operator!=(const Iterator& other) const {
             return other.entry != entry;
         }
     };
@@ -162,6 +169,18 @@ public:
      * @param args The arguments for the newly created item's constructor
      */
     template<class... Args> void emplace_back(Args&&... args);
+
+    /** Removes all elements equal to the provided value
+     *
+     * @param value The value to remove
+     */
+    void remove(const T& value);
+    /** Removes the element that the iterator is pointing to
+     *
+     * @param it The iterator to remove the element at
+     * @return A new iterator, pointing to the element following the deleted one
+     */
+    Iterator erase(Iterator pos);
 
     /** Returns an iterator to the first element of the list
      *

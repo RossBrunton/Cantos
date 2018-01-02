@@ -8,6 +8,7 @@
 #include "mem/object.hpp"
 #include "mem/kmem.hpp"
 #include "structures/mutex.hpp"
+#include "structures/shared_ptr.hpp"
 
 extern "C" {
     #include "task/asm.h"
@@ -77,9 +78,10 @@ namespace task {
         this->vm = new vm::Map(process->process_id, this->task_id, kernel);
 
         // Create the stack object
-        this->stack = new object::Object(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, object::FLAG_AUTOFREE, 0);
+        this->stack = new object::Object(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, 0, 0);
         this->stack->generate(0, 1);
-        this->stack->add_to_vm(this->vm, TASK_STACK_TOP - PAGE_SIZE);
+
+        vm->add_object(shared_ptr<object::Object>(stack), TASK_STACK_TOP - PAGE_SIZE, 0);
 
         stack_installed = page::kinstall(this->stack->pages->page, 0);
 

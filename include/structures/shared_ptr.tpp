@@ -6,7 +6,7 @@ template<class T> shared_ptr<T>::shared_ptr(T *ref) : ref(ref) {
     }
 }
 
-template<class T> shared_ptr<T>::shared_ptr(shared_ptr<T> &other) : ref(other.ref), data(other.data) {
+template<class T> shared_ptr<T>::shared_ptr(const shared_ptr<T> &other) : ref(other.ref), data(other.data) {
     if(ref) {
         data->uses ++;
     }

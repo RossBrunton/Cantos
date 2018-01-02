@@ -39,7 +39,7 @@ public:
      *
      * @param other The other shared_ptr to share from
      */
-    shared_ptr(shared_ptr<T>& other);
+    shared_ptr(const shared_ptr<T>& other);
     /** Create a new shared_ptr from the given shared_ptr
      *
      * After construction, the other pointer will be empty.

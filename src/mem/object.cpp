@@ -7,6 +7,7 @@
 #include "main/panic.hpp"
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
+#include "main/cpu.hpp"
 
 namespace object {
     /**
@@ -14,25 +15,12 @@ namespace object {
      */
 
     Object::Object(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
-    uint8_t object_flags, uint32_t offset) {
-        this->vm_maps = NULL;
-        this->generator = generator;
-        this->deleter = deleter;
-        this->pages = NULL;
-        this->max_pages = max_pages;
-        this->page_flags = page_flags;
-        this->object_flags = object_flags;
-        this->offset = offset;
-    }
+    uint8_t object_flags, uint32_t offset) :
+    generator(generator), deleter(deleter), max_pages(max_pages), page_flags(page_flags), object_flags(object_flags) {}
 
     Object::~Object() {
         PageEntry *page_entry;
         PageEntry *next;
-
-        // Destroy it's VM mappings
-        while(this->vm_maps) {
-            this->remove_from_vm(this->vm_maps->map);
-        }
 
         // And then destroy all the pages
         for(page_entry = this->pages; page_entry; page_entry = next) {
@@ -42,91 +30,8 @@ namespace object {
         }
     }
 
-    void Object::add_to_vm(vm::Map *map, uint32_t base) {
-        List *entry;
-        List *next = NULL;
-        List *prev = NULL;
-        PageEntry *page_entry;
-        MapEntry *mentry;
 
-        for(next = map->objects; next && next->base < base; (prev = next), (next = next->next));
-
-        // Entry in the VM's object list
-        entry = new List();
-        entry->base = base;
-        entry->object = this;
-        entry->next = next;
-        if(prev) {
-            prev->next = entry;
-        }else{
-            map->objects = entry;
-        }
-
-        // Entry in the vm map list
-        mentry = new MapEntry();
-        mentry->base = base;
-        mentry->map = map;
-        mentry->next = this->vm_maps;
-        this->vm_maps = mentry;
-
-        // And fill in the records needed on the page table
-        for(page_entry = this->pages; page_entry; page_entry = page_entry->next) {
-            map->insert(base + page_entry->offset, page_entry->page, this->page_flags);
-        }
-    }
-
-
-    void Object::remove_from_vm(vm::Map *map) {
-        MapEntry *mentry;
-        MapEntry *mprev = NULL;
-        List *oentry;
-        List *oprev = NULL;
-        PageEntry *page_entry;
-
-        // Map in the object's vm list
-        for(mentry = this->vm_maps; mentry && (mentry->map != map); (mprev = mentry), (mentry = mentry->next));
-
-        if(!mentry) {
-            // Not actually in the object's VM list, abort
-            return;
-        }
-
-        if(mprev) {
-            mprev->next = mentry->next;
-        }else{
-            this->vm_maps = mentry->next;
-        }
-
-        // Object in the vm's object list
-        for(oentry = map->objects; oentry && (oentry->object != this); (oprev = oentry), (oentry = oentry->next));
-
-        if(!oentry) {
-            panic("Integrety error in object -> vm mapping. Object was in virtual map, but not vice versia.");
-        }
-
-        if(oprev) {
-            oprev->next = oentry->next;
-        }else{
-            map->objects = oentry->next;
-        }
-
-
-        // Now erase all the page table entries
-        for(page_entry = this->pages; page_entry; page_entry = page_entry->next) {
-            map->clear(mentry->base + page_entry->offset, page_entry->page->count());
-        }
-
-        delete oentry;
-        delete mentry;
-
-        // But wait, if the flag is set, we may have to free ourselves
-        if((this->object_flags & FLAG_AUTOFREE) && !this->vm_maps) {
-            delete this;
-        }
-    }
-
-
-    void Object::shift_right(uint32_t amount) {
+    /*void Object::shift_right(uint32_t amount) {
         PageEntry *page_entry;
         PageEntry *old_page_entry;
         MapEntry *map_entry;
@@ -187,9 +92,9 @@ namespace object {
         }
 
         this->offset += amount;
-    }
+    }*/
 
-    void Object::shift_left(uint32_t amount) {
+    /*void Object::shift_left(uint32_t amount) {
         PageEntry *page_entry;
         PageEntry *old_page_entry;
         MapEntry *map_entry;
@@ -257,7 +162,7 @@ namespace object {
         }
 
         this->offset -= amount;
-    }
+    }*/
 
 
     // count is in pages, Addr is an address not in pages
@@ -266,57 +171,77 @@ namespace object {
         PageEntry *next = NULL;
         PageEntry *prev = NULL;
         page::Page *page;
-        MapEntry *map_entry;
-        int32_t load_addr;
-
-        uint32_t original_addr = addr;
-        load_addr = addr - this->offset * PAGE_SIZE;
-
-        // If we skip some bytes at the start
-        if(load_addr < 0) {
-            count += (load_addr / PAGE_SIZE);
-            original_addr -= load_addr;
-            load_addr = 0;
-        }
 
         // If we would go greater than the maximum number of pages, cap it
         // TODO: Do I really want to do this?
-        if((load_addr / PAGE_SIZE) + count > this->max_pages) {
-            if(load_addr / PAGE_SIZE > this->max_pages) {
+        if((addr / PAGE_SIZE) + count > this->max_pages) {
+            if(addr / PAGE_SIZE > this->max_pages) {
                 // It is out of range, abort
                 return;
             }
-            count = this->max_pages - (load_addr / PAGE_SIZE);
+            count = this->max_pages - (addr / PAGE_SIZE);
         }
 
         // Find the location to insert the page into
-        for(next = this->pages; next && next->offset < load_addr; (prev = next), (next = next->next));
+        for(next = this->pages; next && next->offset < addr; (prev = next), (next = next->next));
 
         // If we are bumping into the next block of pages, then reduce the amount of pages to load appropriately
-        if(next && load_addr + (count * PAGE_SIZE) >= next->offset) {
-            count = (next->offset - load_addr) / PAGE_SIZE;
+        if(next && addr + (count * PAGE_SIZE) >= next->offset) {
+            count = (next->offset - addr) / PAGE_SIZE;
         }
 
         if(!count) return;
 
         // Generate the pages
-        page = this->generator(original_addr, this, count);
+        page = generator(addr, this, count);
 
         // And create a new entry
         new_entry = new PageEntry();
-        new_entry->offset = load_addr;
+        new_entry->offset = addr;
         new_entry->page = page;
         new_entry->next = next;
         if(prev) {
             prev->next = new_entry;
         }else{
-            this->pages = new_entry;
+            pages = new_entry;
         }
 
         // Now update the tables
-        for(map_entry = this->vm_maps; map_entry; map_entry = map_entry->next) {
-            map_entry->map->insert(map_entry->base + load_addr, page, this->page_flags);
+        for(ObjectInMap *oim : objects_in_maps) {
+            oim->map->insert(oim->base + addr, page, page_flags);
         }
+    }
+
+    void Object::add_object_in_map(ObjectInMap *oim) {
+        objects_in_maps.push_front(oim);
+
+        vm::Map *map = oim->map;
+
+        // Fill in the pages already loaded into the vm
+        for(PageEntry *page_entry = pages; page_entry; page_entry = page_entry->next) {
+            map->insert(oim->base + page_entry->offset, page_entry->page, this->page_flags);
+        }
+    }
+
+    void Object::remove_object_in_map(ObjectInMap *oim) {
+        PageEntry *page_entry;
+
+        // Erase all the page table entries
+        for(page_entry = pages; page_entry; page_entry = page_entry->next) {
+            oim->map->clear(oim->base + page_entry->offset, page_entry->page->count());
+        }
+
+        objects_in_maps.remove(oim);
+    }
+
+
+    ObjectInMap::ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset)
+        : object(object), map(map), base(base), offset(offset) {
+        object->add_object_in_map(this);
+    }
+
+    ObjectInMap::~ObjectInMap() {
+        object->remove_object_in_map(this);
     }
 
 
@@ -330,4 +255,30 @@ namespace object {
         (void)object;
         page::free(page);
     }
+}
+
+
+namespace _tests {
+class ObjectTest : public test::TestCase {
+public:
+    ObjectTest() : test::TestCase("Kernel Object Test") {};
+
+    void run_test() override {
+        using namespace object;
+        test("Creating a simple object");
+        shared_ptr<Object> obj = make_shared<Object>(gen_empty, del_free, 1, page::PAGE_TABLE_RW, 0, 0);
+
+        test("Installing an object");
+        cpu::Status& info = cpu::info();
+        vm::Map *map = info.thread->vm;
+
+        map->add_object(obj, 0x2000, 0x0);
+        *(int *)(0x2000) = 0x0;
+
+        test("Removing an object");
+        map->remove_object(obj);
+    }
+};
+
+test::AddTestCase<ObjectTest> objectTest;
 }

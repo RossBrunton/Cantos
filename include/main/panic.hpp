@@ -20,13 +20,14 @@
  *  prepended by "KERNEL PANIC: ".
  *
  * This will then disable interrupts and halt the system, meaning this function does not return.
- * 
+ *
  * @param[in] fmt The format string
  * @param[in] ... The values to use with the format
  */
-extern "C" void __attribute__((format(printf, 1, 2))) panic(const char *fmt, ...);
+extern "C" void __attribute__((format(printf, 1, 2))) __attribute__((noreturn)) panic(const char *fmt, ...);
 
-extern "C" void vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap);
-extern "C" void __attribute__((format(printf, 3, 4))) panic_at(uint32_t ebp, uint32_t eip, const char *fmt, ...);
+extern "C" void __attribute__((noreturn)) vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap);
+extern "C" void __attribute__((format(printf, 3, 4))) __attribute__((noreturn))
+    panic_at(uint32_t ebp, uint32_t eip, const char *fmt, ...);
 
 #endif

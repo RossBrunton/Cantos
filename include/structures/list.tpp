@@ -97,6 +97,7 @@ template<class T> void list<T>::pop_back() {
     if(head.get() == tail) {
         head = nullptr;
         tail = nullptr;
+        count --;
         return;
     }
 
@@ -121,6 +122,53 @@ template<class T> template<class... Args> void list<T>::emplace_back(Args&&... a
     }
 
     count ++;
+}
+
+template<class T> void list<T>::remove(const T& value) {
+    if(!head) return;
+
+    Entry *prev = nullptr;
+    Entry *now = head.get();
+    bool skip;
+
+    for(; now; skip || ((prev = now), (now = now->next.get()))) {
+        skip = false;
+        if(now->object == value) {
+            if(prev) {
+                prev->next = move(now->next);
+                now = prev->next.get();
+            }else{
+                head = move(now->next);
+                now = head.get();
+            }
+            count --;
+            skip = true;
+        }
+    }
+
+    tail = prev;
+}
+
+template<class T> typename list<T>::Iterator list<T>::erase(list<T>::Iterator it) {
+    Entry *entry = it.entry;
+    it ++;
+
+    Entry *prev = nullptr;
+    Entry *now = head.get();
+
+    for(; now; (prev = now), (now = now->next.get())) {
+        if(now == entry) {
+            if(prev) {
+                prev->next = move(now->next);
+            }else{
+                head = move(now->next);
+            }
+            count --;
+            return it;
+        }
+    }
+
+    panic("Tried to erase an iterator that isn't in the list");
 }
 
 template<class T> void list<T>::clear() {

@@ -63,6 +63,7 @@ public:
 
         b.pop_back();
         assert(b.empty());
+        assert(b.size() == 0);
 
         test("Iterating through a list");
         b.push_front(1);
@@ -75,6 +76,29 @@ public:
         for(int e : b) {
             assert(e == (seeking --));
         }
+
+        test("Removing an entry");
+        b.remove(1);
+        assert(b.size() == 4);
+        assert(b.front() == 5);
+        assert(b.back() == 2);
+
+        b.remove(5);
+        assert(b.size() == 3);
+        assert(b.front() == 4);
+        assert(b.back() == 2);
+
+        test("Erase");
+        for(auto i = b.begin(); i != b.end(); ) {
+            if(*i == 3) {
+                i = b.erase(i);
+            }else{
+                i ++;
+            }
+        }
+        assert(b.size() == 2);
+        assert(b.front() == 4);
+        assert(b.back() == 2);
 
         test("Emplace");
         uint8_t constructs = 0;
