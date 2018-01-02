@@ -15,7 +15,7 @@ namespace object {
     public:
         uint32_t offset;
         page::Page *page;
-        PageEntry *next;
+        unique_ptr<PageEntry> next;
     };
 
     class Object;
@@ -29,7 +29,7 @@ namespace object {
     public:
         object_generator_t generator;
         object_deleter_t deleter;
-        PageEntry *pages = nullptr;
+        unique_ptr<PageEntry> pages = nullptr;
         uint32_t max_pages;
         uint8_t page_flags;
         uint8_t object_flags;
@@ -56,10 +56,10 @@ namespace object {
         shared_ptr<Object> object;
         vm::Map *map;
         uint32_t base;
-        uint32_t offset;
+        int64_t offset;
         uint32_t pages;
 
-        ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset, uint32_t pages);
+        ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, int64_t offset, uint32_t pages);
         ~ObjectInMap();
     };
 }

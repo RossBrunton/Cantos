@@ -70,12 +70,12 @@ namespace vm {
     }
 
 
-    void Map::insert(addr_logical_t addr, page::Page *page, uint8_t page_flags, uint32_t min, uint32_t max) {
+    void Map::insert(int64_t addr, page::Page *page, uint8_t page_flags, uint32_t min, uint32_t max) {
         uint32_t dir_slot;
         uint32_t page_slot;
         unsigned int i = 0;
 
-        if(addr >= max) {
+        if(addr >= max || addr < 0) {
             return;
         }
 
@@ -105,10 +105,12 @@ namespace vm {
     }
 
 
-    void Map::clear(addr_logical_t addr, uint32_t pages) {
+    void Map::clear(int64_t addr, uint32_t pages) {
         uint32_t dir_slot;
         uint32_t page_slot;
         unsigned int i = 0;
+
+        if(addr < 0) return;
 
         for(i = 0; i < pages; i ++) {
             dir_slot = addr >> page::PAGE_DIR_SHIFT;
@@ -127,7 +129,7 @@ namespace vm {
             if(addr >= oim->base && addr < oim->base + oim->pages * PAGE_SIZE) {
                 // OK!
                 uint32_t excess = addr % PAGE_SIZE;
-                oim->object->generate(addr - oim->base + (oim->offset * PAGE_SIZE) - excess, 1);
+                oim->object->generate(addr - oim->base + oim->offset - excess, 1);
                 return true;
             }
         }
@@ -136,15 +138,25 @@ namespace vm {
     }
 
 
-    void Map::add_object(const shared_ptr<object::Object> object, uint32_t base, uint32_t offset, uint32_t pages) {
+    void Map::add_object(const shared_ptr<object::Object>& object, uint32_t base, int64_t offset, uint32_t pages) {
         unique_ptr<object::ObjectInMap> oim = make_unique<object::ObjectInMap>(object, this, base, offset, pages);
 
         objects_in_maps.push_front(move(oim));
     }
 
-    void Map::remove_object(const shared_ptr<object::Object> object) {
+    void Map::remove_object(const shared_ptr<object::Object>& object) {
         for(auto i = objects_in_maps.begin(); i != objects_in_maps.end(); ) {
             if((*i)->object == object) {
+                i = objects_in_maps.erase(i);
+            }else{
+                i ++;
+            }
+        }
+    }
+
+    void Map::remove_object_at(const shared_ptr<object::Object>& object, uint32_t base) {
+        for(auto i = objects_in_maps.begin(); i != objects_in_maps.end(); ) {
+            if((*i)->object == object && (*i)->base == base) {
                 i = objects_in_maps.erase(i);
                 break;
             }else{

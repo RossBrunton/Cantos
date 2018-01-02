@@ -23,11 +23,12 @@ namespace object {
         PageEntry *next;
 
         // And then destroy all the pages
-        for(page_entry = this->pages; page_entry; page_entry = next) {
+        for(page_entry = this->pages.get(); page_entry; page_entry = next) {
             this->deleter(page_entry->page, this);
-            next = page_entry->next;
-            delete page_entry;
+            next = page_entry->next.get();
         }
+
+        pages = nullptr;
     }
 
 
@@ -167,23 +168,23 @@ namespace object {
 
     // count is in pages, Addr is an address not in pages
     void Object::generate(uint32_t addr, uint32_t count) {
-        PageEntry *new_entry;
-        PageEntry *next = NULL;
-        PageEntry *prev = NULL;
+        unique_ptr<PageEntry> new_entry;
+        PageEntry *next = nullptr;
+        PageEntry *prev = nullptr;
         page::Page *page;
 
         // If we would go greater than the maximum number of pages, cap it
         // TODO: Do I really want to do this?
-        if((addr / PAGE_SIZE) + count > this->max_pages) {
-            if(addr / PAGE_SIZE > this->max_pages) {
+        if((addr / PAGE_SIZE) + count > max_pages) {
+            if(addr / PAGE_SIZE > max_pages) {
                 // It is out of range, abort
                 return;
             }
-            count = this->max_pages - (addr / PAGE_SIZE);
+            count = max_pages - (addr / PAGE_SIZE);
         }
 
         // Find the location to insert the page into
-        for(next = this->pages; next && next->offset < addr; (prev = next), (next = next->next));
+        for(next = pages.get(); next && next->offset < addr; (prev = next), (next = next->next.get()));
 
         // If we are bumping into the next block of pages, then reduce the amount of pages to load appropriately
         if(next && addr + (count * PAGE_SIZE) >= next->offset) {
@@ -196,19 +197,19 @@ namespace object {
         page = generator(addr, this, count);
 
         // And create a new entry
-        new_entry = new PageEntry();
+        new_entry = make_unique<PageEntry>();
         new_entry->offset = addr;
         new_entry->page = page;
         new_entry->next = next;
         if(prev) {
-            prev->next = new_entry;
+            prev->next = move(new_entry);
         }else{
-            pages = new_entry;
+            pages = move(new_entry);
         }
 
         // Now update the tables
         for(ObjectInMap *oim : objects_in_maps) {
-            oim->map->insert(oim->base + addr, page, page_flags, oim->base, oim->base + oim->pages * PAGE_SIZE);
+            oim->map->insert(oim->base + addr - oim->offset, page, page_flags, oim->base, oim->base + oim->pages * PAGE_SIZE);
         }
     }
 
@@ -218,8 +219,8 @@ namespace object {
         vm::Map *map = oim->map;
 
         // Fill in the pages already loaded into the vm
-        for(PageEntry *page_entry = pages; page_entry; page_entry = page_entry->next) {
-            map->insert(oim->base + page_entry->offset, page_entry->page, this->page_flags,
+        for(PageEntry *page_entry = pages.get(); page_entry; page_entry = page_entry->next.get()) {
+            map->insert(oim->base + page_entry->offset - oim->offset, page_entry->page, this->page_flags,
                 oim->base, oim->base + oim->pages * PAGE_SIZE);
         }
     }
@@ -228,15 +229,15 @@ namespace object {
         PageEntry *page_entry;
 
         // Erase all the page table entries
-        for(page_entry = pages; page_entry; page_entry = page_entry->next) {
-            oim->map->clear(oim->base + page_entry->offset, page_entry->page->count());
+        for(page_entry = pages.get(); page_entry; page_entry = page_entry->next.get()) {
+            oim->map->clear(oim->base + page_entry->offset - oim->offset, page_entry->page->count());
         }
 
         objects_in_maps.remove(oim);
     }
 
 
-    ObjectInMap::ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, uint32_t offset, uint32_t pages)
+    ObjectInMap::ObjectInMap(shared_ptr<Object> object, vm::Map *map, uint32_t base, int64_t offset, uint32_t pages)
         : object(object), map(map), base(base), offset(offset), pages(pages) {
         object->add_object_in_map(this);
     }
@@ -294,6 +295,18 @@ public:
         assert(*(int *)(0x2000) == 0x0);
         assert(*(int *)(0x2004) == 0x4);
         assert(*(int *)(0x3004) == 0x1004);
+
+        test("Installing an object with offset");
+        map->add_object(obj, 0x4000, 0x2000, 2);
+        assert(*(int *)(0x4000) == 0x2000);
+        assert(*(int *)(0x4004) == 0x2004);
+        assert(*(int *)(0x5004) == 0x3004);
+
+        test("Loading an already populated object");
+        map->add_object(obj, 0x6000, 0x1000, 4);
+        assert(*(int *)(0x6000) == 0x1000);
+        assert(*(int *)(0x7000) == 0x2000);
+        assert(*(int *)(0x8000) == 0x3000);
 
         test("Removing an object");
         map->remove_object(obj);

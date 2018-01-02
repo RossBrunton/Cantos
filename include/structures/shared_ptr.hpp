@@ -73,14 +73,14 @@ public:
      *
      * Two shared_ptrs are equal if they own the same object
      */
-    bool operator==(shared_ptr& r) {
+    bool operator==(const shared_ptr& r) {
         return r.ref == ref;
     }
     /** Compare two shared_ptrs for inequality
      *
      * Two shared_ptrs are not equal if they own different objects
      */
-    bool operator!=(shared_ptr& r) {
+    bool operator!=(const shared_ptr& r) {
         return r.ref != ref;
     }
 
