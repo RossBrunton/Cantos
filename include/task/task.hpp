@@ -6,6 +6,7 @@
 #include "mem/vm.hpp"
 #include "mem/object.hpp"
 #include "mem/page.hpp"
+#include "structures/unique_ptr.hpp"
 
 namespace task {
     const uint32_t TASK_STACK_TOP = KERNEL_VM_BASE;
@@ -34,9 +35,9 @@ namespace task {
         uint32_t thread_id;
         uint32_t task_id;
 
-        vm::Map *vm;
+        unique_ptr<vm::Map> vm;
 
-        object::Object *stack;
+        shared_ptr<object::Object> stack;
         addr_logical_t stack_pointer;
 
         Thread *next_in_process;
@@ -56,7 +57,8 @@ namespace task {
     extern "C" void task_yield();
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp);
     extern "C" void task_timer_yield();
-    void __attribute__((noreturn)) schedule(Thread *base);
+    void __attribute__((noreturn)) schedule();
+    bool in_thread();
 }
 
 #endif

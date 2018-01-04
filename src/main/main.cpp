@@ -111,7 +111,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     ps2::init();
 
     new task::Thread(&task::kernel_process, (addr_logical_t)&main_thread);
-    task::schedule(NULL);
+    task::schedule();
 }
 
 extern "C" void __attribute__((noreturn)) ap_main() {
@@ -123,5 +123,5 @@ extern "C" void __attribute__((noreturn)) ap_main() {
 
     asm("sti");
 
-    task::schedule(NULL);
+    task::schedule();
 }

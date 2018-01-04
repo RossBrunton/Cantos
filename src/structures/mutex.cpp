@@ -20,13 +20,19 @@ namespace mutex {
             if(result == EOK) {
                 return EOK;
             }
+
+            if(task::in_thread()) {
+                task::task_yield();
+            }else{
+                asm volatile ("hlt");
+            }
         }
     }
 
     int Mutex::trylock() {
         volatile bool swap = true;
 
-        asm volatile ("xchg %0, %1" : "+r" (swap), "+m" (this->flag) : "r" (swap), "m" (this->flag));
+        asm volatile ("xchg %0, %1" : "+r" (swap), "+m" (flag) : "r" (swap), "m" (flag));
 
         if(swap) {
             return EBUSY;
@@ -36,7 +42,7 @@ namespace mutex {
     }
 
     int Mutex::unlock() {
-        this->flag = false;
+        flag = false;
 
         return EOK;
     }

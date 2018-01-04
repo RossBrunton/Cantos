@@ -19,7 +19,7 @@ namespace mutex {
     public:
         /** Create a new Mutex */
         Mutex();
-        
+
         /** Gets a lock on the mutex, or blocks
          *
          * If the mutex is already locked, this blocks until the lock is released.
@@ -39,7 +39,7 @@ namespace mutex {
          * @return EOK
          */
         int unlock();
-    
+
     private:
         volatile bool flag;
     };

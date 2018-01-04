@@ -19,6 +19,8 @@
  *
  * When an object is removed from the list, their default deconstructor is called, and any references/pointers to them
  *  are invalid. Deleting an element does not invalidate any references/pointers to other elements or the list itself.
+ *
+ * @TODO This needs to be thread safe
  */
 template<class T> class list {
 private:

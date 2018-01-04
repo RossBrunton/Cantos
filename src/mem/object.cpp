@@ -289,7 +289,7 @@ public:
 
         test("Installing an object");
         cpu::Status& info = cpu::info();
-        vm::Map *map = info.thread->vm;
+        vm::Map *map = info.thread->vm.get();
 
         map->add_object(obj, 0x2000, 0x0, 2);
         assert(*(int *)(0x2000) == 0x0);

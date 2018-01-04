@@ -9,6 +9,8 @@
 #include "mem/kmem.hpp"
 #include "structures/mutex.hpp"
 #include "structures/shared_ptr.hpp"
+#include "structures/list.hpp"
+#include "structures/static_list.hpp"
 
 extern "C" {
     #include "task/asm.h"
@@ -24,7 +26,11 @@ namespace task {
     static uint32_t task_counter;
 
     static Thread * volatile tasks;
+
+    static mutex::Mutex waiting_mutex;
     static mutex::Mutex _mutex;
+
+    StaticList<Thread *, 256> waiting_threads;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
         size_t i;
@@ -41,15 +47,6 @@ namespace task {
     }
 
 
-    static Thread *_next_task(Thread *task) {
-        if(task->next_in_tasks) {
-            return task->next_in_tasks;
-        }else{
-            return (Thread *)tasks;
-        }
-    }
-
-
     Process::Process(uint32_t owner, uint32_t group) {
 
     }
@@ -59,31 +56,28 @@ namespace task {
      * @todo Copy all the objects into the new memory map
      * @todo Get the stack object properly
      */
-    Thread::Thread(Process *process, addr_logical_t entry) {
+    Thread::Thread(Process *process, addr_logical_t entry)
+        : process(process), thread_id(++process->thread_counter), task_id(++task_counter), in_use(false) {
         bool kernel = process->process_id == 0;
         uint32_t *sp;
         idt_proc_state_t pstate = {0, 0, 0, 0, 0, 0, 0, 0};
         void *stack_installed;
 
         _mutex.lock();
-        this->in_use = false;
 
-        this->next_in_process = process->thread;
+        next_in_process = process->thread;
         process->thread = this;
-        this->process = process;
-        this->thread_id = ++process->thread_counter;
-        this->task_id = ++task_counter;
 
         // Create the virtual memory map
-        this->vm = new vm::Map(process->process_id, this->task_id, kernel);
+        vm = make_unique<vm::Map>(process->process_id, task_id, kernel);
 
         // Create the stack object
-        this->stack = new object::Object(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, 0, 0);
-        this->stack->generate(0, 1);
+        stack = make_shared<object::Object>(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, 0, 0);
+        stack->generate(0, 1);
 
-        vm->add_object(shared_ptr<object::Object>(stack), TASK_STACK_TOP - PAGE_SIZE, 0, 1);
+        vm->add_object(stack, TASK_STACK_TOP - PAGE_SIZE, 0, 1);
 
-        stack_installed = page::kinstall(this->stack->pages->page, 0);
+        stack_installed = page::kinstall(stack->pages->page, 0);
 
         // Initial stack format:
         // [pushad values]
@@ -97,14 +91,15 @@ namespace task {
         sp -= (sizeof(pstate) / 4);
         _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
 
-        this->stack_pointer = TASK_STACK_TOP - sizeof(void *) * 3 - sizeof(pstate);
+        stack_pointer = TASK_STACK_TOP - sizeof(void *) * 3 - sizeof(pstate);
 
-        page::kuninstall(stack_installed, this->stack->pages->page);
+        page::kuninstall(stack_installed, stack->pages->page);
 
-        this->next_in_tasks = (Thread *)tasks;
+        next_in_tasks = (Thread *)tasks;
         tasks = (Thread* volatile)this;
-
         _mutex.unlock();
+
+        waiting_threads.push_front(this);
     }
 
 
@@ -139,13 +134,12 @@ namespace task {
             panic("Thread to destroy not found in task lists.");
         }
 
-        // And delete the memory map
-        delete this->vm;
         _mutex.unlock();
     }
 
 
     extern "C" void __attribute__((noreturn)) task_enter(Thread *thread) {
+        asm volatile ("cli");
         cpu::Status &info = cpu::info();
         info.thread = thread;
 
@@ -157,15 +151,20 @@ namespace task {
     }
 
     extern "C" void task_yield() {
+        asm volatile ("pushf");
+        asm volatile ("cli");
         cpu::Status& info = cpu::info();
+        bool in_thread = info.thread != 0;
+        uint32_t stack = (uint32_t)info.stack + PAGE_SIZE;
+        asm volatile ("popf");
 
         // Do nothing if we are not in a task
-        if(!info.thread) {
+        if(in_thread) {
             return;
         }
 
         // Call the exit function to move over the stack, will call task_yield_done
-        task_asm_yield((uint32_t)info.stack + PAGE_SIZE);
+        task_asm_yield(stack);
     }
 
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
@@ -173,9 +172,6 @@ namespace task {
         cpu::Status& info = cpu::info();
         current = info.thread;
         info.thread = NULL;
-
-        _mutex.lock();
-
         current->stack_pointer = sp;
 
         // And then use the "normal" memory map
@@ -183,48 +179,46 @@ namespace task {
 
         current->in_use = false;
 
-        _mutex.unlock();
+        // We are now free and can be interrupted again
+        asm volatile ("sti");
 
-        schedule(current);
+        waiting_threads.push_front(current);
+
+        schedule();
     }
 
-    void __attribute__((noreturn)) schedule(Thread *base) {
-        while(tasks == NULL);
+    void __attribute__((noreturn)) schedule() {
+        Thread *next;
 
         while(true) {
-            Thread *next;
-            bool ok = false;
-
-            _mutex.lock();
-
-            if(!base) {
-                base = (Thread *)tasks;
+            waiting_mutex.lock();
+            if(!waiting_threads.empty()) {
+                next = waiting_threads.pop_back();
+                waiting_mutex.unlock();
+                break;
             }
+            waiting_mutex.unlock();
+            asm volatile ("hlt");
+        }
 
+        _mutex.lock();
+        bool ok = true;
+
+        if(next->in_use) {
             ok = false;
-            for(next = _next_task(base); true; next = _next_task(next)) {
-                ok = true;
+            panic("Found an in use thread in the waiting list");
+        }
 
-                if(next->in_use) {
-                    ok = false;
-                }
+        if(ok) {
+            next->in_use = true;
+        }
 
-                if(next == base || ok) {
-                    break;
-                }
-            }
+        _mutex.unlock();
 
-            if(ok) {
-                next->in_use = true;
-            }
-
-            _mutex.unlock();
-
-            if(ok) {
-                task_enter(next);
-            }else{
-                asm volatile ("hlt");
-            }
+        if(ok) {
+            task_enter(next);
+        }else{
+            schedule();
         }
     }
 
@@ -238,5 +232,17 @@ namespace task {
         }
 
         task_yield();
+    }
+
+    bool in_thread() {
+        bool to_ret = false;
+
+        asm volatile ("pushf");
+        asm volatile ("cli");
+        cpu::Status& info = cpu::info();
+        to_ret = info.thread != 0;
+        asm volatile ("popf");
+
+        return to_ret;
     }
 }
