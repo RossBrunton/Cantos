@@ -1,30 +1,28 @@
 #include "main/cpp.hpp"
 #include "test/test.hpp"
 #include "main/panic.hpp"
+#include "main/asm_utils.hpp"
 
 template<class T, size_t C> void StaticList<T, C>::push_front(const T& value) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     head = head ? head - 1 : C - 1;
     objects[head] = value;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }
 
 template<class T, size_t C> void StaticList<T, C>::push_front(T&& value) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     head = head ? head - 1 : C - 1;
     objects[head] = value;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }
 
 template<class T, size_t C> T StaticList<T, C>::pop_front() {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     if(head == tail) {
         panic("Tried to pop_front an empty list");
@@ -34,45 +32,41 @@ template<class T, size_t C> T StaticList<T, C>::pop_front() {
     old_v = objects[head];
     head = (head + 1) % C;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 
     return old_v;
 }
 
 template<class T, size_t C> template<class... Args> void StaticList<T, C>::emplace_front(Args&&... args) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     head = head ? head - 1 : C - 1;
     objects[head] = T(forward<Args>(args)...);
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }
 
 
 template<class T, size_t C> void StaticList<T, C>::push_back(const T& value) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     objects[tail] = value;
     tail = (tail + 1) % C;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }
 
 template<class T, size_t C> void StaticList<T, C>::push_back(T&& value) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     objects[tail] = value;
     tail = (tail + 1) % C;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }
 
 template<class T, size_t C> T StaticList<T, C>::pop_back() {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     if(head == tail) {
         panic("Tried to pop_back an empty list");
@@ -81,17 +75,16 @@ template<class T, size_t C> T StaticList<T, C>::pop_back() {
     tail = tail ? tail - 1 : C - 1;
     T old_v = objects[tail];
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 
     return old_v;
 }
 
 template<class T, size_t C> template<class... Args> void StaticList<T, C>::emplace_back(Args&&... args) {
-    asm volatile("pushf");
-    asm volatile("cli");
+    uint32_t eflags = push_cli();
     mutex.lock();
     objects[tail] = T(forward<Args>(args)...);
     tail = (tail + 1) % C;
     mutex.unlock();
-    asm volatile("popf");
+    pop_flags(eflags);
 }

@@ -29,6 +29,7 @@ OBJECTS=obj/debug/stack.o\
 	obj/int/lapic.o\
 	obj/int/pic.o\
 	obj/int/wrapper.o\
+	obj/main/asm_utils.o\
 	obj/main/ap.o\
 	obj/main/boot.o\
 	obj/main/cpp.o\

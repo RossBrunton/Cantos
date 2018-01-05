@@ -11,6 +11,7 @@
 #include "structures/shared_ptr.hpp"
 #include "structures/list.hpp"
 #include "structures/static_list.hpp"
+#include "main/asm_utils.hpp"
 
 extern "C" {
     #include "task/asm.h"
@@ -151,12 +152,11 @@ namespace task {
     }
 
     extern "C" void task_yield() {
-        asm volatile ("pushf");
-        asm volatile ("cli");
+        uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
         bool in_thread = info.thread != 0;
         uint32_t stack = (uint32_t)info.stack + PAGE_SIZE;
-        asm volatile ("popf");
+        pop_flags(eflags);
 
         // Do nothing if we are not in a task
         if(in_thread) {
@@ -237,11 +237,10 @@ namespace task {
     bool in_thread() {
         bool to_ret = false;
 
-        asm volatile ("pushf");
-        asm volatile ("cli");
+        uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
         to_ret = info.thread != 0;
-        asm volatile ("popf");
+        pop_flags(eflags);
 
         return to_ret;
     }
