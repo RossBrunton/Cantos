@@ -32,6 +32,7 @@ extern "C" {
 
     void vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap) {
         char *name;
+        __asm__ volatile ("cli");
 
         stack::Unwinder unwinder(ebp);
 
@@ -87,7 +88,6 @@ extern "C" {
                 break;
         }
 
-        __asm__ volatile ("cli");
         while(1) {
             __asm__ volatile ("hlt");
         }

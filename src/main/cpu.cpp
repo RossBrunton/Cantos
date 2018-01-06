@@ -5,6 +5,7 @@
 #include "hw/acpi.h"
 #include "mem/page.hpp"
 #include "main/panic.hpp"
+#include "main/asm_utils.hpp"
 
 /** @file main/cpu.c
  *
@@ -35,12 +36,10 @@ namespace cpu {
         return id;
     }
 
-    /** */
     Status& info() {
         return info_of(id());
     }
 
-    /** */
     Status& info_of(uint32_t id) {
         if(!cpu_status[id]) {
             panic("Tried to get the status of an invalid or un-inited cpu");
@@ -48,8 +47,6 @@ namespace cpu {
         return *cpu_status[id];
     }
 
-    /** Sets up the (at the moment) only CPU status struct and create a stack for it.
-     */
      void init() {
         page::Page *page;
         uint32_t i;
@@ -65,15 +62,15 @@ namespace cpu {
         }
     }
 
-    /** Returns the currently running thread.
-     *
-     * Reads the "thread" property of the CPU, but disables interrupts to avoid race conditions.
-     */
     task::Thread *current_thread() {
         task::Thread *t;
-        __asm__ volatile("cli");
+        uint32_t eflags = push_cli();
         t = cpu_status[id()]->thread;
-        __asm__ volatile("sti");
+        pop_flags(eflags);
         return t;
+    }
+
+    task::Thread *current_thread_noint() {
+        return cpu_status[id()]->thread;
     }
 }

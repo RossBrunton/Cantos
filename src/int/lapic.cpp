@@ -91,8 +91,9 @@ namespace lapic {
 
     void timer(idt_proc_state_t state) {
         (void)state;
-        
-        if(cpu::id() == 0) {
+
+        uint32_t id = cpu::id();
+        if(id == 0) {
             switch(_stage) {
                 case 0:
                     if(_deadline < pit::time) {
@@ -102,7 +103,7 @@ namespace lapic {
                     }
                     eoi();
                     break;
-                
+
                 case 1:
                     if(_deadline < pit::time) {
                         _stage = 2;
@@ -114,7 +115,7 @@ namespace lapic {
                     }
                     eoi();
                     break;
-                
+
                 case 2:
                     eoi();
                     task::task_timer_yield();
@@ -125,8 +126,6 @@ namespace lapic {
                     break;
             }
         }else{
-            volatile uint32_t id = cpu::id();
-
             if(_calibrated[id]) {
                 eoi();
                 task::task_timer_yield();

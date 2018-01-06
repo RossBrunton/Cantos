@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 extern "C" {
+uint32_t push_flags();
 uint32_t push_cli();
 void __attribute__((fastcall)) pop_flags(uint32_t flags);
 }

@@ -1,3 +1,9 @@
+.globl push_flags
+push_flags:
+    pushf;
+    pop %eax;
+    ret;
+
 .globl push_cli
 push_cli:
     pushf;

@@ -7,6 +7,7 @@
 #include "main/printk.hpp"
 #include "main/cpu.hpp"
 #include "task/task.hpp"
+#include "main/asm_utils.hpp"
 
 namespace mutex {
     Mutex::Mutex() {
@@ -21,10 +22,20 @@ namespace mutex {
                 return EOK;
             }
 
-            if(task::in_thread()) {
-                task::task_yield();
+            uint32_t eflags = push_flags();
+            if(eflags & cpu::IF) {
+                // Interrupts are enabled, so assume that we can freely halt and get interrupted and stuff
+                asm volatile ("cli");
+                if(cpu::info().thread) {
+                    asm volatile ("sti");
+                    task::task_yield();
+                }else{
+                    asm volatile ("sti");
+                    asm volatile ("hlt");
+                }
             }else{
-                asm volatile ("hlt");
+                // Interrupts are disabled, so assume that the user doesn't want any interrupt handlers to run
+                // Busy wait, not sure if there is a better way of doing this...
             }
         }
     }
