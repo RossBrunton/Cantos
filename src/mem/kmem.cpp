@@ -6,6 +6,7 @@
 #include "main/panic.hpp"
 #include "main/lomain.hpp"
 #include "test/test.hpp"
+#include "main/asm_utils.hpp"
 
 namespace kmem {
     #define _MINIMUM_PAGES 2
@@ -19,6 +20,7 @@ namespace kmem {
     extern "C" char _endofrw;
 
     map_t map;
+    mutex::Mutex mutex;
 
     /** @private */
     struct kmem_header_t {
@@ -212,8 +214,7 @@ namespace kmem {
         dir->entries[0].table = 0x0;
     }
 
-
-    void *__attribute__((alloc_size(1), malloc)) kmalloc(size_t size, uint8_t flags) {
+    static void *__attribute__((alloc_size(1), malloc)) do_kmalloc(size_t size, uint8_t flags) {
         kmem_free_t *free = free_list;
         kmem_free_t *prev = NULL;
         size_t size_needed = 0;
@@ -310,8 +311,8 @@ namespace kmem {
 #endif
 
         // This calls kmalloc, be careful!
-        new_page = page::alloc(page::FLAG_KERNEL | page::FLAG_RESERVED, pages_needed);
-        installed_loc = (addr_logical_t)page::kinstall_append(new_page, page::PAGE_TABLE_RW);
+        new_page = page::alloc(page::FLAG_KERNEL | page::FLAG_RESERVED | page::FLAG_NOLOCK, pages_needed);
+        installed_loc = (addr_logical_t)page::kinstall_append(new_page, page::PAGE_TABLE_RW, false);
         memory_total += pages_needed * PAGE_SIZE;
 
         if(prev && prev->base + prev->size == installed_loc) {
@@ -340,8 +341,23 @@ namespace kmem {
         }
 
         _verify("kmalloc@end");
-        page::used(new_page);
-        return kmalloc(size, flags);
+        page::used(new_page, false);
+        return kmalloc(size, flags | KMALLOC_NOLOCK);
+    }
+
+    void *__attribute__((alloc_size(1), malloc)) kmalloc(size_t size, uint8_t flags) {
+        uint32_t eflags = 0;
+        void *ret;
+        if(!(flags & KMALLOC_NOLOCK)) {
+            eflags = push_cli();
+            mutex.lock();
+        }
+        ret = do_kmalloc(size, flags);
+        if(!(flags & KMALLOC_NOLOCK)) {
+            mutex.unlock();
+            pop_flags(eflags);
+        }
+        return ret;
     }
 
 
@@ -353,18 +369,25 @@ namespace kmem {
             _verify(__func__);
             return hold;
         }else{
-            hold = (kmem_free_t *)kmalloc(sizeof(kmem_free_t), KMALLOC_RESERVED);
+            hold = (kmem_free_t *)kmalloc(sizeof(kmem_free_t), KMALLOC_RESERVED | KMALLOC_NOLOCK);
             _verify(__func__);
             return hold;
         }
     }
 
 
-    void kfree(void *ptr) {
+     void kfree(void *ptr) {
+        uint32_t eflags = push_cli();
+        mutex.lock();
+        kfree_nolock(ptr);
+        mutex.unlock();
+        pop_flags(eflags);
+    }
+
+    void kfree_nolock(void *ptr) {
         kmem_header_t *hdr = ((kmem_header_t *)ptr) - 1;
         size_t full_size = hdr->size + sizeof(kmem_header_t);
         kmem_free_t *new_entry;
-
 
 #if DEBUG_VMEM
         printk("Freeing %p (%d bytes).\n", ptr, hdr->size);

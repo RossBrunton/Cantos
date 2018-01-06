@@ -6,6 +6,7 @@
 #include "main/printk.hpp"
 #include "main/multiboot.hpp"
 #include "main/panic.hpp"
+#include "main/asm_utils.hpp"
 
 namespace page {
     static Page *used_start;
@@ -45,7 +46,7 @@ namespace page {
                 if(now->next->mem_base < now->mem_base) {
                     panic("Free page list corruption, List out of order [%s]", func);
                 }
-                
+
                 if(prev && prev->mem_base + (prev->consecutive * PAGE_SIZE) > now->mem_base) {
                     panic("Free page list corruption, Overlapping pages [%s]", func);
                 }
@@ -79,13 +80,13 @@ namespace page {
 
     void init() {
         page_table_t *page_table;
-        
+
         allocation_pointer = (addr_phys_t)kmem::map.memory_start - KERNEL_VM_BASE;
-        
+
         for(current_map = &(multiboot::mem_table[0]);
             (current_map->base + current_map->length) < allocation_pointer;
             current_map ++);
-        
+
         // The cursor in the table to use
         // This is the logical address of the next unallocated space in the kernel address space
         page_dir = (page_dir_t *)kmem::map.vm_start;
@@ -99,18 +100,20 @@ namespace page {
 
 
     Page *create(uint32_t base, uint8_t flags, unsigned int count) {
+        kmem::mutex.lock();
         Page *write;
-        
-        write = (Page *)kmalloc(sizeof(Page), kmem::KMALLOC_RESERVED);
+
+        write = (Page *)kmalloc(sizeof(Page), kmem::KMALLOC_RESERVED | kmem::KMALLOC_NOLOCK);
         write->page_id = page_id_counter ++;
         write->mem_base = base;
         write->flags = FLAG_ALLOCATED | flags;
         write->consecutive = count;
         write->next = NULL;
-    #if DEBUG_MEM
+#if DEBUG_MEM
         printk("Allocated %d pages.\n", count);
-    #endif
-        
+#endif
+
+        kmem::mutex.unlock();
         return write;
     }
 
@@ -118,18 +121,24 @@ namespace page {
     Page *alloc_nokmalloc(uint8_t flags, unsigned int count) {
         Page *write = &static_page;
         unsigned int size = count * PAGE_SIZE;
-        
+
+        uint32_t eflags;
+        if(!(flags & FLAG_NOLOCK)) {
+            eflags = push_cli();
+            kmem::mutex.lock();
+        }
+
         if((allocation_pointer + size) >= (current_map->base + current_map->length)) {
             size = (current_map->base + current_map->length) - allocation_pointer;
         }
-        
+
         write->page_id = page_id_counter ++;
         write->mem_base = allocation_pointer;
         write->flags = FLAG_ALLOCATED | flags;
         write->consecutive = size / PAGE_SIZE;
         write->next = NULL;
         allocation_pointer = write->mem_base + size;
-        
+
         if((write->mem_base + size) == (current_map->base + current_map->length)) {
     #if DEBUG_MEM
             printk("Have to skip to the next memory region.\n");
@@ -144,11 +153,16 @@ namespace page {
             }
             allocation_pointer = current_map->base;
         }
-        
-    #if DEBUG_MEM
+
+#if DEBUG_MEM
         printk("Allocated %d pages at %p.\n", count, write->mem_base);
-    #endif
-        
+#endif
+
+        if(!(flags & FLAG_NOLOCK)) {
+            kmem::mutex.unlock();
+            pop_flags(eflags);
+        }
+
         return write;
     }
 
@@ -156,11 +170,18 @@ namespace page {
     Page *alloc(uint8_t flags, unsigned int count) {
         Page *new_page;
         uint8_t alloc_flag = (flags & page::FLAG_RESERVED) ? kmem::KMALLOC_RESERVED : 0;
-        
+        alloc_flag |= kmem::KMALLOC_NOLOCK;
+
         if(count == 0) {
             return NULL;
         }
-        
+
+        uint32_t eflags;
+        if(!(flags & FLAG_NOLOCK)) {
+            eflags = push_cli();
+            kmem::mutex.lock();
+        }
+
         // Collect all the pages in the free list
         if(page_free_head) {
             if(page_free_head->consecutive > count) {
@@ -179,14 +200,19 @@ namespace page {
             _verify(__func__);
         }else{
             new_page = (Page *)kmalloc(sizeof(Page), alloc_flag);
-            alloc_nokmalloc(flags, count);
+            alloc_nokmalloc(flags | FLAG_NOLOCK, count);
             _memcpy(new_page, &static_page, sizeof(Page));
         }
-        
+
         if(new_page->consecutive < count) {
             new_page->next = alloc(flags, count - new_page->consecutive);
         }
-        
+
+        if(!(flags & FLAG_NOLOCK)) {
+            kmem::mutex.unlock();
+            pop_flags(eflags);
+        }
+
         return new_page;
     }
 
@@ -194,15 +220,17 @@ namespace page {
     void free(Page *page) {
         Page *now;
         Page *prev = NULL;
-        
+
         if(!page) {
             return;
         }
-        
+
         if(page->next) {
             free(page->next);
         }
-        
+
+        kmem::mutex.lock();
+
         for(now = page_free_head; now && now->mem_base < page->mem_base; ((prev = now), (now = now->next)));
         if(prev) {
             prev->next = page;
@@ -210,53 +238,58 @@ namespace page {
             page_free_head = page;
         }
         page->next = now;
-        
+
         // Try to flatten the free entries
         _merge_free(page);
         if(prev) _merge_free(prev);
+
+        kmem::mutex.unlock();
     }
 
 
-    void used(Page *page) {
+    void used(Page *page, bool lock) {
+        if(lock) kmem::mutex.lock();
         Page *old_next = page->next;
         page->next = used_start;
         used_start = page;
+        if(lock) kmem::mutex.unlock();
+
         if(old_next) {
-            used(old_next);
+            used(old_next, lock);
         }
     }
 
 
-    void *kinstall_append(Page *page, uint8_t page_flags) {
+    void *kinstall_append(Page *page, uint8_t page_flags, bool lock) {
         uint32_t i;
         addr_logical_t first = 0;
-        addr_phys_t base = 0;
+        if(lock) kmem::mutex.lock();
         for(i = 0; i < page->consecutive; i ++) {
             if(virtual_pointer >= TOTAL_VM_SIZE - PAGE_SIZE) {
                 panic("Ran out of kernel virtual address space!");
             }
-            
+
             cursor->block = (page->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
             if(!first) {
                 first = virtual_pointer;
-                base = page->mem_base;
             }
-            
+
             virtual_pointer += PAGE_SIZE;
-            
+
             cursor ++;
         }
-        
+
         kmem::map.memory_end = virtual_pointer;
-        
+        if(lock) kmem::mutex.unlock();
+
         if(page->next) {
             kinstall_append(page->next, page_flags);
         }
-        
-    #if DEBUG_MEM
+
+#if DEBUG_MEM
         printk("KInstalled %d new pages at %p onto %p.\n", page->consecutive, base, first);
-    #endif
-        
+#endif
+
         return (void *)first;
     }
 
@@ -270,13 +303,16 @@ namespace page {
         uint32_t page_offset;
         page_table_entry_t *table_entry;
         unsigned int i;
-        
+
         // Count the total number of pages we need
         total_pages = page->count();
-        
+
+        uint32_t eflags = push_cli();
+        kmem::mutex.lock();
+
         // And search for an empty hole in virtual memory for it
         for(; slot && (slot->pages < total_pages); (prev_slot = slot), (slot = slot->next));
-        
+
         if(slot) {
             if(slot->pages == total_pages) {
                 if(prev_slot) {
@@ -285,28 +321,32 @@ namespace page {
                     empty_slot = slot->next;
                 }
                 base = slot->base;
-                kfree(slot);
+                kmem::kfree_nolock(slot);
             }else{
                 base = slot->base;
                 slot->pages -= total_pages;
                 slot->base += total_pages * PAGE_SIZE;
             }
-            
+
             if(base) {
                 page_offset = (base - KERNEL_VM_BASE) / PAGE_SIZE;
                 table_entry = (page_table_entry_t *)(page_dir + 1) + page_offset;
-                
+
                 for(current = page; current; current = current->next) {
                     for(i = 0; i < page->consecutive; i ++) {
                         table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
                         table_entry ++;
                     }
                 }
-                
+
+                kmem::mutex.unlock();
+                pop_flags(eflags);
                 return (void *)base;
             }
         }
-        
+        kmem::mutex.unlock();
+        pop_flags(eflags);
+
         // No free spaces could be found
         return kinstall_append(page, page_flags);
     }
@@ -319,39 +359,45 @@ namespace page {
         uint32_t page_offset;
         page_table_entry_t *table_entry;
         unsigned int i;
-        
+
         if(!page) {
             return;
         }
-        
+
+        uint32_t eflags = push_cli();
+        kmem::mutex.lock();
+
         for(now = empty_slot; now && now->base < (addr_logical_t)base; ((prev = now), (now = now->next)));
-        
-        new_slot = (_empty_virtual_slot_t *)kmalloc(sizeof(_empty_virtual_slot_t), 0);
+
+        new_slot = (_empty_virtual_slot_t *)kmalloc(sizeof(_empty_virtual_slot_t), kmem::KMALLOC_NOLOCK);
         new_slot->base = (addr_logical_t)base;
         new_slot->pages = page->consecutive;
-        
+
         if(prev) {
             prev->next = new_slot;
         }else{
             empty_slot = new_slot;
         }
         new_slot->next = now;
-        
+
         // Remove the mappings in the page table
         page_offset = ((addr_logical_t)base - KERNEL_VM_BASE) / PAGE_SIZE;
         table_entry = (page_table_entry_t *)(page_dir + 1) + page_offset;
-        
+
         for(i = 0; i < page->consecutive; i ++) {
             table_entry->block = 0;
             table_entry ++;
             __asm__ volatile("invlpg (%0)" ::"r" (base) : "memory");
             base = (void *)((addr_phys_t)base + PAGE_SIZE);
         }
-        
+
         // Try to flatten the free entries
         _merge_free_slots(new_slot);
         if(prev) _merge_free_slots(prev);
-        
+
+        kmem::mutex.unlock();
+        pop_flags(eflags);
+
         if(page->next) {
             kuninstall(base, page->next);
         }
@@ -361,9 +407,9 @@ namespace page {
     uint32_t Page::count() {
         uint32_t sum = 0;
         Page *n = this;
-        
+
         for(; n; n = n->next) sum += n->consecutive;
-        
+
         return sum;
     }
 

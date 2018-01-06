@@ -6,6 +6,7 @@
 
 #include "mem/page.hpp"
 #include "main/common.h"
+#include "structures/mutex.hpp"
 
 /** Manages kernel memory allocation
   *
@@ -17,9 +18,10 @@
   *
   * The memory pool used by kmem grows automatically when it is full.
   *
-  * kmem::kmalloc and kmem::kfree are available in the global scope as `kmalloc` and `kfree`.
+  * Allocating and freeing memory is thread safe. It also disables interrupts while doing so, allowing you to use
+  *  dynamic memory in an interrupt.
   *
-  * @TODO This is not thread safe!
+  * kmem::kmalloc and kmem::kfree are available in the global scope as `kmalloc` and `kfree`.
   */
 namespace kmem {
     /** A kmalloc flag that if set indicates that the reserved area should be used
@@ -31,6 +33,12 @@ namespace kmem {
      *  care.
      */
     const uint8_t KMALLOC_RESERVED = (1 << 0);
+
+    /** A kmalloc flag that if set indicates that the allocation should not attempt to get a lock
+     *
+     * This shouldn't be used by anything outwith functions in the page and kmem namespaces.
+     */
+    const uint8_t KMALLOC_NOLOCK = (1 << 1);
 
     /** A kernel memory map, indicating where different areas of the kernel lie. */
     typedef struct map_s {
@@ -51,6 +59,12 @@ namespace kmem {
      */
     extern map_t map;
 
+    /** A mutex used by the kmem and page namespaces to protect their internal structures
+     *
+     * This should not be used by anything else
+     */
+    extern mutex::Mutex mutex;
+
     /** Initialises the kmem system, this must be called before any dynamic memory is used
      *
      * This populates kmem::map, calls page::init and sets up kmem for memory allocation.
@@ -61,6 +75,9 @@ namespace kmem {
      * If for some reason this is impossible (e.g. running out of virtual/physical memory), we panic instead.
      *
      * Allocating 0 bytes does nothing.
+     *
+     * This is thread safe. It also disables interrupts during its operation KMALLOC_NOLOCK is not specified. This is
+     *  the function used to handle `new`.
      *
      * @param size The number of bytes to allocate.
      * @param flags Any flags that change the behaviour of the allocation.
@@ -73,9 +90,19 @@ namespace kmem {
      *
      * Attempting to free `nullptr` has no effect.
      *
+     * This is thread safe and disables interrupts during its operation. This is the function used to handle `delete`.
+     *
      * @param ptr A pointer to the memory to free
      */
     void kfree(void *ptr);
+    /** Frees previously allocated memory
+     *
+     * Like kfree, but does not try to get a lock or disable interrupts. This should not be used by any function outside
+     *  the kmem or page namespaces.
+     *
+     * @param ptr A pointer to the memory to free
+     */
+    void kfree_nolock(void *ptr);
     /** Remove the bottom page from the kernel memory map
      *
      * After this call, memory adresses lower than 4MiB will be unavailable.

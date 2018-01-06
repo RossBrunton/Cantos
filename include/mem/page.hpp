@@ -16,7 +16,7 @@ namespace page {
         uint8_t flags;
         unsigned int consecutive;
         Page *next;
-        
+
         uint32_t count();
         Page *split(uint32_t count);
     };
@@ -24,6 +24,7 @@ namespace page {
     const uint8_t FLAG_ALLOCATED = 0x01;
     const uint8_t FLAG_KERNEL = 0x02;
     const uint8_t FLAG_RESERVED = 0x04;
+    const uint8_t FLAG_NOLOCK = 0x08;
 
     const uint32_t FREE_MASK = 0xfff;
 
@@ -72,12 +73,12 @@ namespace page {
     Page *alloc_nokmalloc(uint8_t flags, unsigned int count);
     Page *create(uint32_t base, uint8_t flags, unsigned int count);
     void free(Page *page);
-    void used(Page *page);
+    void used(Page *page, bool lock = true);
     void *kinstall(Page *page, uint8_t page_flags);
-    void *kinstall_append(Page *page, uint8_t page_flags); // Doesn't kmalloc, but doesn't reuse any existing memory
+    void *kinstall_append(Page *page, uint8_t page_flags, bool lock = true); // Doesn't kmalloc, but doesn't reuse any existing memory
     // either
     void kuninstall(void *base, Page *page);
-    
+
 }
 
 #endif

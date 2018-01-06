@@ -26,7 +26,8 @@ namespace mutex {
             if(eflags & cpu::IF) {
                 // Interrupts are enabled, so assume that we can freely halt and get interrupted and stuff
                 asm volatile ("cli");
-                if(cpu::info().thread) {
+                uint32_t id = cpu::id();
+                if(cpu::info_of(id).thread) {
                     asm volatile ("sti");
                     task::task_yield();
                 }else{
