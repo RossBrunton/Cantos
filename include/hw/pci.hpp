@@ -2,6 +2,8 @@
 #define _HPP_HW_PCI_
 
 #include "main/common.h"
+#include "structures/list.hpp"
+#include "structures/unique_ptr.hpp"
 
 namespace pci {
     const uint8_t VENDOR_ID = 0x00;
@@ -67,7 +69,6 @@ namespace pci {
 
     class Device {
     public:
-        Device *next;
         uint16_t device_id;
         uint16_t vendor_id;
         uint8_t device_class;
@@ -78,7 +79,7 @@ namespace pci {
         uint8_t bus;
         uint8_t slot;
         uint8_t multifunction;
-        Driver *driver;
+        unique_ptr<Driver> driver;
 
         Device(uint8_t bus, uint8_t slot);
         uint8_t get8(uint8_t fn, uint8_t addr);
@@ -91,14 +92,16 @@ namespace pci {
 
     class Driver {
     public:
-        Device *device;
+        Device& device;
 
-        virtual void configure(Device *device);
+        virtual void configure(Device& device);
         virtual void handle_interrupt();
+
+        virtual ~Driver() {};
     };
 
     void init();
-    extern Device *devices;
+    extern list<Device> devices;
 }
 
 #endif

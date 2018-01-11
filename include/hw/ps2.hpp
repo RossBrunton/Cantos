@@ -2,6 +2,7 @@
 #define _HPP_HW_PS2_
 
 #include "main/common.h"
+#include "structures/unique_ptr.hpp"
 
 namespace ps2 {
     const uint8_t STAT_OUTBUFF = 0x01;
@@ -53,7 +54,7 @@ namespace ps2 {
         bool second;
         bool timed_out;
         uint8_t type;
-        Ps2Driver *driver;
+        unique_ptr<Ps2Driver> driver;
 
         void init();
         void handle(idt_proc_state_t state);
@@ -64,9 +65,15 @@ namespace ps2 {
     };
 
     class Ps2Driver {
+    protected:
+        Ps2Port &port;
+
     public:
-        virtual void configure(Ps2Port *port) = 0;
+        Ps2Driver(Ps2Port &port) : port(port) {};
+        virtual void configure() = 0;
         virtual void handle() = 0;
+
+        virtual ~Ps2Driver() {};
     };
 
     extern Ps2Port ports[2];

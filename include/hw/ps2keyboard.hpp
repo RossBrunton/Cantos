@@ -10,11 +10,12 @@ namespace ps2keyboard {
 
     class Ps2KeyboardDriver : public ps2::Ps2Driver {
     public:
-        void configure(ps2::Ps2Port *port);
+        Ps2KeyboardDriver(ps2::Ps2Port &port) : ps2::Ps2Driver(port) {};
+
+        void configure();
         void handle();
 
     private:
-        ps2::Ps2Port *port;
         uint16_t key;
         bool double_code;
         uint16_t last_key;

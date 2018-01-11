@@ -141,88 +141,87 @@ namespace ps2 {
         uint8_t config;
 
         // Enable it
-        if(this->second) {
+        if(second) {
             _write_command(COM_EN2);
         }else{
             _write_command(COM_EN1);
         }
 
         // Disable scanning
-        this->write_ack(DEV_DISABLE_SCAN);
-        if(this->timed_out) {
+        write_ack(DEV_DISABLE_SCAN);
+        if(timed_out) {
             kwarn("PS2 timed out during init (disable scan)\n");
-            this->enabled = false;
+            enabled = false;
             return;
         }
 
         // Send identify command
-        this->write_ack(DEV_IDENTIFY);
-        if(this->timed_out) {
+        write_ack(DEV_IDENTIFY);
+        if(timed_out) {
             kwarn("PS2 timed out during init (identify)\n");
-            this->enabled = false;
+            enabled = false;
             return;
         }
 
         // Read the results into the info array
-        info[0] = this->read(0xffff);
-        if(!this->timed_out) {
+        info[0] = read(0xffff);
+        if(!timed_out) {
             info_length = 1;
-            info[1] = this->read(0xffff);
-            if(!this->timed_out) {
+            info[1] = read(0xffff);
+            if(!timed_out) {
                 info_length = 2;
             }
         }
 
         // Then work out what we have
         if(info_length == 0) {
-            this->type = TYPE_TRANSLATION_KEYBOARD_AT;
+            type = TYPE_TRANSLATION_KEYBOARD_AT;
         }else{
             // For some reason, at least under qemu, single codes get duplicated
             switch(info[0]) {
                 case 0x00:
-                    this->type = TYPE_STANDARD_MOUSE;
+                    type = TYPE_STANDARD_MOUSE;
                     break;
                 case 0x03:
-                    this->type = TYPE_SCROLL_MOUSE;
+                    type = TYPE_SCROLL_MOUSE;
                     break;
                 case 0x04:
-                    this->type = TYPE_5BTN_MOUSE;
+                    type = TYPE_5BTN_MOUSE;
                     break;
                 case 0xab:
                     switch(info[1]) {
                         case 0x41:
                         case 0xc1:
-                            this->type = TYPE_TRANSLATION_MF2_KEYBOARD;
+                            type = TYPE_TRANSLATION_MF2_KEYBOARD;
                             break;
                         case 0x83:
-                            this->type = TYPE_MF2_KEYBOARD;
+                            type = TYPE_MF2_KEYBOARD;
                             break;
                         default:
-                            this->type = TYPE_UNKNOWN;
+                            type = TYPE_UNKNOWN;
                     }
                     break;
                 default:
-                    this->type = TYPE_UNKNOWN;
+                    type = TYPE_UNKNOWN;
             }
         }
 
-        if(this->type == TYPE_UNKNOWN) {
-            kwarn("PS2 device %d is of an unkown type (%x, %x).\n", this->second, info[0], info[1]);
-            this->enabled = false;
+        if(type == TYPE_UNKNOWN) {
+            kwarn("PS2 device %d is of an unkown type (%x, %x).\n", second, info[0], info[1]);
+            enabled = false;
             return;
         }
 
         // Set a driver
-        if(this->type & TYPE_KEYBOARD) {
-            this->driver = new ps2keyboard::Ps2KeyboardDriver();
-            this->driver->configure(this);
+        if(type & TYPE_KEYBOARD) {
+            driver = make_unique<ps2keyboard::Ps2KeyboardDriver>(*this);
         }
 
         // Now enable it
         _write_command(COM_READ);
         config = _wait_read_data();
 
-        if(this->second) {
+        if(second) {
             config |= CON_EN2;
         }else{
             config |= CON_EN1;
@@ -230,17 +229,17 @@ namespace ps2 {
         _write_double_command(COM_WRITE, config);
 
 #if DEBUG_PS2
-        printk("Got information about PS2 port %d - [%x, %x]%d\n", this->second, info[0], info[1], info_length);
+        printk("Got information about PS2 port %d - [%x, %x]%d\n", second, info[0], info[1], info_length);
 #endif
     }
 
     uint8_t Ps2Port::read(uint32_t timeout) {
-        this->timed_out = false;
+        timed_out = false;
         while(_read_status() & STAT_INBUFF) {
             io_wait();
             timeout --;
             if(!timeout) {
-                this->timed_out = true;
+                timed_out = true;
                 return 0xff;
             }
         }
@@ -249,30 +248,30 @@ namespace ps2 {
     }
 
     void Ps2Port::write(uint8_t dat) {
-        if(this->second) {
+        if(second) {
             _write_command(COM_NEXT2IN);
         }
         _write_data(dat);
     }
 
     void Ps2Port::write_ack(uint8_t dat) {
-        uint8_t read = 0;
+        uint8_t byte_read = 0;
 
         do {
-            this->write(dat);
+            write(dat);
 
-            read = this->read(0xffff);
+            byte_read = read(0xffff);
 
-            if(read == ACK || this->timed_out) {
+            if(byte_read == ACK || timed_out) {
                 return;
             }
-        } while(read == RESEND);
+        } while(byte_read == RESEND);
     }
 
     void Ps2Port::handle(idt_proc_state_t state) {
         _mutex.lock();
-        if(this->enabled && this->driver) {
-            this->driver->handle();
+        if(enabled && driver) {
+            driver->handle();
         }
         _mutex.unlock();
         lapic::eoi();

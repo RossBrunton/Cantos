@@ -1,10 +1,21 @@
 #include "main/cpp.hpp"
 
+template<class T> template<class E> unique_ptr<T>& unique_ptr<T>::operator=(unique_ptr<E>&& r) {
+    T *oldRef = ref;
+
+    ref = r.release();
+
+    if(oldRef) {
+        delete oldRef;
+    }
+
+    return *this;
+}
+
 template<class T> unique_ptr<T>& unique_ptr<T>::operator=(unique_ptr<T>&& r) {
     T *oldRef = ref;
 
-    ref = r.ref;
-    r.ref = nullptr;
+    ref = r.release();
 
     if(oldRef) {
         delete oldRef;

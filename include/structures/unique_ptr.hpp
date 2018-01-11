@@ -50,6 +50,13 @@ public:
      *
      * Any existing object owned by this unique_ptr will be deleted.
      */
+    template<class E> unique_ptr& operator=(unique_ptr<E>&& r);
+    /** Copy the object (if any) from the other unique_ptr
+     *
+     * The other unique_ptr will be empty after this call.
+     *
+     * Any existing object owned by this unique_ptr will be deleted.
+     */
     unique_ptr& operator=(unique_ptr&& r);
     /** Clears the object managed by this unique_ptr.
      *

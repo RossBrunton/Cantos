@@ -6,6 +6,7 @@
 #include "int/lapic.hpp"
 #include "main/panic.hpp"
 #include "structures/mutex.hpp"
+#include "structures/list.hpp"
 
 extern "C" {
     #include "hw/ports.h"
@@ -14,7 +15,7 @@ extern "C" {
 }
 
 namespace pci {
-    Device *devices = NULL;
+    list<Device> devices;
 
     static uint32_t _read(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
         uint32_t addr;
@@ -36,10 +37,7 @@ namespace pci {
 
 
 
-    Device::Device(uint8_t bus, uint8_t slot) {
-        this->bus = bus;
-        this->slot = slot;
-
+    Device::Device(uint8_t bus, uint8_t slot) : bus(bus), slot(slot) {
         uint32_t first = this->get32(0, VENDOR_ID);
         this->vendor_id = first & 0xffff;
         this->device_id = first >> 16;
@@ -78,27 +76,24 @@ namespace pci {
     static void _search_bus(uint8_t bus, uint8_t start) {
         for(uint16_t i = start; i <= 32; i ++) {
             if(_read_device_vendor(bus, i, 0) != 0xffffffff) {
-                Device *device = new Device(bus, i);
-                device->next = devices;
-                devices = device;
+                Device& device = (devices.emplace_back(bus, i), devices.back());
 
                 // Check if it is a pci to pci bridge
-                if(device->device_class == 0x06 && device->device_subclass == 0x04) {
+                if(device.device_class == 0x06 && device.device_subclass == 0x04) {
 #if DEBUG_PCI
                     printk("Found PCI bridge!\n");
 #endif
-                    _search_bus(device->get8(0, PBR_SECONDARY_BUS_NUM), 0);
+                    _search_bus(device.get8(0, PBR_SECONDARY_BUS_NUM), 0);
                 }
             }
         }
     }
 
     void init() {
-        devices = new Device(0, 0);
-        devices->next = NULL;
+        Device& device = (devices.emplace_back(0, 0), devices.back());
 
         // Seach devices
-        if(devices->multifunction) {
+        if(device.multifunction) {
             for(uint8_t fn = 0; fn < 8; fn ++) {
                 if(_read_device_vendor(0, 0, fn) != 0xffffffff) break;
                 _search_bus(fn, fn == 0 ? 1 : 0);
@@ -108,11 +103,10 @@ namespace pci {
         }
 
         // Lets list them
-        Device *device = devices;
-        do {
+        for(const auto &device : devices) {
 #if DEBUG_PCI
-            printk("PCI Device %x:%x.%x is %x:%x\n", device->bus, device->slot, device->prog_if, device->vendor_id, device->device_id);
+            printk("PCI Device %x:%x.%x is %x:%x\n", device.bus, device.slot, device.prog_if, device.vendor_id, device.device_id);
 #endif
-        } while((device = device->next));
+        }
     }
 }

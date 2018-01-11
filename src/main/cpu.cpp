@@ -6,6 +6,7 @@
 #include "mem/page.hpp"
 #include "main/panic.hpp"
 #include "main/asm_utils.hpp"
+#include "structures/unique_ptr.hpp"
 
 /** @file main/cpu.c
  *
@@ -15,7 +16,7 @@
  */
 
 namespace cpu {
-    static Status *cpu_status[MAX_CORES]; // Enough space for as many processors as we can get
+    static unique_ptr<Status> cpu_status[MAX_CORES]; // Enough space for as many processors as we can get
 
     extern "C" addr_logical_t *stacks[MAX_CORES];
     addr_logical_t *stacks[MAX_CORES] = {};
@@ -53,7 +54,7 @@ namespace cpu {
 
         for(i = 0; i < acpi::acpi_proc_count; i ++) {
             page = page::alloc(0, 1);
-            cpu_status[i] = new cpu::Status();
+            cpu_status[i] = make_unique<Status>();
             cpu_status[i]->cpu_id = i;
             cpu_status[i]->stack = page::kinstall(page, page::PAGE_TABLE_RW);
             cpu_status[i]->awoken = false;
