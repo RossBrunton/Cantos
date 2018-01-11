@@ -288,8 +288,7 @@ public:
         shared_ptr<Object> obj = make_shared<Object>(gen_inc, del_free, 5, page::PAGE_TABLE_RW, 0, 0);
 
         test("Installing an object");
-        cpu::Status& info = cpu::info();
-        vm::Map *map = info.thread->vm.get();
+        vm::Map *map = cpu::current_thread()->vm.get();
 
         map->add_object(obj, 0x2000, 0x0, 2);
         assert(*(int *)(0x2000) == 0x0);

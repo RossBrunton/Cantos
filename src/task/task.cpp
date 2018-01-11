@@ -31,7 +31,7 @@ namespace task {
     static mutex::Mutex waiting_mutex;
     static mutex::Mutex _mutex;
 
-    StaticList<Thread *, 256> waiting_threads;
+    list<Thread *> waiting_threads;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
         size_t i;
@@ -98,9 +98,9 @@ namespace task {
 
         next_in_tasks = (Thread *)tasks;
         tasks = (Thread* volatile)this;
-        _mutex.unlock();
 
         waiting_threads.push_front(this);
+        _mutex.unlock();
     }
 
 
@@ -171,7 +171,7 @@ namespace task {
         Thread *current;
         cpu::Status& info = cpu::info();
         current = info.thread;
-        info.thread = NULL;
+        info.thread = nullptr;
         current->stack_pointer = sp;
 
         // And then use the "normal" memory map
@@ -182,7 +182,9 @@ namespace task {
         // We are now free and can be interrupted again
         asm volatile ("sti");
 
+        waiting_mutex.lock();
         waiting_threads.push_front(current);
+        waiting_mutex.unlock();
 
         schedule();
     }
@@ -193,7 +195,8 @@ namespace task {
         while(true) {
             waiting_mutex.lock();
             if(!waiting_threads.empty()) {
-                next = waiting_threads.pop_back();
+                next = waiting_threads.back();
+                waiting_threads.pop_back();
                 waiting_mutex.unlock();
                 break;
             }

@@ -155,7 +155,7 @@ namespace lapic {
         low_ap_page_table = kmem::map.vm_start - KERNEL_VM_BASE;
 
         // Loop through and wake them all up (except number 0)
-        for(i = 1; i < acpi::acpi_proc_count; i ++) {
+        for(i = 1; i < acpi::acpi_proc_count && i < MAX_CORES; i ++) {
             uint32_t id = acpi::acpi_procs[i].apic_id;
 
             _ipi(0, 5, 1, id);
