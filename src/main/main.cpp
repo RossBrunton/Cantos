@@ -110,7 +110,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
 
     ps2::init();
 
-    new task::Thread(&task::kernel_process, (addr_logical_t)&main_thread);
+    task::kernel_process->new_thread((addr_logical_t)&main_thread);
     task::schedule();
 }
 

@@ -10,7 +10,7 @@
 #include "structures/mutex.hpp"
 #include "structures/shared_ptr.hpp"
 #include "structures/list.hpp"
-#include "structures/static_list.hpp"
+#include "structures/list.hpp"
 #include "main/asm_utils.hpp"
 
 extern "C" {
@@ -20,18 +20,18 @@ extern "C" {
 namespace task {
     const uint8_t _INIT_FLAGS = 0x0;
 
-    Process kernel_process(0, 0);
+    shared_ptr<Process> kernel_process;
 
     static uint32_t thread_counter;
     static uint32_t process_counter;
     static uint32_t task_counter;
 
-    static Thread * volatile tasks;
+    static list<shared_ptr<Process>> processes;
 
     static mutex::Mutex waiting_mutex;
     static mutex::Mutex _mutex;
 
-    list<Thread *> waiting_threads;
+    list<shared_ptr<Thread>> waiting_threads;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {
         size_t i;
@@ -43,13 +43,29 @@ namespace task {
 
 
     void init() {
-        kernel_process.process_id = 0;
+        kernel_process = make_shared<Process>(0, 0);
+        processes.push_back(kernel_process);
+        kernel_process->process_id = 0;
         // All other fields 0 by default
     }
 
+    shared_ptr<Process> get_process(uint32_t id) {
+        for(const auto &p : processes) {
+            if(p->process_id == id) return p;
+        }
 
-    Process::Process(uint32_t owner, uint32_t group) {
+        return shared_ptr<Process>();
+    }
 
+
+    Process::Process(uint32_t owner, uint32_t group) {}
+
+    shared_ptr<Thread> Process::new_thread(addr_logical_t entry_point) {
+        shared_ptr<Process> me = get_process(process_id);
+        shared_ptr<Thread> t = (threads.emplace_back(make_shared<Thread>(me, entry_point)), threads.back());
+
+        waiting_threads.push_front(t);
+        return t;
     }
 
 
@@ -57,7 +73,7 @@ namespace task {
      * @todo Copy all the objects into the new memory map
      * @todo Get the stack object properly
      */
-    Thread::Thread(Process *process, addr_logical_t entry)
+    Thread::Thread(shared_ptr<Process> process, addr_logical_t entry)
         : process(process), thread_id(++process->thread_counter), task_id(++task_counter), in_use(false) {
         bool kernel = process->process_id == 0;
         uint32_t *sp;
@@ -65,9 +81,6 @@ namespace task {
         void *stack_installed;
 
         _mutex.lock();
-
-        next_in_process = process->thread;
-        process->thread = this;
 
         // Create the virtual memory map
         vm = make_unique<vm::Map>(process->process_id, task_id, kernel);
@@ -96,50 +109,16 @@ namespace task {
 
         page::kuninstall(stack_installed, stack->pages->page);
 
-        next_in_tasks = (Thread *)tasks;
-        tasks = (Thread* volatile)this;
-
-        waiting_threads.push_front(this);
         _mutex.unlock();
     }
 
 
     Thread::~Thread() {
-        Thread *now;
-        Thread *prev = NULL;
-
-        _mutex.lock();
-
-        // Remove it from the process thread list
-        for(now = this->process->thread; now != this; (prev = now), (now = now->next_in_process));
-        if(prev) {
-            prev->next_in_process = this->next_in_process;
-        }else{
-            this->process->thread = this->next_in_process;
-        }
-
-        if(!now) {
-            panic("Thread to destroy not found in it's process' threads.");
-        }
-
-        // And the main thread list
-        prev = NULL;
-        for(now = (Thread *)tasks; now != this; (prev = now), (now = now->next_in_tasks));
-        if(prev) {
-            prev->next_in_tasks = this->next_in_tasks;
-        }else{
-            tasks = this->next_in_tasks;
-        }
-
-        if(!now) {
-            panic("Thread to destroy not found in task lists.");
-        }
-
-        _mutex.unlock();
+        // Need to do stuff like free the stack or whatever
     }
 
 
-    extern "C" void __attribute__((noreturn)) task_enter(Thread *thread) {
+    extern "C" void __attribute__((noreturn)) task_enter(shared_ptr<Thread> thread) {
         asm volatile ("cli");
         cpu::Status &info = cpu::info();
         info.thread = thread;
@@ -154,7 +133,7 @@ namespace task {
     extern "C" void task_yield() {
         uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
-        bool in_thread = info.thread != 0;
+        bool in_thread = (bool)info.thread;
         uint32_t stack = (uint32_t)info.stack + PAGE_SIZE;
         pop_flags(eflags);
 
@@ -168,7 +147,7 @@ namespace task {
     }
 
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
-        Thread *current;
+        shared_ptr<Thread> current;
         cpu::Status& info = cpu::info();
         current = info.thread;
         info.thread = nullptr;
@@ -190,7 +169,7 @@ namespace task {
     }
 
     void __attribute__((noreturn)) schedule() {
-        Thread *next;
+        shared_ptr<Thread> next;
 
         while(true) {
             waiting_mutex.lock();
@@ -242,7 +221,7 @@ namespace task {
 
         uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
-        to_ret = info.thread != 0;
+        to_ret = (bool)info.thread;
         pop_flags(eflags);
 
         return to_ret;

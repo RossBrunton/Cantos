@@ -7,6 +7,7 @@
 #include "main/panic.hpp"
 #include "main/asm_utils.hpp"
 #include "structures/unique_ptr.hpp"
+#include "structures/shared_ptr.hpp"
 
 /** @file main/cpu.c
  *
@@ -63,15 +64,15 @@ namespace cpu {
         }
     }
 
-    task::Thread *current_thread() {
-        task::Thread *t;
+    shared_ptr<task::Thread>current_thread() {
+        shared_ptr<task::Thread> t;
         uint32_t eflags = push_cli();
         t = cpu_status[id()]->thread;
         pop_flags(eflags);
         return t;
     }
 
-    task::Thread *current_thread_noint() {
+    shared_ptr<task::Thread>current_thread_noint() {
         return cpu_status[id()]->thread;
     }
 }

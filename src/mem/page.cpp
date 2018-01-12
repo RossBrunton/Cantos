@@ -61,7 +61,7 @@ namespace page {
             Page *hold = first->next;
             first->consecutive += hold->consecutive;
             first->next = hold->next;
-            kfree(hold);
+            kmem::kfree_nolock(hold);
             _verify(__func__);
         }
     }
@@ -72,7 +72,7 @@ namespace page {
             _empty_virtual_slot_t *hold = first->next;
             first->pages += hold->pages;
             first->next = hold->next;
-            kfree(hold);
+            kmem::kfree_nolock(hold);
             _verify(__func__);
         }
     }

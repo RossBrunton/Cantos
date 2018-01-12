@@ -13,6 +13,7 @@
 
 #include "task/task.hpp"
 #include "hw/acpi.h"
+#include "structures/shared_ptr.hpp"
 
 namespace cpu {
     /** Represents the current state of a CPU
@@ -23,7 +24,7 @@ namespace cpu {
     public:
         uint8_t cpu_id; /**< The ID of the CPU, each CPU has a unique value */
         void *stack; /**< A pointer to the start of the CPU's kernel stack */
-        task::Thread *thread; /**< The thread this CPU is currently running, or NULL if it is not running one */
+        shared_ptr<task::Thread> thread; /**< The thread this CPU is currently running, or NULL if it is not running one */
         bool awoken; /**< Whether the CPU has been woken up yet */
     };
 
@@ -60,10 +61,10 @@ namespace cpu {
      *
      * Reads the "thread" property of the CPU, but disables interrupts to avoid race conditions
      */
-    task::Thread *current_thread();
+    shared_ptr<task::Thread> current_thread();
     /** Returns the currently running thread without disabling interrupts
      */
-    task::Thread *current_thread_noint();
+    shared_ptr<task::Thread> current_thread_noint();
 
     uint32_t id();
 }
