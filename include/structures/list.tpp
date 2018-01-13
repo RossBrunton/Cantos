@@ -158,6 +158,9 @@ template<class T> typename list<T>::Iterator list<T>::erase(list<T>::Iterator it
 
     for(; now; (prev = now), (now = now->next.get())) {
         if(now == entry) {
+            if(!now->next) {
+                tail = prev;
+            }
             if(prev) {
                 prev->next = move(now->next);
             }else{
@@ -183,4 +186,12 @@ template<class T> typename list<T>::Iterator list<T>::begin() {
 
 template<class T> typename list<T>::Iterator list<T>::end() {
     return Iterator(nullptr);
+}
+
+template<class T> typename list<T>::CIterator list<T>::cbegin() const {
+    return CIterator(head.get());
+}
+
+template<class T> typename list<T>::CIterator list<T>::cend() const {
+    return CIterator(nullptr);
 }

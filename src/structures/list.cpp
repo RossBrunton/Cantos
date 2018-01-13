@@ -56,11 +56,15 @@ public:
         assert(b.back() == 2);
 
         test("Back popping a list");
+        b.push_back(2);
+        b.push_back(3);
         b.pop_back();
-        assert(b.size() == 1);
+        assert(b.size() == 3);
         assert(b.front() == 1);
-        assert(b.back() == 1);
+        assert(b.back() == 2);
 
+        b.pop_back();
+        b.pop_back();
         b.pop_back();
         assert(b.empty());
         assert(b.size() == 0);
@@ -99,6 +103,26 @@ public:
         assert(b.size() == 2);
         assert(b.front() == 4);
         assert(b.back() == 2);
+
+        for(auto i = b.begin(); i != b.end(); ) {
+            if(*i == 2) {
+                i = b.erase(i);
+            }else{
+                i ++;
+            }
+        }
+        assert(b.size() == 1);
+        assert(b.front() == 4);
+        assert(b.back() == 4);
+
+        for(auto i = b.begin(); i != b.end(); ) {
+            if(*i == 4) {
+                i = b.erase(i);
+            }else{
+                i ++;
+            }
+        }
+        assert(b.empty());
 
         test("Emplace");
         uint8_t constructs = 0;

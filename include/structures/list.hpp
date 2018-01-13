@@ -48,17 +48,11 @@ public:
         Entry* entry;
 
     public:
-        using iterator_type = Entry;
-        using iterator_category = iterator::forward_iterator_tag;
-        using value_type = const T;
-        using difference_type = size_t;
-        using reference = T&;
-        using pointer = T *;
+        Iterator(Entry* e) : entry(e) {}
+        Iterator(const Iterator& e) : entry(e.entry) {}
 
-        explicit Iterator(Entry* e) : entry(e) {}
-
-        reference operator*() const {return entry->object;}
-        pointer operator->() const {return &(entry->object);}
+        T& operator*() const {return entry->object;}
+        T* operator->() const {return &(entry->object);}
         Iterator& operator++() {
             entry = entry->next.get();
             return *this;
@@ -72,6 +66,35 @@ public:
             return other.entry == entry;
         }
         bool operator!=(const Iterator& other) const {
+            return other.entry != entry;
+        }
+    };
+
+    class CIterator {
+    friend list;
+
+    private:
+        const Entry* entry;
+
+    public:
+        CIterator(const Entry* e) : entry(e) {}
+        CIterator(const CIterator& e) : entry(e.entry) {}
+
+        const T& operator*() const {return entry->object;}
+        const T* operator->() const {return &(entry->object);}
+        CIterator& operator++() {
+            entry = entry->next.get();
+            return *this;
+        }
+        CIterator operator++(int) {
+            CIterator result(*this);
+            ++(*this);
+            return result;
+        }
+        bool operator==(const CIterator& other) const {
+            return other.entry == entry;
+        }
+        bool operator!=(const CIterator& other) const {
             return other.entry != entry;
         }
     };
@@ -202,6 +225,20 @@ public:
      * @return A null iterator
      */
     Iterator end();
+    /** Returns a constant iterator to the first element of the list
+     *
+     * This iterator will start at the front of the list, and advance through all the items in order.
+     *
+     * @return An iterater through the list's contents
+     */
+    CIterator cbegin() const;
+    /** Returns a sentinel value that represents the end of a constant iteration
+     *
+     * Do not attempt to use this as an iterated value.
+     *
+     * @return A null iterator
+     */
+    CIterator cend() const;
 };
 
 #include "structures/list.tpp"
