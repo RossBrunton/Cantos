@@ -68,6 +68,24 @@ namespace task {
         return t;
     }
 
+    shared_ptr<Thread> Process::get_thread(uint32_t id) const {
+        for(auto t = threads.cbegin(); t != threads.cend(); t ++) {
+            if((*t)->thread_id == id) {
+                return *t;
+            }
+        }
+        return shared_ptr<Thread>();
+    }
+
+    void Process::remove_thread(uint32_t id) {
+        for(auto t = threads.begin(); t != threads.end(); t ++) {
+            if((*t)->thread_id == id) {
+                threads.erase(t);
+                return;
+            }
+        }
+    }
+
 
     /**
      * @todo Copy all the objects into the new memory map
@@ -97,6 +115,8 @@ namespace task {
         // [pushad values]
         // entry eip
         sp = (uint32_t *)((addr_logical_t)stack_installed + PAGE_SIZE) - 1;
+        *sp = (addr_logical_t)task_end;
+        sp --;
         *sp = entry;
         sp --;
         *sp = (addr_logical_t)task_asm_entry_point;
@@ -105,7 +125,7 @@ namespace task {
         sp -= (sizeof(pstate) / 4);
         _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
 
-        stack_pointer = TASK_STACK_TOP - sizeof(void *) * 3 - sizeof(pstate);
+        stack_pointer = TASK_STACK_TOP - sizeof(void *) * 4 - sizeof(pstate);
 
         page::kuninstall(stack_installed, stack->pages->page);
 
@@ -115,19 +135,29 @@ namespace task {
 
     Thread::~Thread() {
         // Need to do stuff like free the stack or whatever
+        printk("Pop! %p\n", this);
+        //panic("!");
+    }
+
+    void Thread::end() {
+        uint32_t eflags = push_cli();
+        _mutex.lock();
+        ended = true;
+        process->remove_thread(thread_id);
+        _mutex.unlock();
+        pop_flags(eflags);
     }
 
 
     extern "C" void __attribute__((noreturn)) task_enter(shared_ptr<Thread> thread) {
         asm volatile ("cli");
         cpu::Status &info = cpu::info();
-        info.thread = thread;
-
-        // Load the task's memory map
-        vm::table_switch(thread->vm->physical_dir->mem_base);
+        uint32_t stack_pointer = thread->stack_pointer;
+        uint32_t mem_base = thread->vm->physical_dir->mem_base;
+        info.thread = move(thread);
 
         // And then hop into it
-        task_asm_enter(thread->stack_pointer);
+        task_asm_enter(stack_pointer, mem_base);
     }
 
     extern "C" void task_yield() {
@@ -171,6 +201,7 @@ namespace task {
     void __attribute__((noreturn)) schedule() {
         shared_ptr<Thread> next;
 
+        asm volatile ("cli");
         while(true) {
             waiting_mutex.lock();
             if(!waiting_threads.empty()) {
@@ -180,7 +211,6 @@ namespace task {
                 break;
             }
             waiting_mutex.unlock();
-            asm volatile ("hlt");
         }
 
         _mutex.lock();
@@ -198,7 +228,7 @@ namespace task {
         _mutex.unlock();
 
         if(ok) {
-            task_enter(next);
+            task_enter(move(next));
         }else{
             schedule();
         }
@@ -216,12 +246,44 @@ namespace task {
         task_yield();
     }
 
+    extern "C" void __attribute__((noreturn)) task_end_done() {
+        shared_ptr<Thread> current = cpu::info().thread;
+        cpu::info().thread = nullptr;
+
+        current->end();
+        current = nullptr;
+
+        schedule();
+    }
+
+    extern "C" void  __attribute__((noreturn)) task_end() {
+        asm volatile ("cli");
+
+        cpu::Status& info = cpu::info();
+        uint32_t stack = (uint32_t)info.stack + PAGE_SIZE;
+
+        // Call the exit function to move over the stack, will call task_yield_done
+        task_asm_set_stack(stack, &task_end_done);
+        schedule();
+    }
+
     bool in_thread() {
         bool to_ret = false;
 
         uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
         to_ret = (bool)info.thread;
+        pop_flags(eflags);
+
+        return to_ret;
+    }
+
+    shared_ptr<Thread> get_thread() {
+        shared_ptr<Thread> to_ret;
+
+        uint32_t eflags = push_cli();
+        cpu::Status& info = cpu::info();
+        to_ret = info.thread;
         pop_flags(eflags);
 
         return to_ret;

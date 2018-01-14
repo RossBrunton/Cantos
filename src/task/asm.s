@@ -1,5 +1,6 @@
 .globl task_asm_enter
 task_asm_enter:
+    mov %edx, %cr3;
     mov %ecx, %esp;
     popal;
     popf;
@@ -18,3 +19,9 @@ task_asm_yield:
     mov %ecx, %esp;
     push %eax;
     call task_yield_done;
+
+.globl task_asm_set_stack
+task_asm_set_stack:
+    mov %ecx, %esp;
+    push %edx;
+    ret;

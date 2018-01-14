@@ -32,14 +32,13 @@ template<class T> void shared_ptr<T>::decrement_usage() {
 }
 
 template<class T> shared_ptr<T>& shared_ptr<T>::operator=(shared_ptr<T>& r) {
+    if(r.ref) {
+        r.data->uses ++;
+    }
     decrement_usage();
 
     ref = r.ref;
     data = r.data;
-
-    if(ref) {
-        data->uses ++;
-    }
 
     return *this;
 }

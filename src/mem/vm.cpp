@@ -38,8 +38,8 @@ namespace vm {
         page::Page *page;
         page::page_table_t *table;
 
-        page::kuninstall(logical_dir, physical_dir);
-        page::free(physical_dir);
+        // Remove all the objects first
+        objects_in_maps.clear();
 
         for(int i = 0; i < PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES; i ++) {
             if(logical_tables->pages[i]) {
@@ -49,6 +49,9 @@ namespace vm {
                 page::free(page);
             }
         }
+
+        page::kuninstall(logical_dir, physical_dir);
+        page::free(physical_dir);
     }
 
 
