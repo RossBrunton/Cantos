@@ -55,7 +55,7 @@ namespace lapic {
         val |= vector & 0xff;
         val |= dest << 8;
         val |= init_deassert << 14;
-        
+
         _write(ICR_B, target << 24);
         _write(ICR_A, val);
     }
@@ -63,16 +63,16 @@ namespace lapic {
     IDT_TELL_INTERRUPT(ltimer);
     void init() {
         page::Page *page;
-        
+
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_TIMER, ltimer);
-        
+
         page = page::create(acpi::acpi_lapic_base, page::FLAG_KERNEL, 1);
         _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
-        
+
         printk("LAPIC ID: %x, Version: %x\n", _read(ID), _read(VER));
         // Set the spurious interrupt vector in order to get interrupts
         _write(SPURIOUS_INT_VECTOR, 0x1ff);
-        
+
         // Set up the timer
         _deadline = pit::time;
         idt::install(INT_LAPIC_BASE, timer, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
@@ -83,7 +83,7 @@ namespace lapic {
     void setup() {
         _write(SPURIOUS_INT_VECTOR, 0x1ff);
         eoi();
-        
+
         // Set up the timer
         _set_timer(_CAL_INIT, _CAL_DIV);
     }

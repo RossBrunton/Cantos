@@ -41,6 +41,7 @@ OBJECTS=obj/debug/stack.o\
 	obj/main/printk.o\
 	obj/main/vga.o\
 	obj/mem/gdt.o\
+	obj/mem/gdt_asm.o\
 	obj/mem/kmem.o\
 	obj/mem/object.o\
 	obj/mem/page.o\

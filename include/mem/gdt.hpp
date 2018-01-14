@@ -30,7 +30,7 @@ namespace gdt {
     void set_entry(table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access);
     void init();
     void setup();
-    
+
     extern "C" volatile descriptor_t gdt_descriptor;
 }
 

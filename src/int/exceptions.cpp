@@ -111,7 +111,7 @@ namespace exceptions {
         IDT_ALLOW_INTERRUPT(INT_GPF, gpf);
         IDT_ALLOW_INTERRUPT(INT_PAGE_FAULT, pagefault);
         IDT_ALLOW_INTERRUPT(INT_FLOATING_POINT, floatingpoint);
-        
+
         idt::install(INT_DIV0, div0, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         idt::install(INT_DEBUG, debug, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         idt::install(INT_NMI, nmi, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
