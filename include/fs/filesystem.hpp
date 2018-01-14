@@ -11,6 +11,8 @@
 namespace filesystem {
     class Filesystem;
 
+    static uint32_t filesystem_counter;
+
     enum UnderlyingType {
         UT_UNDER_FS,
         UT_GENERATED,
@@ -24,39 +26,37 @@ namespace filesystem {
         TYPE_FILE
     };
 
-    class InodeEntry {
-    public:
-        InodeEntry(uint64_t inode, Utf8 name);
-
+    struct InodeEntry {
         uint64_t inode;
         Utf8 name;
-        // Probably other stuff
     };
 
     class Inode {
     public:
-        Inode(Filesystem *fs, uint64_t number, InodeType type, uint64_t size);
+        Inode(Filesystem &fs, uint64_t number, InodeType type, uint64_t size);
+        ~Inode();
 
-        Filesystem *fs;
+        Filesystem& fs;
         uint64_t inode_no;
         void *fs_data = nullptr;
         InodeType type;
-        object::Object *contents = nullptr;
-        uint32_t start = 0; // Start location in the first page
+        shared_ptr<object::Object> contents;
         uint64_t size = 0;
         // Probably other stuff
-        Inode *next = nullptr;
+
         list<InodeEntry> children; // for directories
     };
 
-    // Used to identify files uniquely
-    class InodeId {
-    public:
-        uint32_t filesystem; // id of filesystem
-        uint64_t inode;
+    /** A filesystem id and inode pair
+     *
+     * This can be used to uniquely identify inodes across filesystems.
+     */
+    struct InodeId {
+        uint32_t filesystem; /**< Filesystem id */
+        uint64_t inode; /**< Inode id */
     };
 
-    class UnderlyingInfo {// Details for the underlying filesystem
+    class UnderlyingStorage {// Details for the underlying filesystem
     public:
         UnderlyingType type; // UNDER_FS, GENERATED, etc.
 
@@ -70,16 +70,56 @@ namespace filesystem {
 
     // Base class, individual filesystems (ext4, FAT, etc) inherit this
     class FilePathEntry;
+
+    /** Represents a single filesystem
+     *
+     * Different filesystem types (ext4, FAT, etc.) should create subclasses of this class to represent themselves,
+     *  and provide the various operations required here.
+     *
+     * Instances of those created classes represent instances of those filesystems mapped over a given
+     *  UnderlyingStorage (which manages reading of the raw binary data).
+     */
     class Filesystem {
     public:
-        uint32_t id; // random id
-        // Again, maybe other stuff
-        // And details about the underlying filesystem
+        /** A unique ID for the filesystem */
+        uint32_t id;
 
-        virtual error_t read_inode(FilePathEntry *path, uint64_t inode_no, shared_ptr<Inode>& inode) = 0;
+        /** Constructs a new Filesystem over the given underlying storage
+         *
+         * This constructor should be called by any subclasses, and generates the filesystem id.
+         *
+         * @param us The UnderlyingStorage that this filesystem rests upon
+         */
+        Filesystem(shared_ptr<UnderlyingStorage> us) : id(filesystem_counter++), storage(us) {};
+        virtual ~Filesystem();
+
+        /** Given an inode number, load it or return an error
+         *
+         * If an error occurs, inode may be left in an undefined state.
+         *
+         * Implementations may reuse the same inode instance to represent the same inode.
+         *
+         * @param path The file path to read, this may be null
+         * @param inode_no The inode number to read
+         * @param inode A shared_ptr to the inode, this should be updated to point to an inode instance
+         * @return An error code
+         */
+        virtual error_t read_inode(uint64_t inode_no, shared_ptr<Inode> &inode) = 0;
+        /** Returns the root inode of this filesystem, or returns an error
+         *
+         * As read_inode but returns the root inode of the filesystem, rather than a specified one.
+         *
+         * Root inodes must be of type TYPE_DIRECTORY.
+         *
+         * @param inode A shared_ptr to the inode, this should be updated to point to an inode instance
+         * @return An error code
+         */
         virtual error_t root_inode(shared_ptr<Inode> &inode) = 0;
 
-        UnderlyingInfo info;
+    private:
+        friend Inode;
+        int32_t inodes = 0;
+        shared_ptr<UnderlyingStorage> storage;
     };
 
 

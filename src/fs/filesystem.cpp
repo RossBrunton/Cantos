@@ -7,10 +7,15 @@
 #include "test/test.hpp"
 
 namespace filesystem {
-    InodeEntry::InodeEntry(uint64_t inode, Utf8 name) : inode(inode), name(name) {}
+    Inode::Inode(Filesystem &fs, uint64_t number, InodeType type, uint64_t size)
+        : fs(fs), inode_no(number), type(type), size(size) {
+        // TODO: Not thread safe
+        fs.inodes ++;
+    }
 
-    Inode::Inode(Filesystem *fs, uint64_t number, InodeType type, uint64_t size)
-        : fs(fs), inode_no(number), type(type), size(size) {}
+    Inode::~Inode() {
+        fs.inodes --;
+    }
 
 
     FilePathEntry::FilePathEntry(Utf8 name, shared_ptr<FilePathEntry> parent, shared_ptr<Inode> inode)
@@ -45,7 +50,7 @@ namespace filesystem {
 
         for(InodeEntry &ie : dir->children) {
             if(ie.name == name) {
-                err = dir->fs->read_inode(this, ie.inode, inode);
+                err = dir->fs.read_inode(ie.inode, inode);
 
                 if(err) {
                     inode = nullptr;
@@ -59,6 +64,12 @@ namespace filesystem {
         return ENOENT;
     }
 
+    Filesystem::~Filesystem() {
+        if(inodes) {
+            panic("Filesystem was destroyed without releasing all inodes");
+        }
+    }
+
     shared_ptr<FilePathEntry> parse_path(const Utf8& path, shared_ptr<FilePathEntry>& base) {
         size_t pos = 0;
         size_t oldpos = 0;
@@ -68,7 +79,7 @@ namespace filesystem {
             Utf8 fname = path.substr(oldpos, pos - oldpos);
 
             if(fname.bytes()) {
-                parent = new FilePathEntry(fname, parent);
+                parent = make_shared<FilePathEntry>(fname, parent);
             }
 
             oldpos = pos + 1;
@@ -77,7 +88,7 @@ namespace filesystem {
         // And the rest of the string
         Utf8 fname = path.substr(oldpos, Utf8::npos);
         if(fname.bytes()) {
-            parent = new FilePathEntry(fname, parent);
+            parent = make_shared<FilePathEntry>(fname, parent);
         }
 
         return parent;
@@ -91,24 +102,20 @@ using namespace filesystem;
 
 class TestFilesystem : public Filesystem {
 public:
-    TestFilesystem() {
-        info.type = UT_MEM;
-        info.mem.base = 0x0;
-        info.mem.physical = true;
-    }
+    TestFilesystem(shared_ptr<UnderlyingStorage> us) : Filesystem(us) {}
 
-    error_t read_inode(FilePathEntry *path, uint64_t inode_no, shared_ptr<Inode>& inode) override {
+    error_t read_inode(uint64_t inode_no, shared_ptr<Inode> &inode) override {
         if(inode_no == 1) {
-            inode = make_shared<Inode>(this, 1, TYPE_DIRECTORY, 0);
+            inode = make_shared<Inode>(*this, 1, TYPE_DIRECTORY, 0);
             inode->children = list<InodeEntry>();
-            inode->children.emplace_back(1, Utf8("."));
-            inode->children.emplace_back(1, Utf8(".."));
-            inode->children.emplace_back(1, Utf8("a"));
-            inode->children.emplace_back(2, Utf8("file"));
+            inode->children.push_back({1, Utf8(".")});
+            inode->children.push_back({1, Utf8("..")});
+            inode->children.push_back({1, Utf8("a")});
+            inode->children.push_back({2, Utf8("file")});
 
             return EOK;
         }else if(inode_no == 2) {
-            inode = make_shared<Inode>(this, 2, TYPE_FILE, PAGE_SIZE);
+            inode = make_shared<Inode>(*this, 2, TYPE_FILE, PAGE_SIZE);
 
             //readwrite::read_data(&(i->contents), 0, PAGE_SIZE, this);
 
@@ -119,7 +126,7 @@ public:
     }
 
     error_t root_inode(shared_ptr<Inode>& inode) override {
-        return read_inode(nullptr, 1, inode);
+        return read_inode(1, inode);
     }
 };
 
@@ -128,13 +135,13 @@ public:
     FilesystemTest() : test::TestCase("Filesystem Test") {};
 
     void run_test() override {
-        TestFilesystem fs;
+        shared_ptr<TestFilesystem> fs = make_shared<TestFilesystem>(nullptr);
         error_t err;
         shared_ptr<Inode> i;
         FilePathEntry err_loc;
 
         test("Root inode");
-        err = fs.root_inode(i);
+        err = fs->root_inode(i);
         assert(!err);
         assert(i);
         assert(i->inode_no == 1);
