@@ -60,44 +60,57 @@ OBJECTS=obj/debug/stack.o\
 	obj/test/test.o
 
 obj/%.o: src/%.cpp include/config.hpp
-	$(CPPC) $(CPPFLAGS) -o $@ -imacros include/config.hpp $<
+	@echo "[c++] $<"
+	@$(CPPC) $(CPPFLAGS) -o $@ -imacros include/config.hpp $<
 
 obj/%.o: src/%.c
-	$(CC) $(CFLAGS) -o $@ $^
+	@echo "[c  ] $<"
+	@$(CC) $(CFLAGS) -o $@ $^
 
 obj/%.o: src/%.s
-	$(AS) $(AFLAGS) -o $@ $^
+	@echo "[s  ] $<"
+	@$(AS) $(AFLAGS) -o $@ $^
 
 obj/%.o: src/%.S
-	$(AS) $(AFLAGS) -o $@ $^
+	@echo "[S  ] $<"
+	@$(AS) $(AFLAGS) -o $@ $^
 
 clean:
-	-rm -r obj/*
-	-rm -r bin/*
-	-rm -r isodir/*
+	@echo "Erasing obj..."
+	@-rm -r obj/*
+	@echo "Erasing bin..."
+	@-rm -r bin/*
+	@echo "Erasing isodir..."
+	@-rm -r isodir/*
 
 dirs:
-	test -e obj/main || mkdir obj/main
-	test -e obj/mem || mkdir obj/mem
-	test -e obj/int || mkdir obj/int
-	test -e obj/hw || mkdir obj/hw
-	test -e obj/task || mkdir obj/task
-	test -e obj/structures || mkdir obj/structures
-	test -e obj/debug || mkdir obj/debug
-	test -e obj/fs || mkdir obj/fs
-	test -e obj/test || mkdir obj/test
+	@echo "Making build directories..."
+	@-mkdir -p obj/main
+	@-mkdir -p obj/mem
+	@-mkdir -p obj/int
+	@-mkdir -p obj/hw
+	@-mkdir -p obj/task
+	@-mkdir -p obj/structures
+	@-mkdir -p obj/debug
+	@-mkdir -p obj/fs
+	@-mkdir -p obj/test
 
 all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 
 all_objects: $(OBJECTS)
-	$(LD) -o bin/cantos.bin obj/main/crti.o $(CRTBEGIN_OBJ) $^ $(CRTEND_OBJ) obj/main/crtn.o $(LDFLAGS)
+	@echo "Linking..."
+	@$(LD) -o bin/cantos.bin obj/main/crti.o $(CRTBEGIN_OBJ) $^ $(CRTEND_OBJ) obj/main/crtn.o $(LDFLAGS)
 
 grub: all
-	mkdir -p isodir/boot/grub
-	cp grub.cfg isodir/boot/grub/
-	cp bin/cantos.bin isodir/boot/cantos.bin
-	grub-mkrescue -o cantos.iso isodir
+	@echo "Populating isodir..."
+	@mkdir -p isodir/boot/grub
+	@cp grub.cfg isodir/boot/grub/
+	@cp bin/cantos.bin isodir/boot/cantos.bin
+
+	@echo "Running grub-mkrescue..."
+	@grub-mkrescue -o cantos.iso isodir
 
 docs:
-	-rm -r doc/*
-	doxygen include/Doxyfile
+	@echo "Making documentation..."
+	@-rm -r doc/*
+	@doxygen include/Doxyfile
