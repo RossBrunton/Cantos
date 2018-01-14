@@ -46,7 +46,7 @@ namespace kmem {
     static volatile uint32_t memory_total;
     static volatile uint32_t memory_used;
 
-    static void _print() {
+    __attribute__((unused)) static void _print() {
         kmem_free_t *now;
         int i;
         for((now = free_list), (i = 0); now && i < 1000; (now = now->next), (i ++)) {
@@ -59,7 +59,7 @@ namespace kmem {
     }
 
     /** @private */
-    static void _print_frees() {
+    __attribute__((unused)) static void _print_frees() {
         kmem_free_t *now;
         int i;
         for((now = free_free_structs), (i = 0); now && i < 1000; (now = now->next), (i ++)) {
@@ -71,7 +71,7 @@ namespace kmem {
         printk("\n");
     }
 
-    static void _verify(const char *func) {
+    __attribute__((unused)) static void _verify(const char *func) {
         (void)func;
 #if DEBUG_MEM
         kmem_free_t *now;

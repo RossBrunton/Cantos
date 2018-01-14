@@ -6,7 +6,8 @@ namespace gdt {
     const uint8_t _LENGTH = 3;
 
     static volatile table_entry_t table[_LENGTH];
-    extern "C" volatile descriptor_t gdt_descriptor = {};
+    extern "C" volatile descriptor_t gdt_descriptor;
+    volatile descriptor_t gdt_descriptor = {};
 
     void set_entry(table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access) {
         uint64_t desc = 0;

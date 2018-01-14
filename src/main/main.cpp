@@ -41,19 +41,12 @@ extern "C" {
 extern char _endofelf;
 extern "C" void _init();
 
-void __attribute__((noreturn)) main_thread() {
+void main_thread() {
     list<test::TestResult> res = test::run_tests();
-    test::print_results(res, false);
-
-    while(1) {}
+    test::print_results(res, true);
 }
 
 extern "C" void __attribute__((noreturn)) kernel_main() {
-    unsigned int i;
-    multiboot::entry_t *entry;
-
-    task::Thread *thread;
-
     kmem::init();
 
     _init();

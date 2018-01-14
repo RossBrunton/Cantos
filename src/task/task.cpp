@@ -22,7 +22,6 @@ namespace task {
 
     shared_ptr<Process> kernel_process;
 
-    static uint32_t thread_counter;
     static uint32_t process_counter;
     static uint32_t task_counter;
 
@@ -58,7 +57,7 @@ namespace task {
     }
 
 
-    Process::Process(uint32_t owner, uint32_t group) {}
+    Process::Process(uint32_t owner, uint32_t group) : process_id(process_counter++) {}
 
     shared_ptr<Thread> Process::new_thread(addr_logical_t entry_point) {
         shared_ptr<Process> me = get_process(process_id);

@@ -59,7 +59,7 @@ namespace elf {
     }
 
     uint32_t Header::sectionByType(word_t type, uint32_t base) {
-        for(base; this->sectionHeader(base)->type != type && base < this->shnum; base ++) {
+        for(; this->sectionHeader(base)->type != type && base < this->shnum; base ++) {
             // Pass
         }
 
@@ -109,7 +109,6 @@ namespace elf {
     uint32_t Header::runtimeFindSymbolId(uint32_t addr, word_t type) {
         uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
         SectionHeader *symtab = this->sectionHeader(section_id);
-        Symbol *best = NULL;
         uint32_t best_id = 0;
         uint32_t delta = 0xffffffff;
 
@@ -121,7 +120,6 @@ namespace elf {
             }
 
             if(curr->value <= addr && ((addr - curr->value) < delta)) {
-                best = curr;
                 best_id = i;
                 delta = addr - curr->value;
             }

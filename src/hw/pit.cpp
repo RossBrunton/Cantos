@@ -19,14 +19,14 @@ namespace pit {
         hold |= channel << 6;
         hold |= access_mode << 4;
         hold |= operating_mode << 1;
-        
+
         outb(IO_PORT_PIT_MODE, hold);
     }
 
     void init() {
         ioapic::enable_func(INT_IRQ_INTERRUPT_TIMER_IOAPIC, interrupt, 0);
         _set_mode(0, ACCESS_LOWHIGH, MODE_RATE_GEN);
-        outb(IO_PORT_PIT_0, DIVISOR && 0xff);
+        outb(IO_PORT_PIT_0, DIVISOR & 0xff);
         outb(IO_PORT_PIT_0, DIVISOR >> 8);
         printk("Initing timer!\n");
     }
@@ -34,7 +34,7 @@ namespace pit {
     void interrupt(idt_proc_state_t state) {
         (void)state;
         time ++;
-        
+
         lapic::eoi();
     }
 }

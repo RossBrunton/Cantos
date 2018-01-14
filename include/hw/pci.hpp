@@ -94,9 +94,10 @@ namespace pci {
     public:
         Device& device;
 
-        virtual void configure(Device& device);
-        virtual void handle_interrupt();
+        virtual void configure(Device& device) = 0;
+        virtual void handle_interrupt() = 0;
 
+        Driver(Device& device) : device(device) {};
         virtual ~Driver() {};
     };
 

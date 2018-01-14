@@ -14,7 +14,8 @@ namespace idt {
     static volatile entry_t table[_IDT_LENGTH];
     static volatile interrupt_handler_t functions[_IDT_LENGTH];
     static volatile interrupt_handler_err_t functions_err[_IDT_LENGTH];
-    extern "C" volatile descriptor_t idt_descriptor = {};
+    extern "C" volatile descriptor_t idt_descriptor;
+    volatile descriptor_t idt_descriptor = {};
 
     void enable_entry(uint8_t vector, uint32_t offset) {
         table[vector].offset_low = (uint16_t)(offset & 0xffff);
@@ -44,12 +45,10 @@ namespace idt {
     }
 
     void init() {
-        int i;
-        
-        /*for(i = 0; i < _IDT_LENGTH; i ++) {
+        /*for(int i = 0; i < _IDT_LENGTH; i ++) {
             update_entry((entry_t *)&table[i], 0, 0);
         }*/
-        
+
         idt_descriptor.size = sizeof(table) - 1;
         idt_descriptor.offset = ((uint32_t)&table);
     }

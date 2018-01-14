@@ -103,10 +103,10 @@ namespace pci {
         }
 
         // Lets list them
-        for(const auto &device : devices) {
 #if DEBUG_PCI
+        for(const auto &device : devices) {
             printk("PCI Device %x:%x.%x is %x:%x\n", device.bus, device.slot, device.prog_if, device.vendor_id, device.device_id);
-#endif
         }
+#endif
     }
 }

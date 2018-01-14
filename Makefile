@@ -2,16 +2,17 @@ CROSS_PREFIX=i686-elf
 CC=$(CROSS_PREFIX)-gcc
 CPPC=$(CROSS_PREFIX)-gcc
 AS=$(CROSS_PREFIX)-gcc
+LD=$(CROSS_PREFIX)-gcc
 
 OPTFLAGS=-fno-omit-frame-pointer -Wno-format -Wno-unused-parameter
 COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(OPTFLAGS)
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
 CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 AFLAGS=-c -g -Iinclude/
-LDFLAGS=-g -T linker.ld -ffreestanding -O2 -pedantic -nostdlib -lgcc -static-libgcc
+LDFLAGS=-g -T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
 
-CRTBEGIN_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtbegin.o)
-CRTEND_OBJ:=$(shell $(CC) $(CFLAGS) -print-file-name=crtend.o)
+CRTBEGIN_OBJ:=$(shell $(LD) $(CFLAGS) -print-file-name=crtbegin.o)
+CRTEND_OBJ:=$(shell $(LD) $(CFLAGS) -print-file-name=crtend.o)
 
 OBJECTS=obj/debug/stack.o\
 	obj/fs/filesystem.o\
@@ -89,7 +90,7 @@ dirs:
 all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 
 all_objects: $(OBJECTS)
-	$(CC) -o bin/cantos.bin obj/main/crti.o $(CRTBEGIN_OBJ) $^ $(CRTEND_OBJ) obj/main/crtn.o $(LDFLAGS)
+	$(LD) -o bin/cantos.bin obj/main/crti.o $(CRTBEGIN_OBJ) $^ $(CRTEND_OBJ) obj/main/crtn.o $(LDFLAGS)
 
 grub: all
 	mkdir -p isodir/boot/grub
