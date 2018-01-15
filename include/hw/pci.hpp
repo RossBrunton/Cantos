@@ -1,7 +1,7 @@
 #ifndef _HPP_HW_PCI_
 #define _HPP_HW_PCI_
 
-#include "main/common.h"
+#include "main/common.hpp"
 #include "structures/list.hpp"
 #include "structures/unique_ptr.hpp"
 

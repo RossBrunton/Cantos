@@ -1,7 +1,7 @@
 #ifndef _HPP_HW_PS2KEYBOARD_
 #define _HPP_HW_PS2KEYBOARD_
 
-#include "main/common.h"
+#include "main/common.hpp"
 #include "hw/ps2.hpp"
 
 namespace ps2keyboard {

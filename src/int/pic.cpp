@@ -4,7 +4,7 @@
 #include "int/pic.hpp"
 #include "hw/ports.h"
 #include "main/printk.hpp"
-#include "main/common.h"
+#include "main/common.hpp"
 #include "int/numbers.h"
 
 namespace pic {

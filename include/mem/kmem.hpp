@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "mem/page.hpp"
-#include "main/common.h"
+#include "main/common.hpp"
 #include "structures/mutex.hpp"
 
 /** Manages kernel memory allocation

@@ -1,7 +1,7 @@
 #ifndef _H_MAIN_COMMON_
 #define _H_MAIN_COMMON_
 
-/** @file main/common.h
+/** @file main/common.hpp
  *
  * Contains common definitions used by multiple files and which aren't specific to any one.
  */
@@ -52,5 +52,7 @@ typedef uintptr_t addr_logical_t;
 #define LOW(t, x) (*(t *)((addr_phys_t)&x - (addr_phys_t)KERNEL_VM_BASE))
 
 #define MAX_CORES 32
+
+template<class T> using callback_t = void (*)(T);
 
 #endif

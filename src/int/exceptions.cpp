@@ -5,10 +5,10 @@
 #include "int/idt.hpp"
 #include "mem/gdt.hpp"
 #include "main/cpu.hpp"
+#include "main/common.hpp"
 
 extern "C" {
     #include "int/numbers.h"
-    #include "main/common.h"
 }
 
 namespace exceptions {

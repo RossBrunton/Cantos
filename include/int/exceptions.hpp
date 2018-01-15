@@ -1,9 +1,7 @@
 #ifndef _HPP_INTERRUPTS_EXCEPTIONS_
 #define _HPP_INTERRUPTS_EXCEPTIONS_
 
-extern "C" {
-    #include "main/common.h"
-}
+#include "main/common.hpp"
 
 namespace exceptions {
     /** @file int/exceptions.h

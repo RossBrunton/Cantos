@@ -3,10 +3,7 @@
 #include "int/idt.hpp"
 #include "mem/page.hpp"
 #include "main/panic.hpp"
-
-extern "C" {
-#include "main/common.h"
-}
+#include "main/common.hpp"
 
 namespace idt {
     const uint32_t _IDT_LENGTH = 256;

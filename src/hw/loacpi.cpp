@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "hw/acpi.h"
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace acpi {
 acpi_mdat_t low_mdat_hold[ACPI_MDAT_COPY];

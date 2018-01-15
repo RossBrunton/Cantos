@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "hw/acpi.h"
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace acpi {
     acpi_mdat_proc_t acpi_procs[ACPI_MDAT_COPY];

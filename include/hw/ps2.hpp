@@ -1,7 +1,7 @@
 #ifndef _HPP_HW_PS2_
 #define _HPP_HW_PS2_
 
-#include "main/common.h"
+#include "main/common.hpp"
 #include "structures/unique_ptr.hpp"
 
 namespace ps2 {

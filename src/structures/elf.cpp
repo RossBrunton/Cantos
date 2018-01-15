@@ -3,7 +3,7 @@
 #include "structures/elf.hpp"
 #include "mem/kmem.hpp"
 #include "main/printk.hpp"
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace elf {
     static void *_memcpy(void *destination, const void *source, size_t num) {

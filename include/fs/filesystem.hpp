@@ -1,7 +1,7 @@
 #ifndef _HPP_FS_FILESYSTEM_
 #define _HPP_FS_FILESYSTEM_
 
-#include "main/common.h"
+#include "main/common.hpp"
 #include "structures/utf8.hpp"
 #include "mem/object.hpp"
 #include "main/errno.h"

@@ -1,7 +1,7 @@
 #ifndef _HPP_INTERRUPTS_PIT_
 #define _HPP_INTERRUPTS_PIT_
 
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace pit {
     const uint8_t ACCESS_LATCH = 0;

@@ -1,7 +1,7 @@
 #ifndef _H_IO_ACPI_
 #define _H_IO_ACPI_
 
-#include "main/common.h"
+#include "main/common.hpp"
 
 
 namespace acpi {

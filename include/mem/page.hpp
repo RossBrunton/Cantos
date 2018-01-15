@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include "main/multiboot.hpp"
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace page {
     class Page {

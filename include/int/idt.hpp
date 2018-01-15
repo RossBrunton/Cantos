@@ -13,13 +13,13 @@
  *
  * The difference between a trap gate and an interrupt gate, is that the interrupt gate disables interrupts while it is
  *  running.
- * 
+ *
  * @sa http://wiki.osdev.org/IDT
  */
 
 #include <stdint.h>
 
-#include "main/common.h"
+#include "main/common.hpp"
 
 namespace idt {
     typedef void (* interrupt_handler_t)(idt_proc_state_t);

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "main/common.h"
+#include "main/common.hpp"
 #include "structures/elf.hpp"
 
 namespace stack {
