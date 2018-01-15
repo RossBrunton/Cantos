@@ -16,6 +16,8 @@ namespace task {
     class Process;
     class Thread;
 
+    typedef uint32_t wchan_t;
+
     class Process {
     private:
         list<shared_ptr<Thread>> threads;
@@ -44,6 +46,8 @@ namespace task {
         shared_ptr<object::Object> stack;
         addr_logical_t stack_pointer;
 
+        wchan_t wchan;
+
         bool in_use;
         bool ended;
 
@@ -51,6 +55,7 @@ namespace task {
         ~Thread();
 
         void end();
+        void resume();
     };
 
     extern shared_ptr<Process> kernel_process;
@@ -64,6 +69,9 @@ namespace task {
     extern "C" void task_timer_yield();
     extern "C" void __attribute__((noreturn)) task_end();
     void __attribute__((noreturn)) schedule();
+    void wait(wchan_t wchan);
+
+    wchan_t new_wchan(Utf8 name);
 
 
     bool in_thread();

@@ -32,6 +32,9 @@ namespace task {
 
     list<shared_ptr<Thread>> waiting_threads;
 
+    list<Utf8> wchans;
+    wchan_t no_wchan;
+
     static void *_memcpy(void *destination, const void *source, size_t num) {
         size_t i;
         for(i = 0; i < num; i ++) {
@@ -46,6 +49,8 @@ namespace task {
         processes.push_back(kernel_process);
         kernel_process->process_id = 0;
         // All other fields 0 by default
+
+        no_wchan = new_wchan(Utf8("."));
     }
 
     shared_ptr<Process> get_process(uint32_t id) {
@@ -62,6 +67,7 @@ namespace task {
     shared_ptr<Thread> Process::new_thread(addr_logical_t entry_point) {
         shared_ptr<Process> me = get_process(process_id);
         shared_ptr<Thread> t = (threads.emplace_back(make_shared<Thread>(me, entry_point)), threads.back());
+        t->wchan = no_wchan;
 
         waiting_threads.push_front(t);
         return t;
@@ -159,6 +165,13 @@ namespace task {
         task_asm_enter(stack_pointer, mem_base);
     }
 
+    void wait(wchan_t wchan) {
+        shared_ptr<Thread> t = get_thread();
+        t->wchan = wchan;
+
+        task_yield();
+    }
+
     extern "C" void task_yield() {
         uint32_t eflags = push_cli();
         cpu::Status& info = cpu::info();
@@ -167,7 +180,7 @@ namespace task {
         pop_flags(eflags);
 
         // Do nothing if we are not in a task
-        if(in_thread) {
+        if(!in_thread) {
             return;
         }
 
@@ -191,7 +204,9 @@ namespace task {
         asm volatile ("sti");
 
         waiting_mutex.lock();
-        waiting_threads.push_front(current);
+        if(current->wchan == no_wchan) {
+            waiting_threads.push_front(current);
+        }
         waiting_mutex.unlock();
 
         schedule();
@@ -286,5 +301,23 @@ namespace task {
         pop_flags(eflags);
 
         return to_ret;
+    }
+
+    wchan_t new_wchan(Utf8 name) {
+        wchans.push_back(move(name));
+        return wchans.size() - 1;
+    }
+
+    void resume(shared_ptr<Thread> thread) {
+        _mutex.lock();
+        if(thread->wchan != no_wchan) {
+            thread->wchan = no_wchan;
+            _mutex.unlock();
+            waiting_mutex.lock();
+            waiting_threads.push_front(thread);
+            waiting_mutex.unlock();
+        }else{
+            _mutex.unlock();
+        }
     }
 }

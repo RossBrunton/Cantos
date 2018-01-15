@@ -15,6 +15,7 @@ namespace mutex {
     }
 
     int Mutex::lock() {
+        uint32_t eflags = push_flags();
         while(true) {
             int result = this->trylock();
 
@@ -22,7 +23,6 @@ namespace mutex {
                 return EOK;
             }
 
-            uint32_t eflags = push_flags();
             if(eflags & cpu::IF) {
                 // Interrupts are enabled, so assume that we can freely halt and get interrupted and stuff
                 asm volatile ("cli");
