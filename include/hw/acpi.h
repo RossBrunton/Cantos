@@ -3,10 +3,8 @@
 
 #include "main/common.h"
 
-#ifdef __cplusplus
-extern "C" {
+
 namespace acpi {
-#endif
 
 #define ACPI_RSDP_SIG_A 0x20445352 // " DSR"
 #define ACPI_RSDP_SIG_B 0x20525450 // " RTP"
@@ -42,7 +40,7 @@ typedef struct acpi_rsdp_descriptor_extended {
     char oem_id[6];
     uint8_t revision;
     acpi_rsdt_t *rsdt;
-    
+
     // Extended part
     uint32_t length;
     uint64_t xsdt_addr;
@@ -87,7 +85,7 @@ typedef struct acpi_madt {
 typedef struct acpi_mdat_entry {
     uint8_t type;
     uint8_t length;
-    
+
     union {
         acpi_mdat_proc_t proc;
         acpi_mdat_ioapic_t ioapic;
@@ -109,9 +107,6 @@ extern uint32_t acpi_iso_count;
 
 extern uint32_t acpi_lapic_base;
 
-#ifdef __cplusplus
 }
-}
-#endif
 
 #endif
