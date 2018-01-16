@@ -6,6 +6,11 @@
 #include "main/cpp.hpp"
 #include "main/panic.hpp"
 
+namespace shared_ptr_ns {
+struct Data {
+    uint32_t uses = 1;
+};
+
 /** A smart pointer where multiple own and manage a single object, deleting it when all shared_ptrs goes out of scope
  *
  * Multiple shared_ptrs can own the same object, and the object is deleted only when there are no more shared_ptrs
@@ -16,16 +21,6 @@
  * * Pointer comparsions are not yet supported.
  */
 template<class T> class shared_ptr {
-private:
-    struct Data {
-        uint32_t uses = 1;
-    };
-
-    T *ref;
-    Data *data;
-
-    void decrement_usage(); // Also deletes if appropriate
-
 public:
     /** Create a new empty shared_ptr
      */
@@ -34,19 +29,50 @@ public:
      *
      * @param ref The pointer to own
      */
-    shared_ptr(T *ref);
+    shared_ptr(T *ref) : ref(ref) {
+        if(ref) {
+            data = new Data();
+        }
+    };
     /** Create a new shared_ptr managing the shared resource from the given shared_ptr
      *
      * @param other The other shared_ptr to share from
      */
-    shared_ptr(const shared_ptr<T>& other);
+    template<class U> shared_ptr(const shared_ptr<U>& other) : ref(other.ref) {
+        data = other.data;
+        if(ref) {
+            data->uses ++;
+        }
+    }
     /** Create a new shared_ptr from the given shared_ptr
      *
      * After construction, the other pointer will be empty.
      *
      * @param other The other shared_ptr to steal from
      */
-    shared_ptr(shared_ptr<T>&& other);
+    template<class U> shared_ptr(shared_ptr<U>&& other) : ref(other.ref), data(other.data) {
+        other.ref = nullptr;
+        other.data = nullptr;
+    }
+    /** Create a new shared_ptr managing the shared resource from the given shared_ptr
+     *
+     * @param other The other shared_ptr to share from
+     */
+    shared_ptr(const shared_ptr& other) : ref(other.ref), data(other.data) {
+        if(ref) {
+            data->uses ++;
+        }
+    }
+    /** Create a new shared_ptr from the given shared_ptr
+     *
+     * After construction, the other pointer will be empty.
+     *
+     * @param other The other shared_ptr to steal from
+     */
+    shared_ptr(shared_ptr&& other) : ref(other.ref), data(other.data) {
+        other.ref = nullptr;
+        other.data = nullptr;
+    }
 
     /** Deletes the associated object, if no other shared_ptrs own it
      */
@@ -135,6 +161,14 @@ public:
         }
         return get();
     }
+
+private:
+    template<class U> friend class shared_ptr;
+
+    T *ref;
+    Data *data;
+
+    void decrement_usage(); // Also deletes if appropriate
 };
 
 /** Creates a shared_ptr managing a newly created and allocated T
@@ -145,6 +179,10 @@ public:
  * @return A shared_ptr to the newly allocated object.
  */
 template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args);
+}
+
+using shared_ptr_ns::shared_ptr;
+using shared_ptr_ns::make_shared;
 
 #include "structures/shared_ptr.tpp"
 #endif

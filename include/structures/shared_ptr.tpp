@@ -1,22 +1,7 @@
 #include "main/cpp.hpp"
+#include "main/printk.hpp"
 
-template<class T> shared_ptr<T>::shared_ptr(T *ref) : ref(ref) {
-    if(ref) {
-        data = new Data();
-    }
-}
-
-template<class T> shared_ptr<T>::shared_ptr(const shared_ptr<T> &other) : ref(other.ref), data(other.data) {
-    if(ref) {
-        data->uses ++;
-    }
-}
-
-template<class T> shared_ptr<T>::shared_ptr(shared_ptr<T> &&other) : ref(other.ref), data(other.data) {
-    other.ref = nullptr;
-    other.data = nullptr;
-}
-
+namespace shared_ptr_ns {
 template<class T> shared_ptr<T>::~shared_ptr() {
     decrement_usage();
 }
@@ -81,4 +66,5 @@ template<class T> void shared_ptr<T>::swap(shared_ptr<T>& other) {
 
 template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args) {
     return shared_ptr<T>(new T(forward<Args>(args)...));
+}
 }

@@ -14,9 +14,8 @@ namespace object {
      * @todo Handle page flags
      */
 
-    Object::Object(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
-    uint8_t object_flags, uint32_t offset) :
-    generator(generator), deleter(deleter), max_pages(max_pages), page_flags(page_flags), object_flags(object_flags) {}
+    Object::Object(uint32_t max_pages, uint8_t page_flags, uint8_t object_flags, uint32_t offset) :
+    max_pages(max_pages), page_flags(page_flags), object_flags(object_flags) {}
 
     Object::~Object() {
         PageEntry *page_entry;
@@ -24,7 +23,7 @@ namespace object {
 
         // And then destroy all the pages
         for(page_entry = this->pages.get(); page_entry; page_entry = next) {
-            this->deleter(page_entry->page, this);
+            page::free(page_entry->page);
             next = page_entry->next.get();
         }
 
@@ -168,7 +167,6 @@ namespace object {
 
     // count is in pages, Addr is an address not in pages
     void Object::generate(uint32_t addr, uint32_t count) {
-        unique_ptr<PageEntry> new_entry;
         PageEntry *next = nullptr;
         PageEntry *prev = nullptr;
         page::Page *page;
@@ -194,7 +192,8 @@ namespace object {
         if(!count) return;
 
         // Generate the pages
-        page = generator(addr, this, count);
+        page = do_generate(addr, count);
+        unique_ptr<PageEntry> new_entry;
 
         // And create a new entry
         new_entry = make_unique<PageEntry>();
@@ -247,15 +246,9 @@ namespace object {
     }
 
 
-    page::Page *gen_empty(addr_logical_t addr, Object *object, uint32_t count) {
+    page::Page *EmptyObject::do_generate(addr_logical_t addr, uint32_t count) {
         (void)addr;
-        (void)object;
         return page::alloc(0, count);
-    }
-
-    void del_free(page::Page *page, Object *object) {
-        (void)object;
-        page::free(page);
     }
 }
 
@@ -265,27 +258,34 @@ class ObjectTest : public test::TestCase {
 public:
     ObjectTest() : test::TestCase("Kernel Object Test") {};
 
-    static page::Page *gen_inc(addr_logical_t addr, object::Object *object, uint32_t count) {
-        (void)addr;
-        (void)object;
-        page::Page * p = page::alloc(0, count);
+    class IncObject : public object::Object {
+    public:
+        IncObject(uint32_t max_pages, uint8_t page_flags, uint8_t object_flags, uint32_t offset) :
+            Object(max_pages, page_flags, object_flags, offset) {};
 
-        uint32_t *installed = (uint32_t *)page::kinstall(p, 0);
+        page::Page *do_generate(addr_logical_t addr, uint32_t count) {
+            (void)addr;
+            page::Page * p = page::alloc(0, count);
 
-        for(uint32_t i = 0; i < count * PAGE_SIZE / 4; i ++) {
-            installed[i] = addr + (i * 4);
+            printk("Generating %x\n", addr);
+
+            uint32_t *installed = (uint32_t *)page::kinstall(p, 0);
+
+            for(uint32_t i = 0; i < count * PAGE_SIZE / 4; i ++) {
+                installed[i] = addr + (i * 4);
+            }
+
+            page::kuninstall(installed, p);
+
+            return p;
         }
-
-        page::kuninstall(installed, p);
-
-        return p;
-    }
+    };
 
     void run_test() override {
         using namespace object;
 
         test("Creating a simple object");
-        shared_ptr<Object> obj = make_shared<Object>(gen_inc, del_free, 5, page::PAGE_TABLE_RW, 0, 0);
+        shared_ptr<Object> obj = make_shared<IncObject>(5, page::PAGE_TABLE_RW, 0, 0);
 
         test("Installing an object");
         vm::Map *map = cpu::current_thread()->vm.get();

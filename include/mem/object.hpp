@@ -19,37 +19,37 @@ namespace object {
     };
 
     class Object;
-    typedef page::Page *(* object_generator_t)(addr_logical_t addr, Object *object, uint32_t count);
-    typedef void (* object_deleter_t)(page::Page *page, Object *object);
 
     class Object {
     private:
         list<ObjectInMap *> objects_in_maps;
 
     public:
-        object_generator_t generator;
-        object_deleter_t deleter;
         unique_ptr<PageEntry> pages = nullptr;
         uint32_t max_pages;
         uint8_t page_flags;
         uint8_t object_flags;
         void *userdata = nullptr;
 
-        Object(object_generator_t generator, object_deleter_t deleter, uint32_t max_pages, uint8_t page_flags,
-        uint8_t object_flags, uint32_t offset);
-        ~Object();
+        Object(uint32_t max_pages, uint8_t page_flags, uint8_t object_flags, uint32_t offset);
+        virtual ~Object();
 
         //void shift_right(uint32_t amount);
         //void shift_left(uint32_t amount);
 
         void generate(uint32_t addr, uint32_t count);
+        virtual page::Page *do_generate(addr_logical_t addr, uint32_t count) = 0;
 
         void add_object_in_map(ObjectInMap *oim);
         void remove_object_in_map(ObjectInMap *oim);
     };
 
-    page::Page *gen_empty(addr_logical_t addr, Object *object, uint32_t count);
-    void del_free(page::Page *page, Object *object);
+    class EmptyObject : public Object {
+    public:
+        EmptyObject(uint32_t max_pages, uint8_t page_flags, uint8_t object_flags, uint32_t offset) :
+            Object(max_pages, page_flags, object_flags, offset) {};
+        page::Page *do_generate(addr_logical_t addr, uint32_t count) override;
+    };
 
     class ObjectInMap {
     public:

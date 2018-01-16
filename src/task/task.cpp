@@ -109,7 +109,7 @@ namespace task {
         vm = make_unique<vm::Map>(process->process_id, task_id, kernel);
 
         // Create the stack object
-        stack = make_shared<object::Object>(object::gen_empty, object::del_free, 1, page::PAGE_TABLE_RW, 0, 0);
+        stack = make_shared<object::EmptyObject>(1, page::PAGE_TABLE_RW, 0, 0);
         stack->generate(0, 1);
 
         vm->add_object(stack, TASK_STACK_TOP - PAGE_SIZE, 0, 1);
