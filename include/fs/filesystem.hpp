@@ -13,14 +13,6 @@ namespace filesystem {
 
     static uint32_t filesystem_counter;
 
-    enum UnderlyingType {
-        UT_UNDER_FS,
-        UT_GENERATED,
-        UT_STORAGE,
-        UT_FILE,
-        UT_MEM
-    };
-
     enum InodeType {
         TYPE_DIRECTORY,
         TYPE_FILE
@@ -56,16 +48,20 @@ namespace filesystem {
         uint64_t inode; /**< Inode id */
     };
 
-    class UnderlyingStorage {// Details for the underlying filesystem
+    class Storage {// Details for the underlying filesystem
     public:
-        UnderlyingType type; // UNDER_FS, GENERATED, etc.
+        virtual ~Storage() {};
 
-        union {
-            struct {
-                addr_logical_t base;
-                bool physical;
-            } mem;
-        };
+        virtual page::Page *read(addr_logical_t addr) = 0;
+    };
+
+    class EmptyStorage : public Storage {
+    private:
+        uint8_t flags;
+
+    public:
+        EmptyStorage(uint8_t flags) : flags(flags) {};
+        page::Page *read(addr_logical_t addr);
     };
 
     // Base class, individual filesystems (ext4, FAT, etc) inherit this
@@ -90,7 +86,7 @@ namespace filesystem {
          *
          * @param us The UnderlyingStorage that this filesystem rests upon
          */
-        Filesystem(shared_ptr<UnderlyingStorage> us) : id(filesystem_counter++), storage(us) {};
+        Filesystem(shared_ptr<Storage> us) : id(filesystem_counter++), storage(us) {};
         virtual ~Filesystem();
 
         /** Given an inode number, load it or return an error
@@ -119,7 +115,7 @@ namespace filesystem {
     private:
         friend Inode;
         int32_t inodes = 0;
-        shared_ptr<UnderlyingStorage> storage;
+        shared_ptr<Storage> storage;
     };
 
 
@@ -141,19 +137,14 @@ namespace filesystem {
      *  FilePathEntry::populate). This means it is possible that they are invalid.
      */
     class FilePathEntry {
+    private:
+        shared_ptr<FilePathEntry> parent;
+        FilePathEntry *ref = nullptr;
+        shared_ptr<Inode> inode;
+
     public:
         /** The name of this element of the file path */
         Utf8 name;
-        /** The parent of this FilePathEntry
-         *
-         * This may be empty, indicating the lack of any parent.
-         */
-        shared_ptr<FilePathEntry> parent;
-        /** The inode associated with this FilePathEntry
-         *
-         * May be empty, indicating that no inode has been calculated yet.
-         */
-        shared_ptr<Inode> inode;
 
         /** Create a new FilePathEntry */
         FilePathEntry(Utf8 name = Utf8(""), shared_ptr<FilePathEntry> parent = nullptr,
@@ -177,7 +168,11 @@ namespace filesystem {
          * @param error_loc A reference set to a FilePathEntry that caused an error
          * @return An error code representing failure of some fashion
          */
-        error_t populate(FilePathEntry& error_loc);
+        error_t populate(FilePathEntry &error_loc);
+
+        FilePathEntry &logical_parent();
+        FilePathEntry &path_parent();
+        shared_ptr<Inode> get_inode();
     };
 
     /** Given a file path, convert it into a FilePathEntry path
