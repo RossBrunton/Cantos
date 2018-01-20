@@ -19,14 +19,71 @@ extern "C" {
 // Break -> 0x0f
 
 namespace ps2keyboard {
+    uint8_t Ps2KeyboardDriver::send(uint8_t byte) {
+        last_input = -1;
+
+        do {
+            port.write(byte);
+            while(last_input == -1) {}
+        } while(last_input == RESEND);
+
+        return last_input;
+    }
+
+    uint8_t Ps2KeyboardDriver::send(uint8_t byte_a, uint8_t byte_b) {
+        last_input = -1;
+
+        do {
+            port.write(byte_a);
+            port.write(byte_b);
+            while(last_input == -1) {}
+        } while(last_input == RESEND);
+
+        return last_input;
+    }
+
     void Ps2KeyboardDriver::configure() {
         key = 0;
         double_code = 0;
         last_key = 0;
+
+        // Self test
+        // TODO: Result
+        send(0xff);
+
+        // Set to scancode 2
+        send(0xf0);
+        send(0x02);
     }
 
     void Ps2KeyboardDriver::handle() {
         uint8_t input = port.read(0xffff);
+
+        if(last_input == -1) {
+            last_input = (int16_t)input;
+            return;
+        }
+
+        if(input == ERR_1 || input == ERR_2) {
+            // Key detection error, ignore
+            return;
+        }
+
+        if(input == PASS) {
+            // Passed a test, which is great, but we don't care
+            return;
+        }
+
+        if(input == ECHO || input == ACK || input == RESEND) {
+            // Misc stuff, should be handled earlier
+            return;
+        }
+
+        if(input == ST_FAIL_1 || input == ST_FAIL_2) {
+            // Self test fail
+            // TODO: Something here
+            return;
+        }
 
         if(input == 0x83) {
             // F7 maybe probably generates this key, convent it into 0x02 (which seems to be unused, and is F7 on Linux)

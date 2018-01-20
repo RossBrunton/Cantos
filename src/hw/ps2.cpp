@@ -65,7 +65,6 @@ namespace ps2 {
         uint8_t result;
         // TODO: Check it exists
 
-        _mutex.lock();
         ports[0].second = false;
         ports[1].second = true;
 
@@ -130,7 +129,9 @@ namespace ps2 {
         ioapic::enable_func(INT_IRQ_MOUSE, _handle2, 0);
         ioapic::enable_func(INT_IRQ_KEYBOARD, _handle1, 0);
 
-        _mutex.unlock();
+        // Configure them
+        if(ports[0].driver) ports[0].driver->configure();
+        if(known_dual && ports[1].driver) ports[1].driver->configure();
     }
 
 
@@ -229,7 +230,7 @@ namespace ps2 {
         _write_double_command(COM_WRITE, config);
 
 #if DEBUG_PS2
-        printk("Got information about PS2 port %d - [%x, %x]%d\n", second, info[0], info[1], info_length);
+        printk("Got information about PS2 port %d - [%x, %x]\n", second, info[0], info[1]);
 #endif
     }
 
