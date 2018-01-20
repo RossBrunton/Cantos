@@ -128,6 +128,7 @@ public:
      * @return Whether the list is empty
      */
     bool empty() const {
+        if(!head && tail) panic("List is in an inconsistent state");
         return !head;
     }
 

@@ -69,7 +69,9 @@ namespace task {
         shared_ptr<Thread> t = (threads.emplace_back(make_shared<Thread>(me, entry_point)), threads.back());
         t->wchan = no_wchan;
 
+        waiting_mutex.lock();
         waiting_threads.push_front(t);
+        waiting_mutex.unlock();
         return t;
     }
 
