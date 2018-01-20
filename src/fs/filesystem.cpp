@@ -5,6 +5,7 @@
 #include "main/printk.hpp"
 #include "main/errno.h"
 #include "test/test.hpp"
+#include "main/cpu.hpp"
 
 namespace filesystem {
     Inode::Inode(Filesystem &fs, uint64_t number, InodeType type, uint64_t size)
@@ -100,8 +101,9 @@ namespace filesystem {
 
 
 
-    page::Page *EmptyStorage::read(addr_logical_t addr) {
-        return page::alloc(flags, 1);
+    error_t EmptyStorage::read(addr_logical_t addr, page::Page *&page, uint32_t count) {
+        page = page::alloc(flags, count);
+        return EOK;
     }
 
 
@@ -141,7 +143,45 @@ namespace filesystem {
 namespace _tests {
 using namespace filesystem;
 
+class TestStorage : public Storage {
+public:
+    error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) override {
+        page = page::alloc(0, count);
+        uint8_t *installed = (uint8_t *)page::kinstall(page, 0);
+
+        for(uint32_t i = 0; i < PAGE_SIZE * count; i +=4) {
+            installed[i + 0] = 'T';
+            installed[i + 1] = 'E';
+            installed[i + 2] = 'S';
+            installed[i + 3] = 'T';
+        }
+
+        page::kuninstall(installed, page);
+        return EOK;
+    }
+};
+
 class TestFilesystem : public Filesystem {
+private:
+    class TestFilesystemObject : public object::Object {
+    private:
+        TestFilesystem &fs;
+
+    public:
+        TestFilesystemObject(uint32_t max_pages, uint8_t page_flags, uint8_t object_flags, uint32_t offset, TestFilesystem &fs) :
+            Object(max_pages, page_flags, object_flags, offset), fs(fs) {};
+
+        page::Page *do_generate(addr_logical_t addr, uint32_t count) override {
+            page::Page *page;
+
+            error_t err = fs.get_storage()->read(addr, page, count);
+            if(err) {
+                return nullptr;
+            }
+            return page;
+        }
+    };
+
 public:
     TestFilesystem(shared_ptr<Storage> us) : Filesystem(us) {}
 
@@ -165,7 +205,7 @@ public:
         }else if(inode_no == 3) {
             inode = make_shared<Inode>(*this, 3, TYPE_FILE, PAGE_SIZE);
 
-            //readwrite::read_data(&(i->contents), 0, PAGE_SIZE, this);
+            inode->contents = make_shared<TestFilesystemObject>(1, 0, 0, 0, *this);
 
             return EOK;
         }else{
@@ -183,7 +223,7 @@ public:
     FilesystemTest() : test::TestCase("Filesystem Test") {};
 
     void run_test() override {
-        shared_ptr<TestFilesystem> fs = make_shared<TestFilesystem>(nullptr);
+        shared_ptr<TestFilesystem> fs = make_shared<TestFilesystem>(make_shared<TestStorage>());
         error_t err;
         shared_ptr<Inode> i;
         FilePathEntry err_loc;
@@ -226,6 +266,17 @@ public:
         err = child->populate(err_loc);
         assert(!err);
         assert(child->get_inode()->inode_no == 3);
+
+        test("Reading a file");
+        vm::Map *map = cpu::current_thread()->vm.get();
+
+        map->add_object(child->get_inode()->contents, 0x2000, 0x0, 2);
+        assert(*(char *)0x2000 == 'T');
+        assert(*(char *)0x2001 == 'E');
+        assert(*(char *)0x2002 == 'S');
+        assert(*(char *)0x2003 == 'T');
+
+        map->remove_object(child->get_inode()->contents);
     }
 };
 

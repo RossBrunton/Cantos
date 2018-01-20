@@ -52,7 +52,7 @@ namespace filesystem {
     public:
         virtual ~Storage() {};
 
-        virtual page::Page *read(addr_logical_t addr) = 0;
+        virtual error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) = 0;
     };
 
     class EmptyStorage : public Storage {
@@ -61,7 +61,7 @@ namespace filesystem {
 
     public:
         EmptyStorage(uint8_t flags) : flags(flags) {};
-        page::Page *read(addr_logical_t addr);
+        error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) override;
     };
 
     // Base class, individual filesystems (ext4, FAT, etc) inherit this
@@ -111,6 +111,10 @@ namespace filesystem {
          * @return An error code
          */
         virtual error_t root_inode(shared_ptr<Inode> &inode) = 0;
+
+        virtual shared_ptr<Storage> get_storage() {
+            return storage;
+        }
 
     private:
         friend Inode;
