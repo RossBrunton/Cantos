@@ -35,6 +35,7 @@ OBJECTS=obj/debug/stack.o\
 	obj/main/boot.o\
 	obj/main/cpp.o\
 	obj/main/cpu.o\
+	obj/main/loerror.o\
 	obj/main/lomain.o\
 	obj/main/main.o\
 	obj/main/multiboot.o\

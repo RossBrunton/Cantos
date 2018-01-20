@@ -44,7 +44,7 @@ namespace cpu {
 
     Status& info_of(uint32_t id) {
         if(!cpu_status[id]) {
-            panic("Tried to get the status of an invalid or un-inited cpu");
+            panic("Tried to get the status of an invalid or un-inited cpu (%d)", id);
         }
         return *cpu_status[id];
     }

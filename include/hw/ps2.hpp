@@ -8,7 +8,7 @@ namespace ps2 {
     const uint8_t STAT_OUTBUFF = 0x01;
     const uint8_t STAT_INBUFF = 0x02;
     const uint8_t STAT_SYS = 0x04;
-    const uint8_t STAT_COMDAT = 0x08;
+    const uint8_t STAT_COMADT = 0x08;
     const uint8_t STAT_TIMEOUT = 0x40;
     const uint8_t STAT_PARITY = 0x80;
 
