@@ -26,6 +26,7 @@ namespace cpu {
         void *stack; /**< A pointer to the start of the CPU's kernel stack */
         shared_ptr<task::Thread> thread; /**< The thread this CPU is currently running, or NULL if it is not running one */
         bool awoken; /**< Whether the CPU has been woken up yet */
+        bool awaiting_schedule; /**< Whether the CPU is waiting for a schedule or not */
     };
 
     extern "C" addr_logical_t *stacks[MAX_CORES];

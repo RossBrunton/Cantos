@@ -218,16 +218,32 @@ namespace task {
         shared_ptr<Thread> next;
 
         asm volatile ("cli");
+        cpu::Status &info = cpu::info();
+        info.awaiting_schedule = true;
+        info.thread = nullptr;
+
         while(true) {
-            waiting_mutex.lock();
-            if(!waiting_threads.empty()) {
-                next = waiting_threads.back();
-                waiting_threads.pop_back();
-                waiting_mutex.unlock();
-                break;
+            if(waiting_mutex.trylock()) {
+                asm volatile ("sti");
+                asm volatile ("hlt");
+                continue;
             }
-            waiting_mutex.unlock();
+
+            if(waiting_threads.empty()){
+                waiting_mutex.unlock();
+                asm volatile ("sti");
+                asm volatile ("hlt");
+                continue;
+            }
+
+            break;
         }
+
+        next = waiting_threads.back();
+        waiting_threads.pop_back();
+        waiting_mutex.unlock();
+
+        info.awaiting_schedule = false;
 
         _mutex.lock();
         bool ok = true;
@@ -254,8 +270,8 @@ namespace task {
     extern "C" void task_timer_yield() {
         cpu::Status& info = cpu::info();
 
-        if(!info.thread) {
-            // Not running a thread, do nothing
+        if(!info.thread && !info.awaiting_schedule) {
+            // Not running a thread or waiting for a schedule, do nothing
             return;
         }
 
