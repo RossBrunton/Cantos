@@ -9,6 +9,7 @@
 #include "main/panic.hpp"
 #include "structures/mutex.hpp"
 #include "main/cpu.hpp"
+#include "main/asm_utils.hpp"
 
 namespace vm {
     mutex::Mutex _mutex;
@@ -97,6 +98,7 @@ namespace vm {
 
                 logical_tables->tables[dir_slot]->entries[page_slot].block =
                     (page->mem_base + i * PAGE_SIZE) | page_flags | page::PAGE_TABLE_PRESENT;
+                invlpg(addr);
             }
 
             addr += PAGE_SIZE;
@@ -124,6 +126,7 @@ namespace vm {
             page_slot = (addr >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK;
 
             logical_tables->tables[dir_slot]->entries[page_slot].block = 0;
+            invlpg(addr);
 
             addr += PAGE_SIZE;
         }
@@ -187,5 +190,19 @@ namespace vm {
         using_cpu = 0xffffffff;
         __asm__ volatile ("mov %0, %%cr3" : : "r"((addr_phys_t)page::page_dir - KERNEL_VM_BASE));
         _mutex.unlock();
+    }
+
+    void Map::invlpg(addr_logical_t addr) {
+        uint32_t eflags = push_cli();
+        _mutex.lock();
+        if(using_cpu != 0xffffffff) {
+            if(using_cpu == cpu::id()) {
+                __asm__ volatile ("invlpg (%0)" : : "r"(addr));
+            }else{
+                panic("Invalidating pages of other CPUs not supported yet!");
+            }
+        }
+        _mutex.unlock();
+        pop_flags(eflags);
     }
 }

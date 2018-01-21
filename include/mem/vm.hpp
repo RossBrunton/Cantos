@@ -20,6 +20,8 @@ namespace vm {
         list<unique_ptr<object::ObjectInMap>> objects_in_maps;
         uint32_t using_cpu = 0xffffffff;
 
+        void invlpg(addr_logical_t addr);
+
     public:
         page::Page *physical_dir;
         page::page_dir_t *logical_dir;
