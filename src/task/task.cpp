@@ -160,11 +160,12 @@ namespace task {
         asm volatile ("cli");
         cpu::Status &info = cpu::info();
         uint32_t stack_pointer = thread->stack_pointer;
-        uint32_t mem_base = thread->vm->physical_dir->mem_base;
+
+        thread->vm->enter();
         info.thread = move(thread);
 
         // And then hop into it
-        task_asm_enter(stack_pointer, mem_base);
+        task_asm_enter(stack_pointer);
     }
 
     void wait(wchan_t wchan) {
@@ -198,7 +199,7 @@ namespace task {
         current->stack_pointer = sp;
 
         // And then use the "normal" memory map
-        vm::table_clear();
+        current->vm->exit();
 
         current->in_use = false;
 

@@ -1,6 +1,5 @@
 .globl task_asm_enter
 task_asm_enter:
-    mov %edx, %cr3;
     mov %ecx, %esp;
     popal;
     popf;

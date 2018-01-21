@@ -7,8 +7,12 @@
 #include "mem/kmem.hpp"
 #include "main/printk.hpp"
 #include "main/panic.hpp"
+#include "structures/mutex.hpp"
+#include "main/cpu.hpp"
 
 namespace vm {
+    mutex::Mutex _mutex;
+
     Map::Map(uint32_t pid, uint32_t task_id, bool kernel) : pid(pid), task_id(task_id) {
         uint8_t kernel_flag = kernel ? page::FLAG_KERNEL : 0;
         size_t i;
@@ -168,13 +172,20 @@ namespace vm {
         }
     }
 
-
-    void table_switch(addr_phys_t table) {
-        __asm__ volatile ("mov %0, %%cr3" : : "r"(table));
+    void Map::enter() {
+        _mutex.lock();
+        if(using_cpu != 0xffffffff) {
+            panic("Tried to set a VM which is already owned by another CPU");
+        }
+        using_cpu = cpu::id();
+        __asm__ volatile ("mov %0, %%cr3" : : "r"(physical_dir->mem_base));
+        _mutex.unlock();
     }
 
-
-    void table_clear() {
+    void Map::exit() {
+        _mutex.lock();
+        using_cpu = 0xffffffff;
         __asm__ volatile ("mov %0, %%cr3" : : "r"((addr_phys_t)page::page_dir - KERNEL_VM_BASE));
+        _mutex.unlock();
     }
 }

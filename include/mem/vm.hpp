@@ -18,6 +18,7 @@ namespace vm {
     class Map {
     private:
         list<unique_ptr<object::ObjectInMap>> objects_in_maps;
+        uint32_t using_cpu = 0xffffffff;
 
     public:
         page::Page *physical_dir;
@@ -35,10 +36,10 @@ namespace vm {
         void add_object(const shared_ptr<object::Object>& object, uint32_t base, int64_t offset, uint32_t pages);
         void remove_object(const shared_ptr<object::Object>& object);
         void remove_object_at(const shared_ptr<object::Object>& object, uint32_t base);
-    };
 
-    void table_switch(addr_phys_t table);
-    void table_clear();
+        void enter();
+        void exit();
+    };
 }
 
 #endif
