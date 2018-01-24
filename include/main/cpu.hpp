@@ -14,6 +14,7 @@
 #include "task/task.hpp"
 #include "hw/acpi.h"
 #include "structures/shared_ptr.hpp"
+#include "int/lapic.hpp"
 
 namespace cpu {
     /** Represents the current state of a CPU
@@ -27,6 +28,10 @@ namespace cpu {
         shared_ptr<task::Thread> thread; /**< The thread this CPU is currently running, or NULL if it is not running one */
         bool awoken; /**< Whether the CPU has been woken up yet */
         bool awaiting_schedule; /**< Whether the CPU is waiting for a schedule or not */
+
+        volatile lapic::command_t command; /**< The command that was sent to this CPU via an IPI */
+        volatile uint32_t command_arg; /**< The command argument for the IPI command */
+        volatile bool command_finished; /**< A flag to be set by the handle_command function on command completion */
     };
 
     extern "C" addr_logical_t *stacks[MAX_CORES];

@@ -33,11 +33,21 @@ namespace lapic {
 
     const uint32_t SWITCHES_PER_SECOND = 1000;
 
+    enum command_t {
+        CMD_INVLPG
+    };
+
     void init();
     void setup();
     void timer(idt_proc_state_t state);
+    void handle_command(idt_proc_state_t state);
     void eoi();
     void awaken_others();
+
+    void ipi(uint8_t vector, uint32_t proc);
+    void ipi_all(uint8_t vector);
+
+    void send_command(command_t command, uint32_t argument, uint32_t proc);
 }
 
 #endif

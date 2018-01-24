@@ -10,6 +10,7 @@
 #include "structures/mutex.hpp"
 #include "main/cpu.hpp"
 #include "main/asm_utils.hpp"
+#include "int/lapic.hpp"
 
 namespace vm {
     mutex::Mutex _mutex;
@@ -134,6 +135,8 @@ namespace vm {
 
 
     bool Map::resolve_fault(addr_logical_t addr) {
+        asm volatile ("sti");
+
         // Loop through the objects and see if any fit
         for(unique_ptr<object::ObjectInMap> &oim : objects_in_maps) {
             if(addr >= oim->base && addr < oim->base + oim->pages * PAGE_SIZE) {
@@ -199,7 +202,7 @@ namespace vm {
             if(using_cpu == cpu::id()) {
                 __asm__ volatile ("invlpg (%0)" : : "r"(addr));
             }else{
-                panic("Invalidating pages of other CPUs not supported yet!");
+                lapic::send_command(lapic::CMD_INVLPG, addr, using_cpu);
             }
         }
         _mutex.unlock();

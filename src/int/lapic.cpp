@@ -9,12 +9,10 @@
 #include "mem/kmem.hpp"
 #include "mem/page.hpp"
 #include "task/task.hpp"
-
-extern "C" {
-    #include "int/numbers.h"
-    #include "hw/acpi.h"
-    #include "hw/utils.h"
-}
+#include "int/numbers.h"
+#include "hw/acpi.h"
+#include "hw/utils.h"
+#include "structures/mutex.hpp"
 
 namespace lapic {
     static volatile uint32_t *_base;
@@ -22,6 +20,8 @@ namespace lapic {
     static volatile uint32_t _deadline;
     static volatile uint32_t _callibration_ticks;
     static volatile uint32_t _ticks_per_sec;
+
+    static mutex::Mutex _command_mutex;
 
     extern "C" volatile char _startofap;
     extern "C" volatile char _endofap;
@@ -61,10 +61,12 @@ namespace lapic {
     }
 
     IDT_TELL_INTERRUPT(ltimer);
+    IDT_TELL_INTERRUPT(lcommand);
     void init() {
         page::Page *page;
 
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_TIMER, ltimer);
+        IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_COMMAND, lcommand);
 
         page = page::create(acpi::acpi_lapic_base, page::FLAG_KERNEL, 1);
         _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
@@ -77,6 +79,9 @@ namespace lapic {
         _deadline = pit::time;
         idt::install(INT_LAPIC_BASE, timer, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
         _set_timer(_CAL_INIT, _CAL_DIV);
+
+        // And the command handler
+        idt::install(INT_LAPIC_BASE + INT_LAPIC_COMMAND, handle_command, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
     }
 
 
@@ -169,5 +174,44 @@ namespace lapic {
 
     void eoi() {
         _write(EOI, 0xffffffff);
+    }
+
+
+    void ipi(uint8_t vector, uint32_t proc) {
+        // TODO: LAPIC CPU ids probably don't equal cantos CPU ids
+        _ipi(vector, 0, 0, proc);
+    }
+
+    void ipi_all(uint8_t vector) {
+        for(uint32_t i = 0; i < acpi::acpi_proc_count && i < MAX_CORES; i ++) {
+            ipi(vector, i);
+        }
+    }
+
+    void send_command(command_t command, uint32_t argument, uint32_t proc) {
+        _command_mutex.lock();
+        cpu::Status &status = cpu::info_of(proc);
+        status.command_finished = 0;
+        status.command = command;
+        status.command_arg = argument;
+        ipi(INT_LAPIC_BASE + INT_LAPIC_COMMAND, proc);
+        while(!status.command_finished) {};
+        _command_mutex.unlock();
+    }
+
+    void handle_command(idt_proc_state_t state) {
+        cpu::Status &status = cpu::info();
+
+        switch(status.command) {
+            case CMD_INVLPG:
+                asm volatile ("invlpg (%0)" : : "r"(status.command_arg));
+                break;
+
+            default:
+                panic("Unknown IPI command 0x%x", status.command);
+        }
+
+        status.command_finished = true;
+        eoi();
     }
 }

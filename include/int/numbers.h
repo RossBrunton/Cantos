@@ -4,7 +4,7 @@
 /** @file int/numbers.h
  *
  * Constants representing all the exceptions that can be raised.
- * 
+ *
  * @sa http://wiki.osdev.org/Exceptions
  */
 
@@ -13,7 +13,7 @@
  *
  * CPU Exceptions
  *
- * 
+ *
  */
 
 /** (\#DE) Division by zero exception */
@@ -95,7 +95,7 @@
  *
  * LAPIC Exceptions
  *
- * 
+ *
  */
 
 /** The base of the LAPIC exceptions
@@ -129,12 +129,14 @@
  */
 #define INT_LAPIC_ERROR 0x5
 
+#define INT_LAPIC_COMMAND 0x8
+
 /*
  *
  *
  * IOAPIC Exceptions
  *
- * 
+ *
  */
 
 /** The base of the IOAPIC exceptions
@@ -148,7 +150,7 @@
  *
  * IRQ Interrupts
  *
- * 
+ *
  */
 
 #define INT_IRQ_INTERRUPT_TIMER 0x0
