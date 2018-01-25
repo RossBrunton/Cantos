@@ -48,3 +48,14 @@
  * This MAY catch some memory allocation bugs, however a lot more memory will be used up.
  **/
 #define KMEM_SENTINEL 1
+
+/** @name Code Checks
+ *
+ * @{
+ */
+/** If defined, checks will be made in certain areas of the code as to whether interrupts or enabled or not
+ *
+ * This should help pick up areas where interrupts should be enabled/disabled in certain areas, but are not.
+ */
+#define CHECK_IF 0
+/** @} */

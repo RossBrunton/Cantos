@@ -38,13 +38,13 @@ namespace cpu {
 
     const uint32_t CF = 0x1;
     const uint32_t PF = 0x4;
-    const uint32_t AF = 0x8;
-    const uint32_t ZF = 0x20;
-    const uint32_t SF = 0x40;
-    const uint32_t TF = 0x80;
-    const uint32_t IF = 0x100;
-    const uint32_t DF = 0x200;
-    const uint32_t OF = 0x400;
+    const uint32_t AF = 0x10;
+    const uint32_t ZF = 0x40;
+    const uint32_t SF = 0x80;
+    const uint32_t TF = 0x100;
+    const uint32_t IF = 0x200;
+    const uint32_t DF = 0x400;
+    const uint32_t OF = 0x800;
 
     /** Returns the CPU status structure for currently executing CPU
      *

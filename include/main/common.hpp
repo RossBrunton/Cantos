@@ -55,4 +55,13 @@ typedef uintptr_t addr_logical_t;
 
 template<class T> using callback_t = void (*)(T);
 
+#if CHECK_IF
+#include "main/panic.hpp"
+#define CHECK_IF_SET {uint32_t flags; asm ("pushf; pop %0;" : "=r"(flags)); if(!(flags & 0x200)) panic("IF not set in %s", __func__);}
+#define CHECK_IF_CLR {uint32_t flags; asm ("pushf; pop %0;" : "=r"(flags)); if(flags & 0x200) panic("IF not clear in %s", __func__);}
+#else
+#define CHECK_IF_SET
+#define CHECK_IF_CLR
+#endif
+
 #endif

@@ -23,6 +23,7 @@ namespace cpu {
     addr_logical_t *stacks[MAX_CORES] = {};
 
     uint32_t id() {
+        CHECK_IF_CLR;
         uint32_t volatile id;
 
         __asm__ volatile ("\
@@ -73,6 +74,7 @@ namespace cpu {
     }
 
     shared_ptr<task::Thread>current_thread_noint() {
+        CHECK_IF_CLR;
         return cpu_status[id()]->thread;
     }
 }

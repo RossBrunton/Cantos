@@ -192,6 +192,7 @@ namespace task {
     }
 
     extern "C" void __attribute__((noreturn)) task_yield_done(uint32_t sp) {
+        asm volatile ("cli");
         shared_ptr<Thread> current;
         cpu::Status& info = cpu::info();
         current = info.thread;
@@ -295,7 +296,6 @@ namespace task {
         cpu::Status& info = cpu::info();
         uint32_t stack = (uint32_t)info.stack + PAGE_SIZE;
 
-        // Call the exit function to move over the stack, will call task_yield_done
         task_asm_set_stack(stack, &task_end_done);
         schedule();
     }
