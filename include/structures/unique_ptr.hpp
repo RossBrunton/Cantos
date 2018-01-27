@@ -6,6 +6,7 @@
 #include "main/cpp.hpp"
 #include "main/panic.hpp"
 
+namespace unique_ptr_ns {
 /** A smart pointer that owns and manages an object, deleting it when unique_ptr goes out of scope
  *
  * This is an implementation of unique_ptr from C++11, with the following differences:
@@ -144,4 +145,5 @@ public:
 template<class T, class... Args> unique_ptr<T> make_unique(Args&&... args);
 
 #include "structures/unique_ptr.tpp"
+}
 #endif

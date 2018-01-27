@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "main/common.hpp"
 #include "structures/utf8.hpp"
 #include "main/cpp.hpp"
 #include "structures/list.hpp"

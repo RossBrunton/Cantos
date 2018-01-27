@@ -109,7 +109,7 @@ namespace page {
         kmem::mutex.lock();
         Page *write;
 
-        write = (Page *)kmalloc(sizeof(Page), kmem::KMALLOC_RESERVED | kmem::KMALLOC_NOLOCK);
+        write = (Page *)kmem::kmalloc(sizeof(Page), kmem::KMALLOC_RESERVED | kmem::KMALLOC_NOLOCK);
         write->page_id = page_id_counter ++;
         write->mem_base = base;
         write->flags = FLAG_ALLOCATED | flags;
@@ -191,7 +191,7 @@ namespace page {
         // Collect all the pages in the free list
         if(page_free_head) {
             if(page_free_head->consecutive > count) {
-                new_page = (Page *)kmalloc(sizeof(Page), alloc_flag);
+                new_page = (Page *)kmem::kmalloc(sizeof(Page), alloc_flag);
                 new_page->page_id = page_id_counter ++;
                 new_page->mem_base = page_free_head->mem_base;
                 new_page->consecutive = count;
@@ -205,7 +205,7 @@ namespace page {
             new_page->next = NULL;
             _verify(__func__);
         }else{
-            new_page = (Page *)kmalloc(sizeof(Page), alloc_flag);
+            new_page = (Page *)kmem::kmalloc(sizeof(Page), alloc_flag);
             alloc_nokmalloc(flags | FLAG_NOLOCK, count);
             _memcpy(new_page, &static_page, sizeof(Page));
         }
@@ -376,7 +376,7 @@ namespace page {
 
         for(now = empty_slot; now && now->base < (addr_logical_t)base; ((prev = now), (now = now->next)));
 
-        new_slot = (_empty_virtual_slot_t *)kmalloc(sizeof(_empty_virtual_slot_t), kmem::KMALLOC_NOLOCK);
+        new_slot = (_empty_virtual_slot_t *)kmem::kmalloc(sizeof(_empty_virtual_slot_t), kmem::KMALLOC_NOLOCK);
         new_slot->base = (addr_logical_t)base;
         new_slot->pages = page->consecutive;
 

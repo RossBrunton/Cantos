@@ -149,7 +149,7 @@ namespace elf {
     uint8_t st_info(uint8_t b, uint8_t t) {return st_bind(b) + st_type(t);}
 
     void load_kernel_elf(uint32_t num, uint32_t size, addr_logical_t addr, uint32_t shndx) {
-        kernel_elf = (Header *)kmalloc((num * size) + sizeof(Header), 0);
+        kernel_elf = (Header *)kmem::kmalloc((num * size) + sizeof(Header), 0);
 
         kernel_elf->shnum = num;
         kernel_elf->shentsize = size;

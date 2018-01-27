@@ -181,8 +181,5 @@ private:
 template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args);
 }
 
-using shared_ptr_ns::shared_ptr;
-using shared_ptr_ns::make_shared;
-
 #include "structures/shared_ptr.tpp"
 #endif

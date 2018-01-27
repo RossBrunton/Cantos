@@ -238,13 +238,11 @@ namespace utf8 {
         static const size_t npos = -1;
 
     private:
-        shared_ptr<const char> string_ptr;
+        shared_ptr_ns::shared_ptr<const char> string_ptr;
         const char *string;
         bool static_alloc = false;
         size_t byte_count = 0;
     };
 }
-
-using utf8::Utf8;
 
 #endif

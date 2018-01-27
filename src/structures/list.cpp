@@ -1,4 +1,4 @@
-#include "structures/list.hpp"
+#include "main/common.hpp"
 #include "test/test.hpp"
 
 namespace _tests {

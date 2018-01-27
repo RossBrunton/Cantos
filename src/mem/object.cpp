@@ -8,6 +8,7 @@
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
 #include "main/cpu.hpp"
+#include "test/test.hpp"
 
 namespace object {
     /**

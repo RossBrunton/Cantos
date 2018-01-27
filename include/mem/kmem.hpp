@@ -20,8 +20,6 @@
   *
   * Allocating and freeing memory is thread safe. It also disables interrupts while doing so, allowing you to use
   *  dynamic memory in an interrupt.
-  *
-  * kmem::kmalloc and kmem::kfree are available in the global scope as `kmalloc` and `kfree`.
   */
 namespace kmem {
     /** A kmalloc flag that if set indicates that the reserved area should be used
@@ -109,8 +107,5 @@ namespace kmem {
      */
     void clear_bottom();
 }
-
-using kmem::kmalloc;
-using kmem::kfree;
 
 #endif

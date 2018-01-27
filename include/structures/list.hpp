@@ -3,10 +3,12 @@
 
 #include <stddef.h>
 
+#include "main/common.hpp"
 #include "main/cpp.hpp"
 #include "structures/unique_ptr.hpp"
 #include "structures/iterator.hpp"
 
+namespace list_ns {
 /** Implements a linked list over a specified type, allowing dynamically sized storage
  *
  * This functions similarly to std::list, except it doesn't support custom deleters. Elements can be appended to either
@@ -243,4 +245,5 @@ public:
 };
 
 #include "structures/list.tpp"
+}
 #endif

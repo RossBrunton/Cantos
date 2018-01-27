@@ -9,27 +9,27 @@ extern "C" void __cxa_pure_virtual() {
 }
 
 void *operator new(size_t size) {
-    return kmalloc(size, 0);
+    return kmem::kmalloc(size, 0);
 }
 
 void *operator new[](size_t size) {
-    return kmalloc(size, 0);
+    return kmem::kmalloc(size, 0);
 }
 
 void operator delete(void *p) {
-    kfree(p);
+    kmem::kfree(p);
 }
 
 void operator delete[](void *p) {
-    kfree(p);
+    kmem::kfree(p);
 }
 
 void operator delete(void *p, size_t size) {
-    kfree(p);
+    kmem::kfree(p);
 }
 
 void operator delete[](void *p, size_t size) {
-    kfree(p);
+    kmem::kfree(p);
 }
 
 // Destructors (Do nothing, because we aren't exiting ever

@@ -4,7 +4,50 @@
 /** @file main/common.hpp
  *
  * Contains common definitions used by multiple files and which aren't specific to any one.
+ *
+ * Including common.hpp will also include the following headers (which should be seen as "always available"):
+ *
+ * * stdint.h
+ * * asm_utils.hpp
+ * * panic.hpp
+ * * printk.hpp
+ * * list.hpp
+ * * mutex.hpp
+ * * shared_ptr.hpp
+ * * unique_ptr.hpp
+ * * utf8.hpp
+ *
+ * In addition, the following will be made available in the global scope, and thus won't require namespace scoping:
+ *
+ * * list_ns::list
+ * * mutex::Mutex
+ * * shared_ptr_ns::shared_ptr
+ * * shared_ptr_ns::make_shared
+ * * unique_ptr_ns::unique_ptr
+ * * unique_ptr_ns::make_unique
+ * * utf8::Utf8
  */
+
+#include <stdint.h>
+
+#include "structures/shared_ptr.hpp"
+using shared_ptr_ns::shared_ptr;
+using shared_ptr_ns::make_shared;
+#include "structures/unique_ptr.hpp"
+using unique_ptr_ns::unique_ptr;
+using unique_ptr_ns::make_unique;
+#include "main/asm_utils.hpp"
+#include "main/panic.hpp"
+#include "main/printk.hpp"
+#include "structures/list.hpp"
+#include "structures/mutex.hpp"
+#include "structures/shared_ptr.hpp"
+#include "structures/unique_ptr.hpp"
+#include "structures/utf8.hpp"
+
+using list_ns::list;
+using mutex::Mutex;
+using utf8::Utf8;
 
 /** Processor state, in the same format as pushed by the `PUSHAD` instruction.
  *

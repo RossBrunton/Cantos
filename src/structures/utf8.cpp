@@ -66,7 +66,7 @@ namespace utf8 {
             len = bytes() - pos;
         }
 
-        char *newbuff = (char *)kmalloc(len + 1, 0);
+        char *newbuff = (char *)kmem::kmalloc(len + 1, 0);
 
         for(c = 0; c < len; c ++) {
             newbuff[c] = string[pos + c];
@@ -221,7 +221,7 @@ namespace utf8 {
             st = UINT32_MAX - 1;
         }
 
-        char *newbuff = (char *)kmalloc(sa+sb+1, 0);
+        char *newbuff = (char *)kmem::kmalloc(sa+sb+1, 0);
         for(uint32_t p = 0; p < sa && (p < UINT32_MAX - 1); p ++) {
             newbuff[p] = string[p];
         }
@@ -241,7 +241,7 @@ namespace utf8 {
             st = UINT32_MAX - 1;
         }
 
-        char *newbuff = (char *)kmalloc(sa+sb+1, 0);
+        char *newbuff = (char *)kmem::kmalloc(sa+sb+1, 0);
         for(uint32_t p = 0; p < sa && (p < UINT32_MAX - 1); p ++) {
             newbuff[p] = string[p];
         }
