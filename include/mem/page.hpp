@@ -33,26 +33,26 @@ namespace page {
     const uint32_t PAGE_DIR_SHIFT = 22;
 
     // Page table stuff
-    typedef struct page_table_entry_s {
+    struct page_table_entry_t {
         uint32_t block;
-    } page_table_entry_t;
+    };
 
-    typedef struct page_table_s {
+    struct page_table_t {
         page_table_entry_t entries[PAGE_TABLE_LENGTH];
-    } page_table_t;
+    };
 
-    typedef struct page_dir_entry_s {
+    struct page_dir_entry_t {
         uint32_t table;
-    } page_dir_entry_t;
+    };
 
-    typedef struct page_dir_s {
+    struct page_dir_t {
         page_dir_entry_t entries[PAGE_TABLE_LENGTH];
-    } page_dir_t;
+    };
 
-    typedef struct logical_tables_s {
+    struct logical_tables_t {
         Page *pages[PAGE_TABLE_LENGTH - (KERNEL_VM_PAGE_TABLES)];
         page_table_t *tables[PAGE_TABLE_LENGTH - (KERNEL_VM_PAGE_TABLES)];
-    } logical_tables_t;
+    };
 
     #define PAGE_TABLE_NOFLAGS(x) ((x) & ~PAGE_TABLE_FLAGMASK)
     const uint32_t PAGE_TABLE_FLAGMASK = 0xfff;

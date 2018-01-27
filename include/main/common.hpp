@@ -18,6 +18,7 @@
  * * utf8.hpp
  * * errno.h
  * * failable.hpp
+ * * cpp.hpp
  *
  * In addition, the following will be made available in the global scope, and thus won't require namespace scoping:
  *
@@ -29,10 +30,15 @@
  * * unique_ptr_ns::make_unique
  * * utf8::Utf8
  * * failable::Failable
+ * * cpp::move
+ * * cpp::forward
  */
 
 #include <stdint.h>
 
+#include "main/cpp.hpp"
+using cpp::forward;
+using cpp::move;
 #include "structures/shared_ptr.hpp"
 using shared_ptr_ns::shared_ptr;
 using shared_ptr_ns::make_shared;
@@ -59,7 +65,7 @@ using failable::Failable;
  *
  * That is, `PUSHAD` before a function call will have a structure of this type as its argument.
  */
-typedef struct idt_proc_state_s {
+struct idt_proc_state_t {
     uint32_t edi;
     uint32_t esi;
     uint32_t ebp;
@@ -68,7 +74,7 @@ typedef struct idt_proc_state_s {
     uint32_t edx;
     uint32_t ecx;
     uint32_t eax;
-} idt_proc_state_t;
+};
 
 /** Variables of this type represent a physical address
  *

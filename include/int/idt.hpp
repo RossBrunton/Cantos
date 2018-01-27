@@ -27,21 +27,21 @@ namespace idt {
 
     /** An IDT descriptor, as used by the `LIDT` instruction.
      */
-    typedef struct __attribute__((packed)) descriptor_s {
+    struct __attribute__((packed)) descriptor_t {
         uint16_t size; /**< The size of the IDT table in bytes, minus one */
         uint32_t offset; /**< The location of the IDT table in memory */
-    } descriptor_t;
+    };
 
     extern "C" volatile descriptor_t idt_descriptor;
 
     /** An entry in the IDT */
-    typedef struct entry_s {
+    struct entry_t {
         uint16_t offset_low; /**< Bits 0..15 of the location of the handler */
         uint16_t selector; /**< Segment selector */
         uint8_t zero; /**< Must be zero */
         uint8_t type_attr; /**< A set of flags followed by a gate type */
         uint16_t offset_high; /**< Bits 16..31 of the location of the handler */
-    } entry_t;
+    };
 
     /** A type attr flag that if set, means the IDT entry is present */
     const uint8_t FLAG_PRESENT = (1 << 7);
@@ -107,7 +107,7 @@ namespace idt {
 
     void handle(uint32_t vector, idt_proc_state_t state);
     void handle_with_error(uint32_t vector, idt_proc_state_t state, uint32_t errcode);
-    
+
     extern "C" {
         void idt_handle(uint32_t vector, idt_proc_state_t state);
         void idt_handle_with_error(uint32_t vector, idt_proc_state_t state, uint32_t errcode);

@@ -55,5 +55,5 @@ template<class T> void unique_ptr<T>::swap(unique_ptr<T>& other) {
 
 
 template<class T, class... Args> unique_ptr<T> make_unique(Args&&... args) {
-    return unique_ptr<T>(new T(forward<Args>(args)...));
+    return unique_ptr<T>(new T(cpp::forward<Args>(args)...));
 }

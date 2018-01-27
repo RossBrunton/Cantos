@@ -20,7 +20,7 @@ namespace multiboot {
      *
      * @sa https://www.gnu.org/software/grub/manual/multiboot/multiboot.html#Boot-information-format
      */
-    typedef struct info_s {
+    struct info_t {
         uint32_t flags;
         uint32_t mem_lower; // [0]
         uint32_t mem_upper;
@@ -45,21 +45,21 @@ namespace multiboot {
         uint32_t vbe_interface_seg;
         uint32_t vbe_interface_off;
         uint32_t vbe_interface_len;
-    } info_t;
+    };
 
     /** A multiboot information memory map entry as defined in the multiboot specification.
      *
      * Note that this structure starts at the `size` field, wheras in the specification the given structure starts from
      *  the base field.
-     * 
+     *
      * @sa https://www.gnu.org/software/grub/manual/multiboot/multiboot.html#Boot-information-format
      */
-    typedef struct entry_s {
+    struct entry_t {
         uint32_t size;
         uint64_t base;
         uint64_t length;
         uint32_t type;
-    } entry_t;
+    };
 
     /** The number of memory map entries to store locally in the @ref mb_mem_table array.
      *
@@ -96,7 +96,7 @@ namespace multiboot {
      *  original string is not terminated (in which case you likely have lots of garbage data).
      */
     extern char boot_loader_name[LOCAL_BOOT_LOADER_NAME_LENGTH];
-    
+
     extern info_t header;
 }
 

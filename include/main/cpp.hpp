@@ -2,6 +2,7 @@
 #define _HPP_CPP_
 
 // Destructors (do nothing)
+namespace cpp {
 extern "C" int __cxa_atexit(void (*destructor) (void *), void *arg, void *dso);
 extern "C" void __cxa_finalize(void *f);
 
@@ -34,5 +35,5 @@ template<class T> typename remove_reference<T>::type&& move(T&& t) {
 template<typename T> T&& forward(typename remove_reference<T>::type& x) {
     return static_cast<T&&>(x);
 }
-
+}
 #endif

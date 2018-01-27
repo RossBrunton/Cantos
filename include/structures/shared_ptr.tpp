@@ -65,6 +65,6 @@ template<class T> void shared_ptr<T>::swap(shared_ptr<T>& other) {
 
 
 template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args) {
-    return shared_ptr<T>(new T(forward<Args>(args)...));
+    return shared_ptr<T>(new T(cpp::forward<Args>(args)...));
 }
 }

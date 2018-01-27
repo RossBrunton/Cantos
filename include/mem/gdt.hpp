@@ -4,14 +4,14 @@
 #include <stdint.h>
 
 namespace gdt {
-    typedef struct __attribute__((packed)) descriptor_e {
+    struct __attribute__((packed)) descriptor_t {
         uint16_t size;
         uint32_t offset;
-    } descriptor_t;
+    };
 
-    typedef struct table_entry_e {
+    struct table_entry_t {
         uint64_t value;
-    } table_entry_t;
+    };
 
     const uint8_t ACCESS_PRESENT = (1<<7);
     #define GDT_ACCESS_PRIV(x) ((x)<<5)

@@ -39,7 +39,7 @@ namespace kmem {
     const uint8_t KMALLOC_NOLOCK = (1 << 1);
 
     /** A kernel memory map, indicating where different areas of the kernel lie. */
-    typedef struct map_s {
+    struct map_t {
         addr_logical_t kernel_ro_start; /**< Base address of kernel readonly memory */
         addr_logical_t kernel_ro_end; /**< End address of kernel readonly memory */
         addr_logical_t kernel_rw_start; /**< Base address of kernel read/write memory */
@@ -50,7 +50,7 @@ namespace kmem {
         addr_logical_t vm_end; /**< End address of the kernel's virtual memory tables */
         addr_logical_t memory_start; /**< Base address of the kernel's free use memory */
         addr_logical_t memory_end; /**< End address of the kernel's free use memory (this may grow over time) */
-    } map_t;
+    };
     /** The memory map of the kernel
      *
      * kmem::init must be called before using this struct's values.

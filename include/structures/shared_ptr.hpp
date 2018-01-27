@@ -139,7 +139,7 @@ public:
     }
 
     /** Dereferences the managed object */
-    typename add_lvalue_reference<T>::type operator*() const {
+    typename cpp::add_lvalue_reference<T>::type operator*() const {
         if(!ref) {
             panic("Tried to dereference a null shared_ptr");
         }
