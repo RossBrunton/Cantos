@@ -1,6 +1,10 @@
 #ifndef _HPP_INTERRUPTS_LAPIC_
 #define _HPP_INTERRUPTS_LAPIC_
 
+#include <stdint.h>
+
+#include "main/common.hpp"
+
 namespace lapic {
     const uint32_t ID = 0x20;
     const uint32_t VER = 0x30;
@@ -48,6 +52,7 @@ namespace lapic {
     void ipi_all(uint8_t vector);
 
     void send_command(command_t command, uint32_t argument, uint32_t proc);
+    void send_command_all(command_t command, uint32_t argument);
 }
 
 #endif

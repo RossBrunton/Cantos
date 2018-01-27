@@ -7,6 +7,7 @@
 #include "main/multiboot.hpp"
 #include "main/panic.hpp"
 #include "main/asm_utils.hpp"
+#include "int/lapic.hpp"
 
 namespace page {
     static Page *used_start;
@@ -33,6 +34,11 @@ namespace page {
             ((char *)destination)[i] = ((char *)source)[i];
         }
         return destination;
+    }
+
+    static void invlpg(addr_logical_t addr) {
+        __asm__ volatile ("invlpg (%0)" : : "r"(addr));
+        lapic::send_command_all(lapic::CMD_INVLPG, addr);
     }
 
 
@@ -335,6 +341,7 @@ namespace page {
                 for(current = page; current; current = current->next) {
                     for(i = 0; i < page->consecutive; i ++) {
                         table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
+                        invlpg((addr_logical_t)current->mem_base + PAGE_SIZE * i);
                         table_entry ++;
                     }
                 }
@@ -387,7 +394,7 @@ namespace page {
         for(i = 0; i < page->consecutive; i ++) {
             table_entry->block = 0;
             table_entry ++;
-            __asm__ volatile("invlpg (%0)" ::"r" (base) : "memory");
+            invlpg((addr_logical_t)base);
             base = (void *)((addr_phys_t)base + PAGE_SIZE);
         }
 

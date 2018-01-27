@@ -13,6 +13,7 @@
 #include "hw/acpi.h"
 #include "hw/utils.h"
 #include "structures/mutex.hpp"
+#include "main/asm_utils.hpp"
 
 namespace lapic {
     static volatile uint32_t *_base;
@@ -197,6 +198,19 @@ namespace lapic {
         ipi(INT_LAPIC_BASE + INT_LAPIC_COMMAND, proc);
         while(!status.command_finished) {};
         _command_mutex.unlock();
+    }
+
+    void send_command_all(command_t command, uint32_t argument) {
+        // TODO: This better
+        uint32_t eflags = push_cli();
+        uint32_t id = cpu::id();
+        for(uint32_t i = 0; i < acpi::acpi_proc_count; i ++) {
+            if(i != id) {
+                send_command(command, argument, i);
+            }
+        }
+
+        pop_flags(eflags);
     }
 
     void handle_command(idt_proc_state_t state) {
