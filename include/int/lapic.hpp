@@ -45,6 +45,7 @@ namespace lapic {
     void setup();
     void timer(idt_proc_state_t state);
     void handle_command(idt_proc_state_t state);
+    void handle_panic(idt_proc_state_t state);
     void eoi();
     void awaken_others();
 

@@ -63,11 +63,13 @@ namespace lapic {
 
     IDT_TELL_INTERRUPT(ltimer);
     IDT_TELL_INTERRUPT(lcommand);
+    IDT_TELL_INTERRUPT(lpanic);
     void init() {
         page::Page *page;
 
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_TIMER, ltimer);
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_COMMAND, lcommand);
+        IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_PANIC, lpanic);
 
         page = page::create(acpi::acpi_lapic_base, page::FLAG_KERNEL, 1);
         _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
@@ -83,6 +85,7 @@ namespace lapic {
 
         // And the command handler
         idt::install(INT_LAPIC_BASE + INT_LAPIC_COMMAND, handle_command, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
+        idt::install(INT_LAPIC_BASE + INT_LAPIC_PANIC, handle_panic, GDT_SELECTOR(0, 0, 2), idt::GATE_32_INT);
     }
 
 
@@ -227,5 +230,13 @@ namespace lapic {
 
         status.command_finished = true;
         eoi();
+    }
+
+    void handle_panic(idt_proc_state_t state) {
+        eoi();
+
+        while(true) {
+            asm volatile ("hlt");
+        }
     }
 }

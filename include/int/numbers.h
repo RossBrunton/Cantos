@@ -130,6 +130,7 @@
 #define INT_LAPIC_ERROR 0x5
 
 #define INT_LAPIC_COMMAND 0x8
+#define INT_LAPIC_PANIC 0x9
 
 /*
  *

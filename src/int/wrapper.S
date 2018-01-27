@@ -63,3 +63,4 @@ handle INT_IOAPIC_BASE + INT_IRQ_SATA iosata
 # Lapic
 handle INT_LAPIC_BASE + INT_LAPIC_TIMER ltimer
 handle INT_LAPIC_BASE + INT_LAPIC_COMMAND lcommand
+handle INT_LAPIC_BASE + INT_LAPIC_PANIC lpanic

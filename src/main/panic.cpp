@@ -6,6 +6,7 @@
 #include "main/cpu.hpp"
 #include "debug/stack.hpp"
 #include "structures/elf.hpp"
+#include "int/numbers.h"
 
 extern "C" {
     static uint8_t clr = vga::COLOUR_WHITE | (vga::COLOUR_RED << 4);
@@ -86,6 +87,14 @@ extern "C" {
                 // Pass
                 va_end(ap);
                 break;
+        }
+
+        // Tell other processors to stop
+        uint32_t id = cpu::id();
+        for(uint32_t i = 0; i < acpi::acpi_proc_count; i ++) {
+            if(i != id) {
+                lapic::ipi(INT_LAPIC_BASE + INT_LAPIC_PANIC, i);
+            }
         }
 
         while(1) {
