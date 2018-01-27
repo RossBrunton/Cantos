@@ -63,13 +63,14 @@ namespace filesystem {
 
         for(InodeEntry &ie : dir->children) {
             if(ie.name == name) {
-                err = dir->fs.read_inode(ie.inode, inode);
+                auto result = dir->fs.read_inode(ie.inode);
 
-                if(err) {
+                if(result) {
+                    inode = result.val;
+                    return EOK;
+                }else{
                     inode = nullptr;
                     return err;
-                }else{
-                    return EOK;
                 }
             }
         }
@@ -101,9 +102,9 @@ namespace filesystem {
 
 
 
-    error_t EmptyStorage::read(addr_logical_t addr, page::Page *&page, uint32_t count) {
-        page = page::alloc(flags, count);
-        return EOK;
+    Failable<page::Page *> EmptyStorage::read(addr_logical_t addr, uint32_t count) {
+        page::Page *page = page::alloc(flags, count);
+        return Failable<page::Page *>(EOK, page);
     }
 
 
@@ -145,8 +146,8 @@ using namespace filesystem;
 
 class TestStorage : public Storage {
 public:
-    error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) override {
-        page = page::alloc(0, count);
+    Failable<page::Page *> read(addr_logical_t addr, uint32_t count) override {
+        page::Page *page = page::alloc(0, count);
         uint8_t *installed = (uint8_t *)page::kinstall(page, 0);
 
         for(uint32_t i = 0; i < PAGE_SIZE * count; i +=4) {
@@ -157,7 +158,7 @@ public:
         }
 
         page::kuninstall(installed, page);
-        return EOK;
+        return Failable<page::Page *>(EOK, page);
     }
 };
 
@@ -172,20 +173,20 @@ private:
             Object(max_pages, page_flags, object_flags, offset), fs(fs) {};
 
         page::Page *do_generate(addr_logical_t addr, uint32_t count) override {
-            page::Page *page;
-
-            error_t err = fs.get_storage()->read(addr, page, count);
-            if(err) {
+            auto result = fs.get_storage()->read(addr, count);
+            if(result) {
+                return result.val;
+            }else{
                 return nullptr;
             }
-            return page;
         }
     };
 
 public:
     TestFilesystem(shared_ptr<Storage> us) : Filesystem(us) {}
 
-    error_t read_inode(uint64_t inode_no, shared_ptr<Inode> &inode) override {
+    Failable<shared_ptr<Inode>> read_inode(uint64_t inode_no) override {
+        shared_ptr<Inode> inode;
         if(inode_no == 1) {
             inode = make_shared<Inode>(*this, 1, TYPE_DIRECTORY, 0);
             inode->children = list<InodeEntry>();
@@ -194,27 +195,27 @@ public:
             inode->children.push_back({2, Utf8("a")});
             inode->children.push_back({3, Utf8("file")});
 
-            return EOK;
+            return Failable<shared_ptr<Inode>>(EOK, inode);
         }else if(inode_no == 2) {
             inode = make_shared<Inode>(*this, 2, TYPE_DIRECTORY, 0);
             inode->children = list<InodeEntry>();
             inode->children.push_back({2, Utf8(".")});
             inode->children.push_back({1, Utf8("..")});
 
-            return EOK;
+            return Failable<shared_ptr<Inode>>(EOK, inode);
         }else if(inode_no == 3) {
             inode = make_shared<Inode>(*this, 3, TYPE_FILE, PAGE_SIZE);
 
             inode->contents = make_shared<TestFilesystemObject>(1, 0, 0, 0, *this);
 
-            return EOK;
+            return Failable<shared_ptr<Inode>>(EOK, inode);
         }else{
-            return ENOENT;
+            return Failable<shared_ptr<Inode>>(ENOENT);
         }
     }
 
-    error_t root_inode(shared_ptr<Inode>& inode) override {
-        return read_inode(1, inode);
+    Failable<shared_ptr<Inode>> root_inode() override {
+        return read_inode(1);
     }
 };
 
@@ -225,18 +226,17 @@ public:
     void run_test() override {
         shared_ptr<TestFilesystem> fs = make_shared<TestFilesystem>(make_shared<TestStorage>());
         error_t err;
-        shared_ptr<Inode> i;
         FilePathEntry err_loc;
 
         test("Root inode");
-        err = fs->root_inode(i);
-        assert(!err);
-        assert(i);
-        assert(i->inode_no == 1);
+        auto result = fs->root_inode();
+        assert((bool)result);
+        assert(result.val);
+        assert(result.val->inode_no == 1);
 
         test("File paths");
-        shared_ptr<FilePathEntry> root = make_shared<FilePathEntry>(Utf8(""), nullptr, i);
-        assert(root->get_inode() == i);
+        shared_ptr<FilePathEntry> root = make_shared<FilePathEntry>(Utf8(""), nullptr, result.val);
+        assert(root->get_inode() == result.val);
 
         shared_ptr<FilePathEntry> child = parse_path(Utf8("./././."), root);
         err = child->populate(err_loc);

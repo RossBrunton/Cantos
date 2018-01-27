@@ -52,7 +52,7 @@ namespace filesystem {
     public:
         virtual ~Storage() {};
 
-        virtual error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) = 0;
+        virtual Failable<page::Page *> read(addr_logical_t addr, uint32_t count) = 0;
     };
 
     class EmptyStorage : public Storage {
@@ -61,7 +61,7 @@ namespace filesystem {
 
     public:
         EmptyStorage(uint8_t flags) : flags(flags) {};
-        error_t read(addr_logical_t addr, page::Page *&page, uint32_t count) override;
+        Failable<page::Page *> read(addr_logical_t addr, uint32_t count) override;
     };
 
     // Base class, individual filesystems (ext4, FAT, etc) inherit this
@@ -100,7 +100,7 @@ namespace filesystem {
          * @param inode A shared_ptr to the inode, this should be updated to point to an inode instance
          * @return An error code
          */
-        virtual error_t read_inode(uint64_t inode_no, shared_ptr<Inode> &inode) = 0;
+        virtual Failable<shared_ptr<Inode>> read_inode(uint64_t inode_no) = 0;
         /** Returns the root inode of this filesystem, or returns an error
          *
          * As read_inode but returns the root inode of the filesystem, rather than a specified one.
@@ -110,7 +110,7 @@ namespace filesystem {
          * @param inode A shared_ptr to the inode, this should be updated to point to an inode instance
          * @return An error code
          */
-        virtual error_t root_inode(shared_ptr<Inode> &inode) = 0;
+        virtual Failable<shared_ptr<Inode>> root_inode() = 0;
 
         virtual shared_ptr<Storage> get_storage() {
             return storage;

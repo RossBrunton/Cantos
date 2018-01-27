@@ -16,6 +16,8 @@
  * * shared_ptr.hpp
  * * unique_ptr.hpp
  * * utf8.hpp
+ * * errno.h
+ * * failable.hpp
  *
  * In addition, the following will be made available in the global scope, and thus won't require namespace scoping:
  *
@@ -26,6 +28,7 @@
  * * unique_ptr_ns::unique_ptr
  * * unique_ptr_ns::make_unique
  * * utf8::Utf8
+ * * failable::Failable
  */
 
 #include <stdint.h>
@@ -44,10 +47,13 @@ using unique_ptr_ns::make_unique;
 #include "structures/shared_ptr.hpp"
 #include "structures/unique_ptr.hpp"
 #include "structures/utf8.hpp"
+#include "main/errno.h"
+#include "structures/failable.hpp"
 
 using list_ns::list;
 using mutex::Mutex;
 using utf8::Utf8;
+using failable::Failable;
 
 /** Processor state, in the same format as pushed by the `PUSHAD` instruction.
  *
