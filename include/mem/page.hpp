@@ -33,18 +33,12 @@ namespace page {
     const uint32_t PAGE_DIR_SHIFT = 22;
 
     // Page table stuff
-    struct page_table_entry_t {
-        uint32_t block;
-    };
-
+    typedef uint32_t page_table_entry_t;
     struct page_table_t {
         page_table_entry_t entries[PAGE_TABLE_LENGTH];
     };
 
-    struct page_dir_entry_t {
-        uint32_t table;
-    };
-
+    typedef uint32_t page_dir_entry_t;
     struct page_dir_t {
         page_dir_entry_t entries[PAGE_TABLE_LENGTH];
     };

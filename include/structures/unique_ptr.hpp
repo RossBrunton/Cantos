@@ -63,7 +63,7 @@ public:
      *
      * It will be deleted.
      */
-    unique_ptr& operator=(nullptr_t r);
+    unique_ptr& operator=(cpp::nullptr_t r);
     /** Compare two unique_ptrs for equality
      *
      * Two unique_ptrs are equal if they own the same object

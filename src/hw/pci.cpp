@@ -37,7 +37,7 @@ namespace pci {
 
 
 
-    Device::Device(uint8_t bus, uint8_t slot) : bus(bus), slot(slot) {
+    Device::Device(uint8_t bus, uint8_t slot, uint8_t function) : bus(bus), slot(slot), function(function) {
         uint32_t first = this->get32(0, VENDOR_ID);
         this->vendor_id = first & 0xffff;
         this->device_id = first >> 16;
@@ -74,9 +74,9 @@ namespace pci {
     }
 
     static void _search_bus(uint8_t bus, uint8_t start) {
-        for(uint16_t i = start; i <= 32; i ++) {
+        for(uint16_t i = start; i < 32; i ++) {
             if(_read_device_vendor(bus, i, 0) != 0xffffffff) {
-                Device& device = (devices.emplace_back(bus, i), devices.back());
+                Device& device = (devices.emplace_back(bus, i, 0), devices.back());
 
                 // Check if it is a pci to pci bridge
                 if(device.device_class == 0x06 && device.device_subclass == 0x04) {
@@ -85,12 +85,29 @@ namespace pci {
 #endif
                     _search_bus(device.get8(0, PBR_SECONDARY_BUS_NUM), 0);
                 }
+
+                // Search for other functions
+                if(device.multifunction) {
+                    for(uint8_t j = 1; j < 8; j ++) {
+                        if(_read_device_vendor(bus, i, 0) != 0xffffffff) {
+                            Device& device = (devices.emplace_back(bus, i, j), devices.back());
+
+                            // And check THIS for being a PCI to PCI bus
+                            if(device.device_class == 0x06 && device.device_subclass == 0x04) {
+#if DEBUG_PCI
+                                printk("Found PCI bridge!\n");
+#endif
+                                _search_bus(device.get8(0, PBR_SECONDARY_BUS_NUM), 0);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     void init() {
-        Device& device = (devices.emplace_back(0, 0), devices.back());
+        Device& device = (devices.emplace_back(0, 0, 0), devices.back());
 
         // Seach devices
         if(device.multifunction) {
@@ -101,12 +118,19 @@ namespace pci {
         }else{
             _search_bus(0, 1);
         }
+    }
 
-        // Lets list them
-#if DEBUG_PCI
+void print_devices() {
         for(const auto &device : devices) {
-            printk("PCI Device %x:%x.%x is %x:%x\n", device.bus, device.slot, device.prog_if, device.vendor_id, device.device_id);
+            if(device.driver) {
+                printk("[%x:%x.%x] %s (%x:%x, %x:%x.%x)\n", device.bus, device.slot, device.function,
+                    device.driver->device_name().to_string(), device.vendor_id, device.device_id,
+                    device.device_class, device.device_subclass, device.prog_if);
+            }else{
+                printk("[%x:%x.%x] (unknown) (%x:%x - %x:%x.%x)\n", device.bus, device.slot, device.function,
+                    device.vendor_id, device.device_id,
+                    device.device_class, device.device_subclass, device.prog_if);
+            }
         }
-#endif
     }
 }

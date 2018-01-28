@@ -24,7 +24,7 @@ template<class T> unique_ptr<T>& unique_ptr<T>::operator=(unique_ptr<T>&& r) {
     return *this;
 }
 
-template<class T> unique_ptr<T>& unique_ptr<T>::operator=(nullptr_t r) {
+template<class T> unique_ptr<T>& unique_ptr<T>::operator=(cpp::nullptr_t r) {
     if(ref) {
         delete ref;
     }

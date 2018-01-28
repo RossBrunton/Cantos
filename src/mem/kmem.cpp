@@ -211,7 +211,7 @@ namespace kmem {
         page::page_dir_t *dir;
 
         dir = (page::page_dir_t *)map.vm_start;
-        dir->entries[0].table = 0x0;
+        dir->entries[0] = 0x0;
     }
 
     static void *__attribute__((alloc_size(1), malloc)) do_kmalloc(size_t size, uint8_t flags) {

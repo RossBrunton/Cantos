@@ -10,18 +10,14 @@
  * Some error codes are from posix, but some are not.
  */
 
-/** The current error code */
-extern volatile int errno;
-
-/** The type used to represent errors */
-typedef uint32_t error_t;
-
 /** Operation not permitted. */
-#define EOK 0
-#define EPERM 1
-#define EBUSY 2
-#define ENOENT 3
-#define ENOTDIR 4
-#define ENOPATHBASE 5 /* No base for path */
+enum error_t {
+    EOK = 0,
+    EPERM,
+    EBUSY,
+    ENOENT,
+    ENOTDIR,
+    ENOPATHBASE /* No base for path */
+};
 
 #endif

@@ -97,7 +97,7 @@ namespace page {
         // This is the logical address of the next unallocated space in the kernel address space
         page_dir = (page_dir_t *)kmem::map.vm_start;
         page_table = (page_table_t *)PAGE_TABLE_NOFLAGS(
-            page_dir->entries[kmem::map.vm_end >> PAGE_DIR_SHIFT].table) + KERNEL_VM_BASE;
+            page_dir->entries[kmem::map.vm_end >> PAGE_DIR_SHIFT]) + KERNEL_VM_BASE;
         cursor = (page_table_entry_t *)((addr_logical_t)(
             &(page_table->entries[((kmem::map.vm_end >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK)]))
                 + (addr_logical_t)KERNEL_VM_BASE);
@@ -275,7 +275,7 @@ namespace page {
                 panic("Ran out of kernel virtual address space!");
             }
 
-            cursor->block = (page->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
+            *cursor = (page->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
             if(!first) {
                 first = virtual_pointer;
             }
@@ -340,7 +340,7 @@ namespace page {
 
                 for(current = page; current; current = current->next) {
                     for(i = 0; i < page->consecutive; i ++) {
-                        table_entry->block = (current->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
+                        *table_entry = (current->mem_base + PAGE_SIZE * i) | page_flags | page::PAGE_TABLE_PRESENT;
                         invlpg((addr_logical_t)current->mem_base + PAGE_SIZE * i);
                         table_entry ++;
                     }
@@ -392,7 +392,7 @@ namespace page {
         table_entry = (page_table_entry_t *)(page_dir + 1) + page_offset;
 
         for(i = 0; i < page->consecutive; i ++) {
-            table_entry->block = 0;
+            *table_entry = 0;
             table_entry ++;
             invlpg((addr_logical_t)base);
             base = (void *)((addr_phys_t)base + PAGE_SIZE);

@@ -78,10 +78,11 @@ namespace pci {
         uint8_t header_type;
         uint8_t bus;
         uint8_t slot;
+        uint8_t function;
         uint8_t multifunction;
         unique_ptr<Driver> driver;
 
-        Device(uint8_t bus, uint8_t slot);
+        Device(uint8_t bus, uint8_t slot, uint8_t function);
         uint8_t get8(uint8_t fn, uint8_t addr);
         uint16_t get16(uint8_t fn, uint8_t addr);
         uint32_t get32(uint8_t fn, uint8_t addr);
@@ -96,6 +97,7 @@ namespace pci {
 
         virtual void configure(Device& device) = 0;
         virtual void handle_interrupt() = 0;
+        virtual Utf8 device_name() = 0;
 
         Driver(Device& device) : device(device) {};
         virtual ~Driver() {};
@@ -103,6 +105,7 @@ namespace pci {
 
     void init();
     extern list<Device> devices;
+    void print_devices();
 }
 
 #endif

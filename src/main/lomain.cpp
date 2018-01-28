@@ -70,50 +70,50 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     addr_logical_t info_end = 0;
     addr_logical_t lowest_info = 0xffffffff;
     bool sections = false;
-    
+
     // Load multiboot information
     _strncpy((char *)&LOW(char, multiboot::cmdline), (char *)mbi->cmdline, LOCAL_CMDLINE_LENGTH);
     LOW(char *, multiboot::cmdline)[LOCAL_CMDLINE_LENGTH-1] = '\0';
-    
+
     _strncpy((char *)&LOW(char, multiboot::boot_loader_name),
         (char *)mbi->boot_loader_name, LOCAL_BOOT_LOADER_NAME_LENGTH);
     LOW(char *, multiboot::boot_loader_name)[LOCAL_BOOT_LOADER_NAME_LENGTH-1] = '\0';
-    
+
     mm_entry = (multiboot::entry_t *)mbi->mmap_addr;
     for(i = 0; (addr_phys_t)((addr_phys_t)mm_entry - mbi->mmap_addr) < mbi->mmap_length && i < LOCAL_MM_COUNT; i ++) {
         _memcpy(&(LOW(multiboot::entry_t, multiboot::mem_table[i])), mm_entry, sizeof(multiboot::entry_t));
         mm_entry = (multiboot::entry_t *)(((addr_phys_t)mm_entry) + mm_entry->size + 4);
     }
-    
+
     _memcpy(&LOW(multiboot::info_t, multiboot::header), mbi, sizeof(multiboot::info_t));
-    
+
     // Now need to look through and find the highest/lowest offset of all the section header table things
     for(i = 0; i < mbi->elf_num; i ++) {
         sections = true;
         elf::SectionHeader *sect = (elf::SectionHeader *)(mbi->elf_addr + (i * mbi->elf_size));
         uint32_t load_addr = sect->addr;
-        
+
         if(load_addr >= KERNEL_VM_BASE) load_addr -= KERNEL_VM_BASE;
-        
+
         if(load_addr + sect->size > info_end) {
             info_end = load_addr + sect->size;
         }
-        
+
         if(load_addr < lowest_info) {
             lowest_info = load_addr;
         }
     }
-    
+
     info_end = info_end + PAGE_SIZE - (info_end % PAGE_SIZE);
-    
+
     if(!sections) {
         lowest_info = low_ro_start;
         info_end = low_rw_end;
     }
-    
+
     // Find ACPI tables
     acpi::low_acpi_setup();
-    
+
     // Fill in kernel map
     map_low.kernel_ro_start = lowest_info;
     map_low.kernel_ro_end = low_ro_end;
@@ -126,39 +126,39 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     map_low.vm_end += sizeof(page::page_dir_entry_t) * PAGE_TABLE_LENGTH;
     map_low.vm_end += (sizeof(page::page_table_entry_t) * PAGE_TABLE_LENGTH) * KERNEL_VM_PAGE_TABLES;
     map_low.memory_start = map_low.vm_end;
-    
+
     dir = (volatile page::page_dir_t *)map_low.vm_start;
     table = (volatile page::page_table_t *)(map_low.vm_start + sizeof(page::page_dir_t));
-    
+
     // Set up page mapping for the first 1MB
-    dir->entries[0].table = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT | page::PAGE_TABLE_SIZE;
-    
+    dir->entries[0] = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT | page::PAGE_TABLE_SIZE;
+
     // And now set up the page directory and any page entries
     for(i = 1; i < PAGE_TABLE_LENGTH; i ++) {
         if(i >= (KERNEL_VM_BASE / PAGE_DIR_SIZE)) {
-            dir->entries[i].table = (uint32_t)table | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
-            
+            dir->entries[i] = (uint32_t)table | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
+
             entry = (page::page_table_entry_t *)table;
             for(j = 0; j < PAGE_TABLE_LENGTH; j ++) {
                 addr_phys_t addr = (i * PAGE_DIR_SIZE) + (j * PAGE_SIZE) - KERNEL_VM_BASE;
                 if(addr >= map_low.kernel_ro_start && addr < map_low.kernel_ro_end + PAGE_SIZE) {
                     // Kernel text
-                    entry->block = addr | page::PAGE_TABLE_PRESENT;
+                    *entry = addr | page::PAGE_TABLE_PRESENT;
                 }else if(addr >= map_low.kernel_rw_start && addr < map_low.vm_end + PAGE_SIZE) {
                     // Page table
-                    entry->block = addr | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
+                    *entry = addr | page::PAGE_TABLE_RW | page::PAGE_TABLE_PRESENT;
                 }else{
                     // Absent
-                    entry->block = (uint32_t)(0x0);
+                    *entry = (uint32_t)(0x0);
                 }
                 entry ++;
             }
-            
+
             table ++;
         }else{
-            dir->entries[i].table = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_SIZE;
+            dir->entries[i] = 0x0 | page::PAGE_TABLE_RW | page::PAGE_TABLE_SIZE;
         }
     }
-    
+
     return dir;
 }

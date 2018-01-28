@@ -94,7 +94,7 @@ public:
      *
      * It will be deleted if no other shared_ptrs own it.
      */
-    shared_ptr& operator=(nullptr_t r);
+    shared_ptr& operator=(cpp::nullptr_t r);
     /** Compare two shared_ptrs for equality
      *
      * Two shared_ptrs are equal if they own the same object

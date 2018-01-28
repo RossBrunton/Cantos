@@ -32,6 +32,7 @@
  * * failable::Failable
  * * cpp::move
  * * cpp::forward
+ * * cpp::nullptr_t
  */
 
 #include <stdint.h>
@@ -39,6 +40,7 @@
 #include "main/cpp.hpp"
 using cpp::forward;
 using cpp::move;
+using cpp::nullptr_t;
 #include "structures/shared_ptr.hpp"
 using shared_ptr_ns::shared_ptr;
 using shared_ptr_ns::make_shared;

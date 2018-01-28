@@ -38,7 +38,7 @@ template<class T> shared_ptr<T>& shared_ptr<T>::operator=(shared_ptr<T>&& r) {
     return *this;
 }
 
-template<class T> shared_ptr<T>& shared_ptr<T>::operator=(nullptr_t r) {
+template<class T> shared_ptr<T>& shared_ptr<T>::operator=(cpp::nullptr_t r) {
     decrement_usage();
     ref = nullptr;
     data = nullptr;

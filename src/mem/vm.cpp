@@ -26,9 +26,9 @@ namespace vm {
         // Load the kernel tables into it
         for(i = 0; i < PAGE_TABLE_LENGTH; i ++) {
             if(i >= PAGE_TABLE_LENGTH - KERNEL_VM_PAGE_TABLES) {
-                logical_dir->entries[i].table = page::page_dir->entries[i].table;
+                logical_dir->entries[i] = page::page_dir->entries[i];
             }else{
-                logical_dir->entries[i].table = 0;
+                logical_dir->entries[i] = 0;
             }
         }
 
@@ -74,7 +74,7 @@ namespace vm {
 
             map->logical_tables->pages[slot] = page;
             map->logical_tables->tables[slot] = table;
-            map->logical_dir->entries[slot].table = page->mem_base | page::PAGE_TABLE_PRESENT | page_flags;
+            map->logical_dir->entries[slot] = page->mem_base | page::PAGE_TABLE_PRESENT | page_flags;
         }
     }
 
@@ -97,7 +97,7 @@ namespace vm {
                     _new_table(addr, this, page_flags);
                 }
 
-                logical_tables->tables[dir_slot]->entries[page_slot].block =
+                logical_tables->tables[dir_slot]->entries[page_slot] =
                     (page->mem_base + i * PAGE_SIZE) | page_flags | page::PAGE_TABLE_PRESENT;
                 invlpg(addr);
             }
@@ -126,7 +126,7 @@ namespace vm {
             dir_slot = addr >> page::PAGE_DIR_SHIFT;
             page_slot = (addr >> page::PAGE_TABLE_SHIFT) & page::PAGE_TABLE_MASK;
 
-            logical_tables->tables[dir_slot]->entries[page_slot].block = 0;
+            logical_tables->tables[dir_slot]->entries[page_slot] = 0;
             invlpg(addr);
 
             addr += PAGE_SIZE;
