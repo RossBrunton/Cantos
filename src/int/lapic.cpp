@@ -5,7 +5,6 @@
 #include "int/idt.hpp"
 #include "int/lapic.hpp"
 #include "main/printk.hpp"
-#include "mem/gdt.hpp"
 #include "mem/kmem.hpp"
 #include "mem/page.hpp"
 #include "task/task.hpp"

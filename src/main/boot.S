@@ -43,29 +43,51 @@ stack_top:
 _start:
     mov $lo_stack_top, %esp
     push %ebx
-    
+
     call low_kernel_main
-    
+
+    #if X86_64
+    push %eax
+
+    # Enable long mode
+    mov %cr4, %ecx
+    or $0x00000020, %ecx
+    mov %ecx, %cr4
+
+    movl %eax, %cr3
+
+    mov 0x10, %edx
+    mov 0x0, %eax
+    mov $0xC0000080, %ecx
+    wrmsr
+
+    pop %eax
+
+    #else
+
     # Install the page table
     mov %eax, %cr3
-    
+
+    #endif
+
     # Enable 4MiB pages
     mov %cr4, %ecx
     or $0x00000010, %ecx
     mov %ecx, %cr4
-    
+
     # And flick the switch
     mov %cr0, %ecx
     or  $0x80000000, %ecx
     mov %ecx, %cr0
-    
+
     mov $stack_top, %esp
-    
-    call kernel_main
-    
-    cli
-halt:   hlt
-    jmp halt
+
+    # Install the GDT
+    call gdt_init
+    call gdt_setup
+
+    # And longjump into the kernel
+    jmp $0x10, $kernel_main
 
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.

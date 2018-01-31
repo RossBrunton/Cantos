@@ -3,7 +3,6 @@
 #include "int/exceptions.hpp"
 #include "main/panic.hpp"
 #include "int/idt.hpp"
-#include "mem/gdt.hpp"
 #include "main/cpu.hpp"
 #include "main/common.hpp"
 

@@ -29,7 +29,7 @@ namespace gdt {
         entry->value = desc;
     }
 
-    void init() {
+    extern "C" void gdt_init() {
         volatile table_entry_t *entry = table;
 
         // Null entry
@@ -51,11 +51,5 @@ namespace gdt {
 
         gdt_descriptor.size = sizeof(table_entry_t) * _LENGTH;
         gdt_descriptor.offset = (uint32_t)table;
-    }
-
-
-    extern "C" void gdt_setup();
-    void setup() {
-        gdt_setup();
     }
 }

@@ -4,7 +4,6 @@
 
 #include "main/printk.hpp"
 #include "int/idt.hpp"
-#include "mem/gdt.hpp"
 #include "mem/page.hpp"
 
 extern "C" {

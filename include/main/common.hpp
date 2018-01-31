@@ -110,6 +110,8 @@ typedef uintptr_t addr_logical_t;
 
 #define MAX_CORES 32
 
+#define GDT_SELECTOR(rpl, ti, index) ((rpl) | ((ti) << 2) | ((index) << 3))
+
 template<class T> using callback_t = void (*)(T);
 
 #if CHECK_IF

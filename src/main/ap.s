@@ -8,7 +8,6 @@ low_ap_jumper:
     ljmp $0x0, $load_gdt
 load_gdt:
     # GDT
-
     mov $0x0, %ax
     mov %ax, %ds
     mov %ax, %es
@@ -63,11 +62,10 @@ enter_protected:
     add $0x1000, %eax
     mov %eax, %esp
 
-    call ap_main
+    # And set up the GDT
+    call gdt_setup
 
-stop:
-    hlt
-    jmp stop
+    jmp $0x10, $ap_main
 
 .align 8
 

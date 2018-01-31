@@ -25,11 +25,8 @@ namespace gdt {
     const uint8_t CODE_OFFSET = 0x10;
     const uint8_t DATA_OFFSET = 0x08;
 
-    #define GDT_SELECTOR(rpl, ti, index) ((rpl) | ((ti) << 2) | ((index) << 3))
-
     void set_entry(table_entry_t *entry, uint32_t base, uint32_t limit, uint8_t flags, uint8_t access);
-    void init();
-    void setup();
+    extern "C" void gdt_init();
 
     extern "C" volatile descriptor_t gdt_descriptor;
 }

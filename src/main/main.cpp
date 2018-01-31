@@ -13,7 +13,6 @@
 #include "int/ioapic.hpp"
 #include "int/idt.hpp"
 #include "int/lapic.hpp"
-#include "mem/gdt.hpp"
 #include "main/multiboot.hpp"
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
@@ -52,8 +51,6 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     _init();
 
     serial_init();
-    gdt::init();
-    gdt::setup();
     idt::init();
     idt::setup();
     exceptions::init();
@@ -111,7 +108,6 @@ extern "C" void __attribute__((noreturn)) ap_main() {
     cpu::info().awoken = true;
 
     idt::setup();
-    gdt::setup();
     lapic::setup();
 
     asm("sti");
