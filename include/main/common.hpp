@@ -12,6 +12,7 @@
  * * panic.hpp
  * * printk.hpp
  * * list.hpp
+ * * vector.hpp
  * * mutex.hpp
  * * shared_ptr.hpp
  * * unique_ptr.hpp
@@ -23,6 +24,7 @@
  * In addition, the following will be made available in the global scope, and thus won't require namespace scoping:
  *
  * * list_ns::list
+ * * vector_ns::vector
  * * mutex::Mutex
  * * shared_ptr_ns::shared_ptr
  * * shared_ptr_ns::make_shared
@@ -36,32 +38,6 @@
  */
 
 #include <stdint.h>
-
-#include "main/cpp.hpp"
-using cpp::forward;
-using cpp::move;
-using cpp::nullptr_t;
-#include "structures/shared_ptr.hpp"
-using shared_ptr_ns::shared_ptr;
-using shared_ptr_ns::make_shared;
-#include "structures/unique_ptr.hpp"
-using unique_ptr_ns::unique_ptr;
-using unique_ptr_ns::make_unique;
-#include "main/asm_utils.hpp"
-#include "main/panic.hpp"
-#include "main/printk.hpp"
-#include "structures/list.hpp"
-#include "structures/mutex.hpp"
-#include "structures/shared_ptr.hpp"
-#include "structures/unique_ptr.hpp"
-#include "structures/utf8.hpp"
-#include "main/errno.h"
-#include "structures/failable.hpp"
-
-using list_ns::list;
-using mutex::Mutex;
-using utf8::Utf8;
-using failable::Failable;
 
 /** Processor state, in the same format as pushed by the `PUSHAD` instruction.
  *
@@ -122,5 +98,34 @@ template<class T> using callback_t = void (*)(T);
 #define CHECK_IF_SET
 #define CHECK_IF_CLR
 #endif
+
+#include "main/cpp.hpp"
+using cpp::forward;
+using cpp::move;
+using cpp::nullptr_t;
+#include "structures/shared_ptr.hpp"
+using shared_ptr_ns::shared_ptr;
+using shared_ptr_ns::make_shared;
+#include "structures/unique_ptr.hpp"
+using unique_ptr_ns::unique_ptr;
+using unique_ptr_ns::make_unique;
+#include "main/asm_utils.hpp"
+#include "main/panic.hpp"
+#include "main/printk.hpp"
+#include "structures/list.hpp"
+#include "mem/kmem.hpp"
+#include "structures/vector.hpp"
+#include "structures/mutex.hpp"
+#include "structures/shared_ptr.hpp"
+#include "structures/unique_ptr.hpp"
+#include "structures/utf8.hpp"
+#include "main/errno.h"
+#include "structures/failable.hpp"
+
+using list_ns::list;
+using vector_ns::vector;
+using mutex::Mutex;
+using utf8::Utf8;
+using failable::Failable;
 
 #endif

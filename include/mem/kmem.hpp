@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "mem/page.hpp"
 #include "main/common.hpp"
+#include "mem/page.hpp"
 #include "structures/mutex.hpp"
 
 /** Manages kernel memory allocation

@@ -1,8 +1,7 @@
 #include <stddef.h>
 
-#include "main/panic.hpp"
-#include "mem/kmem.hpp"
 #include "main/cpp.hpp"
+#include "main/common.hpp"
 
 extern "C" void __cxa_pure_virtual() {
     panic((char *)"__cxa_pure_virtual called.");
@@ -14,6 +13,14 @@ void *operator new(size_t size) {
 
 void *operator new[](size_t size) {
     return kmem::kmalloc(size, 0);
+}
+
+void *operator new(size_t size, void *pos) {
+    return pos;
+}
+
+void *operator new[](size_t size, void *pos) {
+    return pos;
 }
 
 void operator delete(void *p) {

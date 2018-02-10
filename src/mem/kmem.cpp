@@ -385,6 +385,11 @@ namespace kmem {
     }
 
     void kfree_nolock(void *ptr) {
+        if(!ptr) {
+            // Ignore NULL
+            return;
+        }
+
         kmem_header_t *hdr = ((kmem_header_t *)ptr) - 1;
         size_t full_size = hdr->size + sizeof(kmem_header_t);
         kmem_free_t *new_entry;
@@ -398,11 +403,6 @@ namespace kmem {
         }
         hdr->sentinel = 0;
 #endif
-
-        if(!ptr) {
-            // Ignore NULL
-            return;
-        }
 
         new_entry = _get_struct();
 

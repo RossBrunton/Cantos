@@ -1,6 +1,8 @@
 #ifndef _HPP_CPP_
 #define _HPP_CPP_
 
+#include <stddef.h>
+
 // Destructors (do nothing)
 namespace cpp {
 extern "C" int __cxa_atexit(void (*destructor) (void *), void *arg, void *dso);
@@ -36,4 +38,7 @@ template<typename T> T&& forward(typename remove_reference<T>::type& x) {
     return static_cast<T&&>(x);
 }
 }
+
+void *operator new(size_t size, void *pos);
+void *operator new[](size_t size, void *pos);
 #endif
