@@ -189,7 +189,7 @@ public:
         shared_ptr<Inode> inode;
         if(inode_no == 1) {
             inode = make_shared<Inode>(*this, 1, TYPE_DIRECTORY, 0);
-            inode->children = list<InodeEntry>();
+            inode->children = vector<InodeEntry>();
             inode->children.push_back({1, Utf8(".")});
             inode->children.push_back({1, Utf8("..")});
             inode->children.push_back({2, Utf8("a")});
@@ -198,7 +198,7 @@ public:
             return Failable<shared_ptr<Inode>>(EOK, inode);
         }else if(inode_no == 2) {
             inode = make_shared<Inode>(*this, 2, TYPE_DIRECTORY, 0);
-            inode->children = list<InodeEntry>();
+            inode->children = vector<InodeEntry>();
             inode->children.push_back({2, Utf8(".")});
             inode->children.push_back({1, Utf8("..")});
 

@@ -32,7 +32,7 @@ namespace task {
 
     list<shared_ptr<Thread>> waiting_threads;
 
-    list<Utf8> wchans;
+    vector<Utf8> wchans;
     wchan_t no_wchan;
 
     static void *_memcpy(void *destination, const void *source, size_t num) {

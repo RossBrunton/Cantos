@@ -36,7 +36,7 @@ namespace filesystem {
         uint64_t size = 0;
         // Probably other stuff
 
-        list<InodeEntry> children; // for directories
+        vector<InodeEntry> children; // for directories
     };
 
     /** A filesystem id and inode pair

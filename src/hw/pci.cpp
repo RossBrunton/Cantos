@@ -15,7 +15,7 @@ extern "C" {
 }
 
 namespace pci {
-    list<Device> devices;
+    vector<Device> devices;
 
     static uint32_t _read(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
         uint32_t addr;

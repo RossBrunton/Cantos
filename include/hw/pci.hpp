@@ -104,7 +104,7 @@ namespace pci {
     };
 
     void init();
-    extern list<Device> devices;
+    extern vector<Device> devices;
     void print_devices();
 }
 

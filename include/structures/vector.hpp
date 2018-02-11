@@ -38,12 +38,12 @@ private:
         T *new_buff = (T *)kmem::kmalloc(sizeof(T) * target, 0);
 
         for(size_t i = 0; i < count; i ++) {
-            new_buff[i] = move(buff[i]);
+            new (&(new_buff[i])) T(move(buff[i]));
         }
 
         kmem::kfree(buff);
         buff = new_buff;
-        buff_size = sizeof(T) * target;
+        buff_size = target;
     }
 
     void grow_buff() {
@@ -69,12 +69,12 @@ public:
     }
 
     /** Copy constructs a vector, copying all elements from the other buffer into this */
-    vector(vector &other) {
+    vector(const vector &other) {
         grow_buff(other.buff_size);
 
         count = other.count;
         for(size_t i = 0; i < count; i ++) {
-            buff[i] = other[i];
+            new (&(buff[i])) T(other[i]);
         }
     }
 
@@ -83,10 +83,34 @@ public:
         other.buff = nullptr;
     }
 
-    ~vector() {
+    /** Copies all elements from the other buffer into this */
+    vector &operator=(const vector &other) {
+        clear();
+
+        grow_buff(other.buff_size);
+
+        count = other.count;
         for(size_t i = 0; i < count; i ++) {
-            buff[i].~T();
+            new (buff[i]) T(other[i]);
         }
+
+        return *this;
+    }
+
+    /** Moves the other buffer into this */
+    vector &operator=(vector &&other) {
+        clear();
+
+        buff = move(other.buff);
+        count = other.count;
+        buff_size = other.buff_size;
+        other.buff = nullptr;
+
+        return *this;
+    }
+
+    ~vector() {
+        clear();
         kmem::kfree(buff);
     }
 
@@ -137,7 +161,8 @@ public:
      * After this call, the vector will be empty.
      */
     void clear() {
-        for(auto e : *this) {
+        if(!buff) return;
+        for(T &e : *this) {
             e.~T();
         }
         count = 0;
@@ -149,7 +174,7 @@ public:
      * @return The data at that position
      */
     T &operator[](size_t pos) const {
-        if(pos >= buff_size) panic("Out of bounds vector access!");
+        if(pos >= count) panic("Out of bounds vector access!");
         if(!buff) panic("Vector is no longer available.");
         return buff[pos];
     }
@@ -179,7 +204,7 @@ public:
      */
     void push_back(const T& value) {
         if(count == buff_size) grow_buff();
-        (*this)[count ++] = value;
+        new (&((*this)[count ++])) T(value);
     }
     /** Push an item to the back of the vector
      *
@@ -189,7 +214,7 @@ public:
      */
     void push_back(T&& value) {
         if(count == buff_size) grow_buff();
-        (*this)[count ++] = move(value);
+        new (&((*this)[count ++])) T(move(value));
     }
     /** Remove the back item from the vector
      *
@@ -207,7 +232,7 @@ public:
      */
     template<class... Args> void emplace_back(Args&&... args) {
         if(count == buff_size) grow_buff();
-        (*this)[count ++] = T(forward<Args>(args)...);
+        new (&((*this)[count ++])) T(forward<Args>(args)...);
     }
 
     /** Returns an iterator to the first element of the vector
