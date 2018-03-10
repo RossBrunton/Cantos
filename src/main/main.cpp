@@ -20,7 +20,7 @@
 #include "main/printk.hpp"
 #include "structures/elf.hpp"
 #include "main/panic.hpp"
-#include "hw/pci.hpp"
+#include "hw/pci/pci.hpp"
 #include "test/test.hpp"
 
 extern "C" {

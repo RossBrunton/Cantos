@@ -16,6 +16,8 @@ namespace unique_ptr_ns {
  */
 template<class T> class unique_ptr {
 private:
+    template<class U> friend class unique_ptr;
+
     T* ref;
 
 public:
@@ -36,6 +38,20 @@ public:
     unique_ptr(unique_ptr<T>&& other) : ref(other.ref) {
         other.ref = nullptr;
     };
+    /** Create a new unique_ptr owning `ref`
+     *
+     * @param ref The pointer to own
+     */
+    template<class E> unique_ptr(E *ref) : ref(ref) {}
+    /** Create a new unique_ptr from the given unique_ptr
+     *
+     * After construction, the other pointer will be empty.
+     *
+     * @param other The other unique_ptr to steal from.
+     */
+    template<class E> unique_ptr(unique_ptr<E>&& other) : ref(other.ref) {
+        other.ref = nullptr;
+    }
 
     /** Deletes the associated object, if it owns one
      */

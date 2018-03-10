@@ -240,7 +240,6 @@ namespace utf8 {
     private:
         shared_ptr_ns::shared_ptr<const char> string_ptr;
         const char *string;
-        bool static_alloc = false;
         size_t byte_count = 0;
     };
 }

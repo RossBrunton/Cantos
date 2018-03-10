@@ -23,7 +23,7 @@ namespace utf8 {
         return UINT32_MAX - 1;
     }
 
-    Utf8::Utf8(const char *string) : string(string), static_alloc(true), byte_count(_strlen(string)) {}
+    Utf8::Utf8(const char *string) : string(string), byte_count(_strlen(string)) {}
 
     Utf8 Utf8::own(const char *buffer, uint32_t size) {
         Utf8 base;
@@ -40,16 +40,15 @@ namespace utf8 {
         return base;
     }
 
-    Utf8::Utf8(Utf8 &copy) : string_ptr(copy.string_ptr), string(copy.string), static_alloc(copy.static_alloc),
+    Utf8::Utf8(Utf8 &copy) : string_ptr(copy.string_ptr), string(copy.string),
         byte_count(copy.byte_count) {}
-    Utf8::Utf8(Utf8 &&move) : string_ptr(::move(move.string_ptr)), string(move.string), static_alloc(move.static_alloc),
+    Utf8::Utf8(Utf8 &&move) : string_ptr(::move(move.string_ptr)), string(move.string),
         byte_count(move.byte_count) {
         move.string = _empty_string;
-        move.static_alloc = true;
         move.byte_count = 0;
     }
 
-    Utf8::Utf8() : string_ptr(shared_ptr<const char>(nullptr)), string(_empty_string), static_alloc(true), byte_count(0) {}
+    Utf8::Utf8() : string_ptr(shared_ptr<const char>(nullptr)), string(_empty_string), byte_count(0) {}
 
     const char *Utf8::to_string() const {
         return string;
@@ -194,7 +193,6 @@ namespace utf8 {
     Utf8& Utf8::operator=(Utf8 &other) {
         string = other.string;
         string_ptr = other.string_ptr;
-        static_alloc = other.static_alloc;
         byte_count = other.byte_count;
 
         return *this;
@@ -203,11 +201,9 @@ namespace utf8 {
     Utf8& Utf8::operator=(Utf8 &&other) {
         string = other.string;
         string_ptr = move(other.string_ptr);
-        static_alloc = other.static_alloc;
         byte_count = other.byte_count;
 
         other.string = _empty_string;
-        other.static_alloc = true;
         other.byte_count = 0;
 
         return *this;

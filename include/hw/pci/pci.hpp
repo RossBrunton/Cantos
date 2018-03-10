@@ -93,19 +93,36 @@ namespace pci {
 
     class Driver {
     public:
-        Device& device;
-
-        virtual void configure(Device& device) = 0;
+        virtual void configure() = 0;
         virtual void handle_interrupt() = 0;
         virtual Utf8 device_name() = 0;
+        virtual Utf8 driver_name() = 0;
 
         Driver(Device& device) : device(device) {};
         virtual ~Driver() {};
+    protected:
+        Device& device;
+    };
+
+    class DriverFactory {
+    public:
+        virtual void create_driver(Device &device) = 0;
+        virtual void search_for_device(const vector<Device> &devices) = 0;
+        virtual ~DriverFactory() {};
     };
 
     void init();
     extern vector<Device> devices;
     void print_devices();
+
+    vector<unique_ptr<DriverFactory>> &getDriverFactoryRegistry();
+    template<class T> class RegisterDriverFactory {
+    public:
+        RegisterDriverFactory() {
+            unique_ptr<DriverFactory> t = make_unique<T>();
+            getDriverFactoryRegistry().push_back(move(t));
+        }
+    };
 }
 
 #endif

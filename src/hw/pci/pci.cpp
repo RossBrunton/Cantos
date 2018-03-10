@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "hw/pci.hpp"
+#include "hw/pci/pci.hpp"
 #include "main/printk.hpp"
 #include "int/ioapic.hpp"
 #include "int/lapic.hpp"
@@ -16,6 +16,10 @@ extern "C" {
 
 namespace pci {
     vector<Device> devices;
+    vector<unique_ptr<DriverFactory>> &getDriverFactoryRegistry() {
+        static vector<unique_ptr<DriverFactory>> driverFactoryRegistry;
+        return driverFactoryRegistry;
+    }
 
     static uint32_t _read(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
         uint32_t addr;
@@ -117,6 +121,18 @@ namespace pci {
             }
         }else{
             _search_bus(0, 1);
+        }
+
+        // And create drivers for them
+        for(unique_ptr<DriverFactory> &df : getDriverFactoryRegistry()) {
+            df->search_for_device(devices);
+        }
+
+        // And then configure them
+        for(Device &d : devices) {
+            if(d.driver) {
+                d.driver->configure();
+            }
         }
     }
 

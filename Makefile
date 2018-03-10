@@ -18,7 +18,8 @@ OBJECTS=obj/debug/stack.o\
 	obj/fs/filesystem.o\
 	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
-	obj/hw/pci.o\
+	obj/hw/pci/pci.o\
+	obj/hw/pci/ahci.o\
 	obj/hw/pit.o\
 	obj/hw/ps2.o\
 	obj/hw/ps2keyboard.o\
@@ -91,6 +92,7 @@ dirs:
 	@-mkdir -p obj/mem
 	@-mkdir -p obj/int
 	@-mkdir -p obj/hw
+	@-mkdir -p obj/hw/pci
 	@-mkdir -p obj/task
 	@-mkdir -p obj/structures
 	@-mkdir -p obj/debug
