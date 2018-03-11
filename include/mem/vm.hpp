@@ -24,7 +24,7 @@ namespace vm {
 
     public:
         page::Page *physical_dir;
-        page::page_dir_t *logical_dir;
+        volatile page::page_dir_t *logical_dir;
         unique_ptr<page::logical_tables_t> logical_tables;
         uint32_t pid;
         uint32_t task_id;

@@ -202,8 +202,10 @@ namespace object {
         new_entry->page = page;
         new_entry->next = next;
         if(prev) {
+            prev->next.release();
             prev->next = move(new_entry);
         }else{
+            pages.release();
             pages = move(new_entry);
         }
 

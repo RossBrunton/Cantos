@@ -71,6 +71,9 @@ namespace vm {
         }else{
             page = page::alloc(0, 1);
             table = (page::page_table_t *)page::kinstall(page, page_flags | page::PAGE_TABLE_RW);
+            for(size_t i = 0; i < PAGE_TABLE_LENGTH; i ++) {
+                table->entries[i] = 0;
+            }
 
             map->logical_tables->pages[slot] = page;
             map->logical_tables->tables[slot] = table;

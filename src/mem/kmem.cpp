@@ -11,6 +11,7 @@
 namespace kmem {
     #define _MINIMUM_PAGES 2
     #define _SENTINEL_VAL 0x4b4d454d
+    #define _SENTINEL_FREED 0x46524545
 
     /** @private */
     extern "C" char _startofro;
@@ -398,10 +399,13 @@ namespace kmem {
         printk("Freeing %p (%d bytes).\n", ptr, hdr->size);
 #endif
 #if KMEM_SENTINEL
+        if(hdr->sentinel == _SENTINEL_FREED) {
+            panic("Suspected double free found!");
+        }
         if(hdr->sentinel != _SENTINEL_VAL) {
             panic("Sentinel value was not set correctly!");
         }
-        hdr->sentinel = 0;
+        hdr->sentinel = _SENTINEL_FREED;
 #endif
 
         new_entry = _get_struct();

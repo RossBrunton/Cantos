@@ -359,7 +359,7 @@ namespace page {
     }
 
 
-    void kuninstall(void *base, Page *page) {
+    void kuninstall(volatile void *base, Page *page) {
         _empty_virtual_slot_t *now;
         _empty_virtual_slot_t *prev = NULL;
         _empty_virtual_slot_t *new_slot;
