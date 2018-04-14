@@ -7,7 +7,7 @@ LD=$(CROSS_PREFIX)-gcc
 OPTFLAGS=-fno-omit-frame-pointer -Wno-format -Wno-unused-parameter
 COMMON_FLAGS=-ffreestanding -O2 -pedantic -Wall -Wextra -c -Iinclude/ $(OPTFLAGS)
 CFLAGS=-g -std=c99 $(COMMON_FLAGS)
-CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti
+CPPFLAGS=-g -std=c++14 $(COMMON_FLAGS) -fno-exceptions -fno-rtti -fno-threadsafe-statics
 AFLAGS=-c -g -Iinclude/
 LDFLAGS=-g -T linker.ld -ffreestanding -O2 -nostdlib -lgcc -static-libgcc
 

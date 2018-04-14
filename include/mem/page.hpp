@@ -71,7 +71,7 @@ namespace page {
     void *kinstall(Page *page, uint8_t page_flags);
     void *kinstall_append(Page *page, uint8_t page_flags, bool lock = true); // Doesn't kmalloc, but doesn't reuse any existing memory
     // either
-    void kuninstall(void *base, Page *page);
+    void kuninstall(volatile void *base, Page *page);
 
 }
 
