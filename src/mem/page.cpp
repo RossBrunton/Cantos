@@ -28,14 +28,6 @@ namespace page {
     };
     static _empty_virtual_slot_t *empty_slot;
 
-    static void *_memcpy(void *destination, const void *source, size_t num) {
-        size_t i;
-        for(i = 0; i < num; i ++) {
-            ((char *)destination)[i] = ((char *)source)[i];
-        }
-        return destination;
-    }
-
     static void invlpg(addr_logical_t addr) {
         __asm__ volatile ("invlpg (%0)" : : "r"(addr));
         lapic::send_command_all(lapic::CMD_INVLPG, addr);
@@ -207,7 +199,7 @@ namespace page {
         }else{
             new_page = (Page *)kmem::kmalloc(sizeof(Page), alloc_flag);
             alloc_nokmalloc(flags | FLAG_NOLOCK, count);
-            _memcpy(new_page, &static_page, sizeof(Page));
+            memcpy(new_page, &static_page, sizeof(Page));
         }
 
         if(new_page->consecutive < count) {

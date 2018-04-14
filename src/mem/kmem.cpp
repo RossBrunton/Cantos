@@ -121,14 +121,6 @@ namespace kmem {
 #endif
     }
 
-    static void *_memcpy(void *destination, const void *source, size_t num) {
-        size_t i;
-        for(i = 0; i < num; i ++) {
-            ((char *)destination)[i] = ((char *)source)[i];
-        }
-        return destination;
-    }
-
 
     static void _merge_free(kmem_free_t *first) {
         if(first->next && first->base + first->size == first->next->base) {
@@ -174,24 +166,24 @@ namespace kmem {
 
         // Memory header for the page header
         header.size = sizeof(page::Page);
-        _memcpy((void *)mem_base, &header, sizeof(kmem_header_t));
+        memcpy((void *)mem_base, &header, sizeof(kmem_header_t));
         end_pointer += sizeof(kmem_header_t);
 
         // And the struct
-        _memcpy((void *)(mem_base+end_pointer), initial, sizeof(page::Page));
+        memcpy((void *)(mem_base+end_pointer), initial, sizeof(page::Page));
         kernel_start = (page::Page *)(mem_base + end_pointer);
         end_pointer += sizeof(page::Page);
 
         // And now for the initial free block thing's header
         header.size = sizeof(kmem_free_t);
-        _memcpy((void *)(mem_base+end_pointer), &header, sizeof(kmem_header_t));
+        memcpy((void *)(mem_base+end_pointer), &header, sizeof(kmem_header_t));
         end_pointer += sizeof(kmem_header_t);
 
         // And its value
         free_block.size = PAGE_SIZE - end_pointer - sizeof(kmem_free_t);
         free_block.base = mem_base + end_pointer + sizeof(kmem_free_t);
         free_block.next = NULL;
-        _memcpy((void *)(mem_base+end_pointer), &free_block, sizeof(kmem_free_t));
+        memcpy((void *)(mem_base+end_pointer), &free_block, sizeof(kmem_free_t));
         free_list = (kmem_free_t *)(mem_base+end_pointer);
         free_end = free_list;
         end_pointer += sizeof(kmem_free_t);

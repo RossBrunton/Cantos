@@ -35,14 +35,6 @@ namespace task {
     vector<Utf8> wchans;
     wchan_t no_wchan;
 
-    static void *_memcpy(void *destination, const void *source, size_t num) {
-        size_t i;
-        for(i = 0; i < num; i ++) {
-            ((char *)destination)[i] = ((char *)source)[i];
-        }
-        return destination;
-    }
-
 
     void init() {
         kernel_process = make_shared<Process>(0, 0);
@@ -130,7 +122,7 @@ namespace task {
         sp --;
         *sp = _INIT_FLAGS;
         sp -= (sizeof(pstate) / 4);
-        _memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
+        memcpy(sp - (sizeof(pstate) / 4), &pstate, sizeof(pstate));
 
         stack_pointer = TASK_STACK_TOP - sizeof(void *) * 4 - sizeof(pstate);
 

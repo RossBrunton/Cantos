@@ -6,14 +6,6 @@
 #include "main/common.hpp"
 
 namespace elf {
-    static void *_memcpy(void *destination, const void *source, size_t num) {
-        size_t i;
-        for(i = 0; i < num; i ++) {
-            ((char *)destination)[i] = ((char *)source)[i];
-        }
-        return destination;
-    }
-
     SectionHeader *Header::sectionHeader(uint32_t id) {
         return (SectionHeader *)((addr_logical_t)this + this->shoff + (id * this->shentsize));
     }
@@ -156,7 +148,7 @@ namespace elf {
         kernel_elf->shoff = sizeof(Header);
         kernel_elf->shstrndx = shndx;
 
-        _memcpy((void *)((addr_logical_t)kernel_elf + sizeof(Header)), (void *)addr, (num * size));
+        memcpy((void *)((addr_logical_t)kernel_elf + sizeof(Header)), (void *)addr, (num * size));
 
         // Now go through all the headers and update their addresses if needed
         for(uint32_t i = 0; i < num; i ++) {

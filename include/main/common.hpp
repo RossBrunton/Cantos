@@ -7,6 +7,7 @@
  *
  * Including common.hpp will also include the following headers (which should be seen as "always available"):
  *
+ * * utils.hpp
  * * stdint.h
  * * asm_utils.hpp
  * * panic.hpp
@@ -99,6 +100,7 @@ template<class T> using callback_t = void (*)(T);
 #define CHECK_IF_CLR
 #endif
 
+#include "main/utils.hpp"
 #include "main/cpp.hpp"
 using cpp::forward;
 using cpp::move;

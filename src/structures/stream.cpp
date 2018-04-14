@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#include "main/common.hpp"
+
 #include "structures/stream.hpp"
 #include "main/errno.h"
 
@@ -23,12 +25,6 @@ namespace stream {
 
     error_t Stream::skip(size_t len, uint32_t flags, void *data, uint32_t *skipped) {
         return EPERM;
-    }
-
-    static int _strlen(uint8_t *str) {
-        int len = 0;
-        while(str[len]) len ++;
-        return len;
     }
 
     static uint8_t _num_to_str(uint8_t value, bool uppercase) {
@@ -121,8 +117,8 @@ namespace stream {
                         case 's':
                             (void)0;
                             str = va_arg(ap, uint8_t *);
-                            this->write(str, _strlen(str), flags, data, &tmp);
-                            written += _strlen(str);
+                            this->write(str, strlen((char*)str), flags, data, &tmp);
+                            written += strlen((char*)str);
                             break;
                     }
                 }

@@ -9,28 +9,14 @@
 namespace utf8 {
     static const char *_empty_string = "";
 
-    inline size_t _strlen(const char *str) {
-        if(!str) {
-            panic("Null in _strlen");
-        }
-        size_t p = 0;
-        while(p < UINT32_MAX) {
-            if(str[p] == '\0') {
-                return p;
-            }
-            p ++;
-        }
-        return UINT32_MAX - 1;
-    }
-
-    Utf8::Utf8(const char *string) : string(string), byte_count(_strlen(string)) {}
+    Utf8::Utf8(const char *string) : string(string), byte_count(strlen(string)) {}
 
     Utf8 Utf8::own(const char *buffer, uint32_t size) {
         Utf8 base;
 
         if(size == npos) {
             // Calculate bytes
-            size = _strlen(buffer);
+            size = strlen(buffer);
         }
 
         base.byte_count = size;
@@ -231,7 +217,7 @@ namespace utf8 {
 
     Utf8 Utf8::operator+(const char *other) {
         uint32_t sa = bytes();
-        uint32_t sb = _strlen(other);
+        uint32_t sb = strlen(other);
         uint32_t st = sa + sb;
         if(UINT32_MAX - 1 - sb < sa || UINT32_MAX - 1 - sa < sb) {
             st = UINT32_MAX - 1;
