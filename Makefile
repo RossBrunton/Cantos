@@ -15,6 +15,7 @@ CRTBEGIN_OBJ:=$(shell $(LD) $(CFLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ:=$(shell $(LD) $(CFLAGS) -print-file-name=crtend.o)
 
 OBJECTS=obj/debug/stack.o\
+	obj/display/display.o\
 	obj/fs/filesystem.o\
 	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
@@ -98,6 +99,7 @@ dirs:
 	@-mkdir -p obj/debug
 	@-mkdir -p obj/fs
 	@-mkdir -p obj/test
+	@-mkdir -p obj/display
 
 all: dirs obj/main/crti.o obj/main/crtn.o all_objects
 

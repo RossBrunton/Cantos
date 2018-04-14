@@ -134,7 +134,6 @@ namespace task {
 
     Thread::~Thread() {
         // Need to do stuff like free the stack or whatever
-        printk("Pop! %p\n", this);
         //panic("!");
     }
 

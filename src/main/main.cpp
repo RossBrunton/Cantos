@@ -22,6 +22,7 @@
 #include "main/panic.hpp"
 #include "hw/pci/pci.hpp"
 #include "test/test.hpp"
+#include "display/display.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -43,6 +44,9 @@ extern "C" void _init();
 void main_thread() {
     list<test::TestResult> res = test::run_tests();
     test::print_results(res, true);
+
+    display::Display& d = vga::addDisplay<display::TestDisplay>();
+    vga::switchDisplay(d.id);
 }
 
 extern "C" void __attribute__((noreturn)) kernel_main() {

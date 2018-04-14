@@ -97,7 +97,7 @@ extern uint32_t acpi_proc_count;
 extern uint32_t acpi_ioapic_count;
 extern uint32_t acpi_iso_count;
 
-extern uint32_t acpi_lapic_base;
+extern addr_phys_t acpi_lapic_base;
 
 }
 
