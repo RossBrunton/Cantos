@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #include "task/task.hpp"
-#include "hw/acpi.h"
+#include "hw/acpi.hpp"
 #include "structures/shared_ptr.hpp"
 #include "int/lapic.hpp"
 

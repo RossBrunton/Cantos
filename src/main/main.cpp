@@ -27,7 +27,7 @@
 extern "C" {
     #include "int/numbers.h"
     #include "hw/serial.h"
-    #include "hw/acpi.h"
+    #include "hw/acpi.hpp"
 }
 
 #if defined(__linux__)
@@ -74,7 +74,7 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("Memory end: %x\n", kmem::map.memory_end);
 #endif
 
-    printk("Machine has %d cores and %d ioapics\n", acpi::acpi_proc_count, acpi::acpi_ioapic_count);
+    printk("Machine has %d cores and %d ioapics\n", acpi::proc_count, acpi::ioapic_count);
 
     cpu::init();
     pic::init();

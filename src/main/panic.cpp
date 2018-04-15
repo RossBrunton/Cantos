@@ -91,7 +91,7 @@ extern "C" {
 
         // Tell other processors to stop
         uint32_t id = cpu::id();
-        for(uint32_t i = 0; i < acpi::acpi_proc_count; i ++) {
+        for(uint32_t i = 0; i < acpi::proc_count; i ++) {
             if(i != id) {
                 lapic::ipi(INT_LAPIC_BASE + INT_LAPIC_PANIC, i);
             }

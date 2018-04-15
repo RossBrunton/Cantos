@@ -9,7 +9,7 @@
 #include "mem/page.hpp"
 #include "task/task.hpp"
 #include "int/numbers.h"
-#include "hw/acpi.h"
+#include "hw/acpi.hpp"
 #include "hw/utils.h"
 #include "structures/mutex.hpp"
 #include "main/asm_utils.hpp"
@@ -70,7 +70,7 @@ namespace lapic {
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_COMMAND, lcommand);
         IDT_ALLOW_INTERRUPT(INT_LAPIC_BASE + INT_LAPIC_PANIC, lpanic);
 
-        page = page::create(acpi::acpi_lapic_base, page::FLAG_KERNEL, 1);
+        page = page::create(acpi::lapic_base, page::FLAG_KERNEL, 1);
         _base = (uint32_t *)page::kinstall(page, page::PAGE_TABLE_CACHEDISABLE | page::PAGE_TABLE_RW);
 
         printk("LAPIC ID: %x, Version: %x\n", _read(ID), _read(VER));
@@ -163,8 +163,8 @@ namespace lapic {
         low_ap_page_table = kmem::map.vm_start - KERNEL_VM_BASE;
 
         // Loop through and wake them all up (except number 0)
-        for(i = 1; i < acpi::acpi_proc_count && i < MAX_CORES; i ++) {
-            uint32_t id = acpi::acpi_procs[i].apic_id;
+        for(i = 1; i < acpi::proc_count && i < MAX_CORES; i ++) {
+            uint32_t id = acpi::procs[i].apic_id;
 
             _ipi(0, 5, 1, id);
             io_wait();
@@ -186,7 +186,7 @@ namespace lapic {
     }
 
     void ipi_all(uint8_t vector) {
-        for(uint32_t i = 0; i < acpi::acpi_proc_count && i < MAX_CORES; i ++) {
+        for(uint32_t i = 0; i < acpi::proc_count && i < MAX_CORES; i ++) {
             ipi(vector, i);
         }
     }
@@ -206,7 +206,7 @@ namespace lapic {
         // TODO: This better
         uint32_t eflags = push_cli();
         uint32_t id = cpu::id();
-        for(uint32_t i = 0; i < acpi::acpi_proc_count; i ++) {
+        for(uint32_t i = 0; i < acpi::proc_count; i ++) {
             if(i != id) {
                 send_command(command, argument, i);
             }

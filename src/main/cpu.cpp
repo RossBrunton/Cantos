@@ -2,7 +2,7 @@
 
 #include "main/cpu.hpp"
 #include "task/task.hpp"
-#include "hw/acpi.h"
+#include "hw/acpi.hpp"
 #include "mem/page.hpp"
 #include "main/panic.hpp"
 #include "main/asm_utils.hpp"
@@ -54,7 +54,7 @@ namespace cpu {
         page::Page *page;
         uint32_t i;
 
-        for(i = 0; i < acpi::acpi_proc_count; i ++) {
+        for(i = 0; i < acpi::proc_count; i ++) {
             page = page::alloc(0, 1);
             cpu_status[i] = make_unique<Status>();
             cpu_status[i]->cpu_id = i;

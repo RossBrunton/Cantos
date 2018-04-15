@@ -5,7 +5,7 @@
 
 #include "mem/page.hpp"
 #include "mem/kmem.hpp"
-#include "hw/acpi.h"
+#include "hw/acpi.hpp"
 #include "structures/elf.hpp"
 
 extern "C" char _startofro;
@@ -112,7 +112,7 @@ extern "C" volatile page::page_dir_t *low_kernel_main(multiboot::info_t *mbi) {
     }
 
     // Find ACPI tables
-    acpi::low_acpi_setup();
+    acpi::low_setup();
 
     // Fill in kernel map
     map_low.kernel_ro_start = lowest_info;
