@@ -346,6 +346,15 @@ namespace utf8 {
                     }
                     break;
                 }
+                case 'S': {
+                    (void)0;
+                    Utf8* str = va_arg(ap, Utf8*);
+                    size_t len = str->bytes();
+                    for (size_t i = 0; i < len; i++) {
+                        out.push_back((*str)[i]);
+                    }
+                    break;
+                }
                 }
             }
             } else {
@@ -408,6 +417,10 @@ public:
         test("Formatting");
         Utf8 f("%s %s %d %x");
         assert(f.format("Hello", "World", 69, 0xff) == "Hello World 69 ff");
+        Utf8 f2("%S %S");
+        Utf8 h("Hello");
+        Utf8 w("World");
+        assert(f2.format(&h, &w) == "Hello World");
     }
 };
 

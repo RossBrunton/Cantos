@@ -230,7 +230,42 @@ namespace utf8 {
          */
         char operator[] (int x) const;
 
+        /** Performs a sprintf-like format with this as the format parameter
+         *
+         * This returns a new version of the current Utf8, but with format specifiers (starting with '%') being
+         *  replaced by appropriate values given in the arguments to this call.
+         *
+         * Many of the same values supported by printf are also supported here, but there may be some differences.
+         *
+         * The syntax of a format specifier is `%[length]specifier`.
+         *
+         * Valid specifiers are:
+         * * `%`: a literal `%`.
+         * * `n`: Nothing, but the respective argument (which must be a `signed int *`) is updated with the number of
+         *  characters written.
+         * * `p`: Pointer, same as `x` only with `0x` prepended.
+         * * `x`: Unsigned hexadecimal integer, with `abcdef` in lower case.
+         * * `X`: Unsigned hexadecimal integer, with `ABCDEF` in upper case.
+         * * `o`: Unsigned octal integer.
+         * * `u`: Unsigned decimal integer.
+         * * `d`/`i`: Signed decimal integer.
+         * * `s`: String, the argument must be a char pointer which is then included as a string.
+         * * `S`: Utf8*, a pointer to a Uft8 instance to include
+         *
+         * Length specifiers are used to determine the length of the value to take, which only make sense on integers:
+         * * `(none)`: Int.
+         * * `l`: Long int.
+         * * `ll`: Long long int.
+         *
+         * @param ... The format parameters.
+         */
         Utf8 format(...) const;
+        /** Performs a sprintf-like format with this as the format parameter
+         *
+         * See @ref format for more information, this is a version that takes a `va_list` rather than parameters.
+         *
+         * @param ap The argument list from va_start.
+         */
         Utf8 format(va_list ap) const;
 
         /** Maximum value for the length of a string
