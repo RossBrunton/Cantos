@@ -32,28 +32,28 @@ namespace elf {
         half_t shnum;
         half_t shstrndx;
 
-        char *lookupString(uint32_t section, uint32_t offset);
-        char *runtimeLookupString(uint32_t section, uint32_t offset);
-        uint32_t sectionByType(word_t type, uint32_t base);
+        char *lookupString(uint32_t section, uint32_t offset) const;
+        char *runtimeLookupString(uint32_t section, uint32_t offset) const;
+        uint32_t sectionByType(word_t type, uint32_t base) const;
 
-        SectionHeader *sectionHeader(uint32_t id);
-        void *sectionData(uint32_t id);
-        void *runtimeSectionData(uint32_t id);
+        SectionHeader *sectionHeader(uint32_t id) const;
+        void *sectionData(uint32_t id) const;
+        void *runtimeSectionData(uint32_t id) const;
 
-        SectionHeader *sectionStringSection();
-        void *sectionStringSectionData();
-        void *runtimeSectionStringSectionData();
-        char *lookupSectionString(uint32_t offset);
-        char *runtimeLookupSectionString(uint32_t offset);
+        SectionHeader *sectionStringSection() const;
+        void *sectionStringSectionData() const;
+        void *runtimeSectionStringSectionData() const;
+        char *lookupSectionString(uint32_t offset) const;
+        char *runtimeLookupSectionString(uint32_t offset) const;
 
-        Symbol *symbol(uint32_t section, uint32_t offset);
-        Symbol *runtimeSymbol(uint32_t section, uint32_t offset);
-        char *symbolName(uint32_t section, uint32_t offset);
-        char *runtimeSymbolName(uint32_t section, uint32_t offset);
+        Symbol *symbol(uint32_t section, uint32_t offset) const;
+        Symbol *runtimeSymbol(uint32_t section, uint32_t offset) const;
+        char *symbolName(uint32_t section, uint32_t offset) const;
+        char *runtimeSymbolName(uint32_t section, uint32_t offset) const;
 
-        uint32_t runtimeFindSymbolId(uint32_t addr, word_t type);
-        Symbol *runtimeFindSymbol(uint32_t addr, word_t type);
-        char *runtimeFindSymbolName(uint32_t addr, word_t type);
+        uint32_t runtimeFindSymbolId(uint32_t addr, word_t type) const;
+        Symbol *runtimeFindSymbol(uint32_t addr, word_t type) const;
+        char *runtimeFindSymbolName(uint32_t addr, word_t type) const;
     };
 
     const uint8_t EI_MAG0 = 0;

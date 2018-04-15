@@ -32,7 +32,7 @@ extern "C" {
     }
 
     void vpanic_at(uint32_t ebp, uint32_t eip, const char *fmt, va_list ap) {
-        char *name;
+        const char *name;
         __asm__ volatile ("cli");
 
         stack::Unwinder unwinder(ebp);
@@ -64,7 +64,7 @@ extern "C" {
 
                     if(ebp) {
                         do {
-                            name = unwinder.methodName(elf::kernel_elf);
+                            name = unwinder.methodName(*elf::kernel_elf);
                             if(name) {
                                 vga::string_stream.writef(0, &clr, "\nin %s", name, 0);
                             }else{

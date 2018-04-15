@@ -6,51 +6,51 @@
 #include "main/common.hpp"
 
 namespace elf {
-    SectionHeader *Header::sectionHeader(uint32_t id) {
+    SectionHeader *Header::sectionHeader(uint32_t id) const {
         return (SectionHeader *)((addr_logical_t)this + this->shoff + (id * this->shentsize));
     }
 
-    SectionHeader *Header::sectionStringSection() {
+    SectionHeader *Header::sectionStringSection() const {
         return this->sectionHeader(this->shstrndx);
     }
 
-    void *Header::sectionData(uint32_t id) {
+    void *Header::sectionData(uint32_t id) const {
         SectionHeader *hdr = this->sectionHeader(id);
 
         return (void *)((addr_logical_t)this + hdr->offset);
     }
 
-    void *Header::runtimeSectionData(uint32_t id) {
+    void *Header::runtimeSectionData(uint32_t id) const {
         SectionHeader *hdr = this->sectionHeader(id);
 
         return (void *)hdr->addr;
     }
 
-    void *Header::sectionStringSectionData() {
+    void *Header::sectionStringSectionData() const {
         return this->sectionData(this->shstrndx);
     }
 
-    void *Header::runtimeSectionStringSectionData() {
+    void *Header::runtimeSectionStringSectionData() const {
         return this->runtimeSectionData(this->shstrndx);
     }
 
-    char *Header::lookupString(uint32_t section, uint32_t offset) {
+    char *Header::lookupString(uint32_t section, uint32_t offset) const {
         return &((char *)this->sectionData(section))[offset];
     }
 
-    char *Header::runtimeLookupString(uint32_t section, uint32_t offset) {
+    char *Header::runtimeLookupString(uint32_t section, uint32_t offset) const {
         return (char *)this->runtimeSectionData(section) + offset;
     }
 
-    char *Header::lookupSectionString(uint32_t offset) {
+    char *Header::lookupSectionString(uint32_t offset) const {
         return this->lookupString(this->shstrndx, offset);
     }
 
-    char *Header::runtimeLookupSectionString(uint32_t offset) {
+    char *Header::runtimeLookupSectionString(uint32_t offset) const {
         return this->runtimeLookupString(this->shstrndx, offset);
     }
 
-    uint32_t Header::sectionByType(word_t type, uint32_t base) {
+    uint32_t Header::sectionByType(word_t type, uint32_t base) const {
         for(; this->sectionHeader(base)->type != type && base < this->shnum; base ++) {
             // Pass
         }
@@ -62,7 +62,7 @@ namespace elf {
         return 0;
     }
 
-    Symbol *Header::symbol(uint32_t section, uint32_t offset) {
+    Symbol *Header::symbol(uint32_t section, uint32_t offset) const {
         SectionHeader *sect = this->sectionHeader(section);
         Symbol *symbols = (Symbol *)this->sectionData(section);
 
@@ -73,7 +73,7 @@ namespace elf {
         return (Symbol *)((addr_logical_t)symbols + offset * sect->entsize);
     }
 
-    Symbol *Header::runtimeSymbol(uint32_t section, uint32_t offset) {
+    Symbol *Header::runtimeSymbol(uint32_t section, uint32_t offset) const {
         SectionHeader *sect = this->sectionHeader(section);
         Symbol *symbols = (Symbol *)this->runtimeSectionData(section);
 
@@ -84,21 +84,21 @@ namespace elf {
         return (Symbol *)((addr_logical_t)symbols + offset * sect->entsize);
     }
 
-    char *Header::symbolName(uint32_t section, uint32_t offset) {
+    char *Header::symbolName(uint32_t section, uint32_t offset) const {
         SectionHeader *sect = this->sectionHeader(section);
         Symbol *symbol = this->symbol(section, offset);
 
         return this->lookupString(sect->link, symbol->name);
     }
 
-    char *Header::runtimeSymbolName(uint32_t section, uint32_t offset) {
+    char *Header::runtimeSymbolName(uint32_t section, uint32_t offset) const {
         SectionHeader *sect = this->sectionHeader(section);
         Symbol *symbol = this->runtimeSymbol(section, offset);
 
         return this->runtimeLookupString(sect->link, symbol->name);
     }
 
-    uint32_t Header::runtimeFindSymbolId(uint32_t addr, word_t type) {
+    uint32_t Header::runtimeFindSymbolId(uint32_t addr, word_t type) const {
         uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
         SectionHeader *symtab = this->sectionHeader(section_id);
         uint32_t best_id = 0;
@@ -120,13 +120,13 @@ namespace elf {
         return best_id;
     }
 
-    Symbol *Header::runtimeFindSymbol(uint32_t addr, word_t type) {
+    Symbol *Header::runtimeFindSymbol(uint32_t addr, word_t type) const {
         uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
 
         return this->runtimeSymbol(section_id, this->runtimeFindSymbolId(addr, type));
     }
 
-    char *Header::runtimeFindSymbolName(uint32_t addr, word_t type) {
+    char *Header::runtimeFindSymbolName(uint32_t addr, word_t type) const {
         uint32_t section_id = this->sectionByType(SHT_SYMTAB, 0);
 
         return this->runtimeSymbolName(section_id, this->runtimeFindSymbolId(addr, type));
