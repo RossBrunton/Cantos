@@ -12,7 +12,7 @@ public:
         assert(a.size() == 0);
         assert(a.empty());
 
-        vector<int> b = vector<int>(5);
+        vector<int> b = vector<int>(5, 0);
         assert(b.size() == 5);
         assert(b.front() == 0);
         assert(!b.empty());

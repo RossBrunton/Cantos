@@ -68,6 +68,19 @@ public:
         this->count = count;
     }
 
+    /** Constructs a vector of `count` elements, each initialised to a given value
+     *
+     * @param count The number of elements to create
+     * @param value The initial value to set to the elements, this will be assigned into the underlying storage
+     */
+    vector(size_t count, T value) {
+        grow_buff(count);
+        for (size_t i = 0; i < count; i++) {
+            new (&(buff[i])) T(value);
+        }
+        this->count = count;
+    }
+
     /** Copy constructs a vector, copying all elements from the other buffer into this */
     vector(const vector &other) {
         grow_buff(other.buff_size);

@@ -15,7 +15,7 @@ struct integral_constant {
     static constexpr T value = v;
     typedef T value_type;
     typedef integral_constant<T,v> type;
-    constexpr operator T() {return v;}
+    constexpr operator T() const {return v;}
 };
 typedef integral_constant<bool, false> false_type;
 typedef integral_constant<bool, true> true_type;

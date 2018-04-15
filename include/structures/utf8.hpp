@@ -36,7 +36,7 @@ namespace utf8 {
          *
          * It will be a reference to the same string as the argument.
          */
-        Utf8(Utf8 &copy);
+        Utf8(const Utf8 &copy);
         /** Construct a new Utf8 by moving an existing Utf8
          *
          * The old Utf8 will be set to `""`.
@@ -229,6 +229,9 @@ namespace utf8 {
          * This runs in O(1) time.
          */
         char operator[] (int x) const;
+
+        Utf8 format(...) const;
+        Utf8 format(va_list ap) const;
 
         /** Maximum value for the length of a string
          *
