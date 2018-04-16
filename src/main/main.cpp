@@ -23,6 +23,8 @@
 #include "hw/pci/pci.hpp"
 #include "test/test.hpp"
 #include "display/display.hpp"
+#include "fs/physical_mem_storage.hpp"
+#include "fs/expanse_fs.hpp"
 
 extern "C" {
     #include "int/numbers.h"
@@ -46,7 +48,34 @@ void main_thread() {
     test::print_results(res, true);
 
     display::Display& d = vga::addDisplay<display::TestDisplay>();
-    vga::switchDisplay(d.id);
+    // vga::switchDisplay(d.id);
+
+    // Test out the PhysicalMemStorage thing now
+    shared_ptr<physical_mem_storage::PhysicalMemStorage> s
+        = make_shared<physical_mem_storage::PhysicalMemStorage>(0, page::FLAG_KERNEL);
+
+    shared_ptr<expanse_fs::ExpanseFs> fs = make_shared<expanse_fs::ExpanseFs>(s);
+
+    shared_ptr<filesystem::FilePathEntry> root
+        = make_shared<filesystem::FilePathEntry>(Utf8(""), nullptr, fs->root_inode().val);
+
+    shared_ptr<filesystem::FilePathEntry> child = parse_path(Utf8("contents"), root);
+    filesystem::FilePathEntry error_loc;
+    child->populate(error_loc);
+
+    vm::Map *map = cpu::current_thread()->vm.get();
+    map->add_object(child->get_inode()->contents, 0x8000, 0x0, 0x10);
+
+    for(uint8_t* i = (uint8_t*)0x8000; i < (uint8_t*)0x8060; i ++) {
+        if ((addr_logical_t)i % 16 == 0) {
+            printk("\n");
+        }
+        if (*i <= 0xf) {
+            printk("0%x ", *i);
+        } else {
+            printk("%x ", *i);
+        }
+    }
 }
 
 extern "C" void __attribute__((noreturn)) kernel_main() {

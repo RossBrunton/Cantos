@@ -17,6 +17,9 @@ CRTEND_OBJ:=$(shell $(LD) $(CFLAGS) -print-file-name=crtend.o)
 OBJECTS=obj/debug/stack.o\
 	obj/display/display.o\
 	obj/fs/filesystem.o\
+	obj/fs/filesystem_test.o\
+	obj/fs/physical_mem_storage.o\
+	obj/fs/expanse_fs.o\
 	obj/hw/acpi.o\
 	obj/hw/loacpi.o\
 	obj/hw/pci/pci.o\
