@@ -20,6 +20,7 @@ extern "C" {
 
 namespace ps2keyboard {
     uint8_t Ps2KeyboardDriver::send(uint8_t byte) {
+        io_wait();
         last_input = -1;
 
         do {
@@ -31,6 +32,7 @@ namespace ps2keyboard {
     }
 
     uint8_t Ps2KeyboardDriver::send(uint8_t byte_a, uint8_t byte_b) {
+        io_wait();
         last_input = -1;
 
         do {
@@ -43,13 +45,19 @@ namespace ps2keyboard {
     }
 
     void Ps2KeyboardDriver::configure() {
+#if DEBUG_PS2
+        printk("Configuring a PS2 keyboard on port %d...\n", port.second ? 1 : 0);
+#endif
         key = 0;
         double_code = 0;
         last_key = 0;
+        self_test_passed = false;
 
         // Self test
         // TODO: Result
         send(0xff);
+
+        while (!self_test_passed) {}
 
         // Set to scancode 2
         send(0xf0);
@@ -58,6 +66,11 @@ namespace ps2keyboard {
 
     void Ps2KeyboardDriver::handle() {
         uint8_t input = port.read(0xffff);
+        if(input == PASS) {
+            // Passed a self test
+            self_test_passed = true;
+            return;
+        }
 
         if(last_input == -1) {
             last_input = (int16_t)input;
@@ -66,11 +79,6 @@ namespace ps2keyboard {
 
         if(input == ERR_1 || input == ERR_2) {
             // Key detection error, ignore
-            return;
-        }
-
-        if(input == PASS) {
-            // Passed a test, which is great, but we don't care
             return;
         }
 

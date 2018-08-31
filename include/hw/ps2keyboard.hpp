@@ -28,12 +28,13 @@ namespace ps2keyboard {
         uint8_t send(uint8_t byte_a, uint8_t byte_b);
 
     private:
-        uint16_t key;
-        bool double_code;
-        uint16_t last_key;
-        uint16_t modifiers;
+        volatile uint16_t key;
+        volatile bool double_code;
+        volatile uint16_t last_key;
+        volatile uint16_t modifiers;
 
-        int16_t last_input;
+        volatile int16_t last_input;
+        volatile bool self_test_passed;
     };
 }
 
