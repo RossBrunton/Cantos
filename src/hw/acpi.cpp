@@ -15,4 +15,5 @@ uint32_t ioapic_count;
 uint32_t iso_count;
 
 addr_phys_t lapic_base;
+bool acpi_found;
 }

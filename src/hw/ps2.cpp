@@ -208,7 +208,7 @@ namespace ps2 {
         }
 
         if(type == TYPE_UNKNOWN) {
-            kwarn("PS2 device %d is of an unkown type (%x, %x).\n", second, info[0], info[1]);
+            kwarn("PS2 device %d is of an unknown type (%x, %x).\n", second, info[0], info[1]);
             enabled = false;
             return;
         }

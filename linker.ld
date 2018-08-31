@@ -27,6 +27,10 @@ SECTIONS {
         obj/main/boot.o(.rodata)
         obj/hw/loacpi.o(.rodata)
         obj/main/loerror.o(.rodata)
+        obj/main/lomain.o(.rodata*)
+        obj/main/boot.o(.rodata*)
+        obj/hw/loacpi.o(.rodata*)
+        obj/main/loerror.o(.rodata*)
     }
 
     /* Read-write data (initialized) */

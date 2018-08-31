@@ -3,6 +3,6 @@
 
 #include "main/common.hpp"
 
-void low_error(const char *msg);
+__attribute__((noreturn)) void low_error(const char *msg);
 
 #endif

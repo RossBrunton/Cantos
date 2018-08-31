@@ -103,7 +103,11 @@ extern "C" void __attribute__((noreturn)) kernel_main() {
     printk("Memory end: %x\n", kmem::map.memory_end);
 #endif
 
-    printk("Machine has %d cores and %d ioapics\n", acpi::proc_count, acpi::ioapic_count);
+    if (acpi::acpi_found) {
+        printk("Machine has %d cores and %d ioapics\n", acpi::proc_count, acpi::ioapic_count);
+    } else {
+        kwarn("Could not find acpi information\n");
+    }
 
     cpu::init();
     pic::init();

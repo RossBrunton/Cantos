@@ -167,4 +167,6 @@ extern uint32_t iso_count;
 
 /** The base address of LAPIC memory as defined in the tables */
 extern addr_phys_t lapic_base;
+
+extern bool acpi_found;
 }

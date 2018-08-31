@@ -3,10 +3,9 @@
 #include <stdint.h>
 
 #include "main/loerror.hpp"
-#include "main/common.hpp"
 
-void low_error(const char *msg) {
-    uint16_t *terminal_buffer = (uint16_t *)0xb8000;
+__attribute__((noreturn)) void low_error(const char *msg) {
+    volatile uint16_t *terminal_buffer = (volatile uint16_t *)0xb8000;
     uint32_t i = 0;
     uint32_t p = 0;
 

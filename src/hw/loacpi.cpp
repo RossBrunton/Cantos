@@ -44,8 +44,12 @@ void low_setup() {
     }
 
     if (!rsdp) {
-        // Fail in some way if we can't find it
-        low_error("ACPI: Failed to find rsdp descriptior");
+        // Fail if we can't find it
+        LOW(bool, acpi_found) = false;
+        LOW(uint32_t, proc_count) = 1;
+        LOW(uint32_t, ioapic_count) = 1;
+        LOW(uint32_t, iso_count) = 0;
+        return;
     }
 
 
@@ -113,6 +117,7 @@ void low_setup() {
             LOW(uint32_t, proc_count) = pc;
             LOW(uint32_t, ioapic_count) = ic;
             LOW(uint32_t, iso_count) = sc;
+            LOW(bool, acpi_found) = true;
 
             break;
         }
